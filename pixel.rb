@@ -10,7 +10,7 @@ set :environment, :development
 @@settings = YAML.load_file 'config/settings.yaml'
 
 get '/' do
-  'Hello World!'
+  erb :layout
 end
 
 get '/device/:device' do |device|

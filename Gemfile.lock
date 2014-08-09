@@ -3,12 +3,14 @@ GEM
   specs:
     backports (3.6.0)
     multi_json (1.10.1)
+    mysql (2.9.1)
     pg (0.17.1)
     rack (1.5.2)
     rack-protection (1.5.3)
       rack
     rack-test (0.6.2)
       rack (>= 1.0)
+    sequel (4.13.0)
     sinatra (1.4.5)
       rack (~> 1.4)
       rack-protection (~> 1.4)
@@ -26,6 +28,8 @@ PLATFORMS
   ruby
 
 DEPENDENCIES
+  mysql
   pg
+  sequel
   sinatra
   sinatra-contrib

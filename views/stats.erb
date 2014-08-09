@@ -1,0 +1,36 @@
+<h1>Stats</h1>
+
+<!-- UNMATCHED DEVICE WARNINGS -->
+<% if @unmatched.size > 0 %>
+  <div class='row'>
+    <div class='col-md-3'></div>
+    <div class='col-md-6'>
+      <ul class='list-group'>
+        <li class='center list-group-item list-group-item-danger'>
+        <br />Can't parse the following devices (check your <b>dev_rxps</b> value):<br /><br />
+        <% @unmatched.each do |device| %>
+          <b><%= device %></b><br />
+        <% end %>
+        <br />
+        </li>
+      </ul>
+    </div>
+    <div class='col-md-3'></div>
+  </div>
+<% end %>
+
+<!-- Janky, just a test to try google graph api -->
+<div class='row'>
+  <div class='col-md-6'>
+    <h3>Bits forwarded/sec (Location)</h3>
+    <div id="chart_bps_loc" style='margin-left: 15%;' class='pxl-chart'></div>
+  </div>
+  <div class='col-md-6'>
+    <h3>Bits forwarded/sec (Row)</h3>
+    <div id="chart_bps_row" style='margin-left: 15%;' class='pxl-chart'></div>
+  </div>
+</div>
+<script type="text/javascript" src="https://www.google.com/jsapi"></script>
+<script type="text/javascript">
+  google.load("visualization", "1", {packages:["corechart"]});
+</script>

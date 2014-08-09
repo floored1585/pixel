@@ -1,0 +1,138 @@
+<% provide(:title, 'Dashboard') %>
+<h1>Dashboard!</h1>
+
+<!-- INTERFACE DOWN WARNINGS -->
+<% if !@interfaces_down.empty? %>
+  <div class='row'>
+    <div class='col-md-2'></div>
+    <div class='col-md-8'>
+      <ul class='list-group'>
+        <% @interfaces_down.each do |device,interfaces| %>
+          <% interfaces.each do |if_index,oids| %>
+            <li class='center list-group-item list-group-item-danger'>
+            <%= device_link(oids) + ' PORT ' + interface_link(oids) %> 
+            TO <%= neighbor_link(oids).html_safe %> is <b>DOWN!</b>
+            <span class='badge' style='float: left;'>&nbsp;
+              <span class='glyphicon glyphicon-warning-sign'></span>
+              Link Down&nbsp;&nbsp;
+            </span>
+            <span class='badge'>
+              <%= humanize_time(Time.now.to_i - oids['ifOperStatus_time']) %>
+            </span>
+            </li>
+          <% end %>
+        <% end %>
+      </ul>
+    </div>
+    <div class='col-md-2'></div>
+  </div>
+<% end %>
+
+<div class='row'>
+
+  <!-- DISCARDING PORTS -->
+  <div class='col-md-6'>
+    <h2>Top Discarding Ports</h2>
+    <% if !@interfaces_dis.empty? %>
+      <table id='discardTable' class='table table-hover table-condensed tablesorter'>
+      <thead>
+        <tr>
+          <th class='pxl-hidden'>Total</th>
+          <th>Discards/sec </th>
+          <th>Device</th>
+          <th>Interface </th>
+          <th>Neighbor </th>
+          <th>Ingress </th>
+          <th>Egress </th>
+        </tr>
+      </thead>
+      <tbody>
+      <% @interfaces_dis.each do |device,interfaces| %>
+        <% interfaces.each do |if_index,oids| %>
+          <tr <%= tr_attributes(oids).html_safe %>>
+            <td class='pxl-hidden'><%= oids['discardsOut'] %></td>
+            <td>
+              <span class='text-danger'><b><%= oids['discardsOut'] %></b></span>
+              <%= "(#{oids['discardsOut_pct']}%)" %>
+            </td>
+            <td><%= device_link(oids) %></td>
+            <td><%= interface_link(oids) %></td>
+            <td><%= neighbor_link(oids, { device_only: true }).html_safe %></td>
+            <td class='pxl-histogram pxl-meta <%= 'pxl-hoverswap' unless /^10+/.match(oids['ifHighSpeed'].to_s) %>' data-pxl-meta='<%= oids['bpsIn_util']%>'>
+              <span class='pxl-swap-pri'>
+                <%= bps_cell('In', oids, { compact: true, bps_only: true }) %>
+              </span>
+              <span class='pxl-swap-alt'>
+                <%= bps_cell('In', oids, { pct_only: true }) %>
+              </span>
+            </td>
+            <td class='pxl-histogram pxl-meta <%= 'pxl-hoverswap' unless /^10+/.match(oids['ifHighSpeed'].to_s) %>' data-pxl-meta='<%= oids['bpsOut_util']%>'>
+              <span class='pxl-swap-pri'>
+                <%= bps_cell('Out', oids, { compact: true, bps_only: true }) %>
+              </span>
+              <span class='pxl-swap-alt'>
+                <%= bps_cell('Out', oids, { pct_only: true }) %>
+              </span>
+            </td>
+          </tr>
+        <% end %>
+      <% end %>
+      </tbody>
+      </table>
+    <% end %>
+  </div>
+
+  <!-- SATURATED PORTS -->
+  <div class='col-md-6'>
+    <h2>Saturated Links</h2>
+    <% if !@interfaces_sat.empty? %>
+      <table id='discardTable' class='table table-hover table-condensed tablesorter'>
+      <thead>
+        <tr>
+          <th class='pxl-hidden'>Total</th>
+          <th class='pxl-th'>Device</th>
+          <th class='pxl-th'>Interface </th>
+          <th class='pxl-th'>Type </th>
+          <th class='pxl-th'>Neighbor </th>
+          <th class='pxl-th'>Ingress </th>
+          <th class='pxl-th'>Egress </th>
+        </tr>
+      </thead>
+      <tbody>
+      <% @interfaces_sat.each do |device,interfaces| %>
+        <% interfaces.each do |if_index,oids| %>
+          <tr <%= tr_attributes(oids).html_safe %>>
+            <td class='pxl-hidden'><%= oids['discardsOut'] %></td>
+            <td><%= device_link(oids) %></td>
+            <td><%= interface_link(oids) %></td>
+            <td><%= oids['linkType'] %>
+              <% if oids['isChild'] %>
+                <span> <%= "[#{oids['myParentName']}]" %></span>
+              <% end %>
+            </td>
+            <td><%= neighbor_link(oids, { device_only: true }).html_safe %></td>
+            <td class='pxl-histogram pxl-meta <%= 'pxl-hoverswap' unless /^10+/.match(oids['ifHighSpeed'].to_s) %>' data-pxl-meta='<%= oids['bpsIn_util']%>'>
+              <span class='pxl-swap-pri'>
+                <%= bps_cell('In', oids, { compact: true, bps_only: true }) %>
+              </span>
+              <span class='pxl-swap-alt'>
+                <%= bps_cell('In', oids, { pct_only: true }) %>
+              </span>
+            </td>
+            <td class='pxl-histogram pxl-meta <%= 'pxl-hoverswap' unless /^10+/.match(oids['ifHighSpeed'].to_s) %>' data-pxl-meta='<%= oids['bpsOut_util']%>'>
+              <span class='pxl-swap-pri'>
+                <%= bps_cell('Out', oids, { compact: true, bps_only: true }) %>
+              </span>
+              <span class='pxl-swap-alt'>
+                <%= bps_cell('Out', oids, { pct_only: true }) %>
+              </span>
+            </td>
+          </tr>
+        <% end %>
+      <% end %>
+      </tbody>
+      </table>
+    <% end %>
+  </div>
+
+</div>

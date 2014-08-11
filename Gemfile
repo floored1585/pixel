@@ -6,4 +6,6 @@ gem 'sinatra-contrib'
 gem 'pg'
 gem 'sequel'
 gem 'mysql'
+gem 'sass'
+gem 'rack-coffee'
 

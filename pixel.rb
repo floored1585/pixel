@@ -21,7 +21,55 @@ db_handle = SQ.initiate
 use Rack::Coffee, root: 'public', urls: '/javascripts'
 
 get '/' do
-  erb :dashboard
+
+    # Start timer
+    beginning = Time.now
+
+    pg = pg_connect(settings)
+    query_bb_down = "
+      SELECT * FROM current
+      WHERE
+        ( ifalias LIKE 'sub%' OR ifalias LIKE 'bb%' )
+        AND ifoperstatus != 1
+        AND device<>'test'"
+    query_dis = "
+      SELECT * FROM current
+      WHERE discardsout > 9
+      AND ifalias NOT LIKE 'sub%'
+      AND device<>'test'
+      ORDER BY discardsout DESC
+      LIMIT 10"
+    query_sat = "
+      SELECT * FROM current
+      WHERE ( bpsin_util > 90 OR bpsout_util > 90 )
+      AND device<>'test'
+      LIMIT 10"
+
+    ints_down = populate(settings, pg, query_bb_down)
+
+    # Remove from down list if parent interface is down
+    # and parent interface is on the same device.
+    ints_down.each do |device,interfaces|
+      interfaces.delete_if do |index,oids|
+        oids['myParent'] &&
+          interfaces[oids['myParent']]
+      end
+    end
+
+    ints_dis = populate(settings, pg, query_dis)
+    ints_sat = populate(settings, pg, query_sat)
+    pg.close
+
+    # How long did it take us to query the database
+    db_elapsed = '%.2f' % (Time.now - beginning)
+
+  erb :dashboard, :locals => {
+    :title => 'Dashboard!',
+    :settings => settings,
+    :ints_dis => ints_dis,
+    :ints_sat => ints_sat,
+    :ints_down => ints_down,
+  }
 end
 
 get '/device/search' do
@@ -41,9 +89,10 @@ get '/device/:device' do |device|
   # How long did it take us to query the database
   db_elapsed = '%.2f' % (Time.now - beginning)
 
-  erb :device, :locals => { 
-    :interfaces => interfaces, 
-    :settings => settings 
+  erb :device, :locals => {
+    :settings => settings,
+    :device => device,
+    :interfaces => interfaces,
   }
 end
 

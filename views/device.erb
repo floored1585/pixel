@@ -1,5 +1,6 @@
+<% locals[:title] = device %>
 
-<h1><%= interfaces[interfaces.keys[0]]['device'] %></h1>
+<h1><%= device %></h1>
 <div>
   <% if !interfaces.empty? %>
   <table id='ifTable' class='table table-hover table-condensed tablesorter'>

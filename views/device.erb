@@ -1,3 +1,4 @@
+
 <h1><%= interfaces[interfaces.keys[0]]['device'] %></h1>
 <div>
   <% if !interfaces.empty? %>
@@ -34,6 +35,8 @@
         <td><%= neighbor_link(oids) %></td>
         <td class='pxl-histogram' data-pxl-meta='<%= oids['bpsIn_util'] %>'><%= bps_cell('In', oids) %></td>
         <td class='pxl-histogram' data-pxl-meta='<%= oids['bpsOut_util'] %>'><%= bps_cell('Out', oids) %></td>
+        <td><%= speed_cell(oids) %>&nbsp;&nbsp;&nbsp;&nbsp;</td>
+      </tr>
     <% end %>
     </tbody>
   </table>

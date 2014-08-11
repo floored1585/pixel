@@ -2,6 +2,7 @@ require 'sinatra'
 require 'yaml'
 require 'sinatra/reloader'
 require 'pg'
+require 'rack/coffee'
 
 require_relative 'lib/core_ext/string.rb'
 require_relative 'lib/yaml'

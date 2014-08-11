@@ -1,5 +1,5 @@
-
 module Helper
+
   def humanize_time secs
     [[60, :seconds], [60, :minutes], [24, :hours], [1000, :days]].map{ |count, name|
       if secs > 0
@@ -42,12 +42,13 @@ module Helper
     attributes.join(' ') + " class='#{classes.join(' ')}'"
   end
 
-  def bps_cell(direction, oids, opts={})
+  def bps_cell(direction, oids, opts={:pct_precision => 2})
+    pct_precision = opts[:pct_precision]
     # If bpsIn/Out doesn't exist, return blank
     return '' unless oids['bps' + direction] && oids['linkUp']
-    util = ('%.3g' % oids["bps#{direction}_util"]) + '%'
+    util = ("%.3g" % oids["bps#{direction}_util"]) + '%'
     util.gsub!(/\.[0-9]+/,'') if opts[:compact]
-    traffic = number_to_human(oids['bps' + direction], :bps, true)
+    traffic = number_to_human(oids['bps' + direction], :bps, true, '%.3g')
     return traffic if opts[:bps_only]
     return util if opts[:pct_only]
     return "#{util} (#{traffic})"
@@ -70,7 +71,7 @@ module Helper
 
   def speed_cell(oids)
     return '' unless oids['linkUp']
-    number_to_human(oids['ifHighSpeed'], :bps, true)
+    number_to_human(oids['ifHighSpeed'] * 1000000, :bps, true, '%.0f')
   end
 
   def neighbor_link(oids, opts={})
@@ -127,12 +128,19 @@ module Helper
     return stale_warn + discard_warn + error_warn + child_warn + "#{state} for #{time}"
   end
 
-  def number_to_human(raw, unit, si)
+  def number_to_human(raw, unit, si, format='%.2f')
     i = 0
     units = {
       :bps => [' bps', ' Kbps', ' Mbps', ' Gbps', ' Tbps', ' Pbps', ' Ebps', ' Zbps', ' Ybps'],
       :pps => [' pps', ' Kpps', ' Mpps', ' Gpps', ' Tpps', ' Ppps', ' Epps', ' Zpps', ' Ypps'],
       :si_short => [' b', ' K', ' M', ' G', ' T', ' P', ' E', ' Z', ' Y'],
     }
+    step = si ? 1000 : 1024
+    while raw > step do
+      raw = raw.to_f / step
+      i += 1
+    end
+
+    return (sprintf format % raw).to_s + ' ' + units[unit][i]
   end
 end

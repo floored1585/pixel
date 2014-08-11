@@ -1,76 +1,76 @@
 <!DOCTYPE html>
 <html>
-    <head>
-        <title><%# #full_title(yield(:title)) %></title>
-        <link href="/stylesheets/test.css" rel="stylesheet">
-        <link href="/bootstrap/css/bootstrap.css" rel="stylesheet">
-        <script src="/javascripts/lib/jquery-1.11.1.min.js"></script>
-        <script src="/bootstrap/js/bootstrap.min.js"></script>
-        <script src="/javascripts/lib/jquery.tablesorter.js"></script>
-        <script src="/javascripts/lib/jquery.cookie.js"></script>
-        <script src="/javascripts/application.js"></script>
-        <%# #include_gon %>
-    </head>
-    <body>
+<head>
+<title><%# #full_title(yield(:title)) %></title>
+<link href="/bootstrap/css/bootstrap.css" rel="stylesheet">
+<link href="/stylesheets/test.css" rel="stylesheet">
+<script src="/javascripts/lib/jquery-1.11.1.min.js"></script>
+<script src="/bootstrap/js/bootstrap.min.js"></script>
+<script src="/javascripts/lib/jquery.tablesorter.js"></script>
+<script src="/javascripts/lib/jquery.cookie.js"></script>
+<script src="/javascripts/application.js"></script>
+<%# #include_gon %>
+</head>
+<body>
 
-        <!-- BEGIN HEADER -->
-        <header class='navbar navbar-fixed-top navbar-inverse' role='navigation'>
-        <div class='navbar-inner'>
-            <div class='container'>
-                <a href='/'id='logo'>pixel</a>
-                <nav>
-                <ul class='nav navbar-nav pull-right'>
-                    <li>
-                    <form action='/device/search' class='navbar-form navbar-left' method='get' role='search'>
-                        <div class='form-group'>
-                            <button id='pxl-refresh' type="button" class="btn btn-default pxl-btn-refresh pxl-btn-refresh-white" data-toggle='tooltip' title='2m auto-refresh' data-rel='tooltip-left'>
-                                <span class="glyphicon glyphicon-refresh btn-txt"></span>
-                            </button>
-                        </div>
-                    </form>
-                    </li>
-                    <li><a href='/'>Dash</a></li>
-                    <li><a href='/stats'>Stats</a></li>
-                    <li>
-                    <form action='/device/search' class='navbar-form navbar-left' method='get' role='search'>
-                        <div class='form-group'>
-                            <input class="form-control" id="device_input" name="device_input" placeholder="Jump to Device" type="text" />
-                            <button type='submit' class='btn btn-default'>Go!</button>
-                        </div>
-                    </form>
-                    </li>
-                </ul>
-                </nav>
+<!-- BEGIN HEADER -->
+<header class='navbar navbar-fixed-top navbar-inverse' role='navigation'>
+  <div class='navbar-inner'>
+    <div class='container'>
+      <a href='/'id='logo'>pixel</a>
+      <nav>
+        <ul class='nav navbar-nav pull-right'>
+          <li>
+          <form action='/device/search' class='navbar-form navbar-left' method='get' role='search'>
+            <div class='form-group'>
+              <button id='pxl-refresh' type="button" class="btn btn-default pxl-btn-refresh pxl-btn-refresh-white" data-toggle='tooltip' title='2m auto-refresh' data-rel='tooltip-left'>
+                <span class="glyphicon glyphicon-refresh btn-txt"></span>
+              </button>
             </div>
-        </div>
-        </header>
-        <!-- END HEADER -->
+          </form>
+          </li>
+          <li><a href='/'>Dash</a></li>
+          <li><a href='/stats'>Stats</a></li>
+          <li>
+          <form action='/device/search' class='navbar-form navbar-left' method='get' role='search'>
+            <div class='form-group'>
+              <input class="form-control" id="device_input" name="device_input" placeholder="Jump to Device" type="text" />
+              <button type='submit' class='btn btn-default'>Go!</button>
+            </div>
+          </form>
+          </li>
+        </ul>
+      </nav>
+    </div>
+  </div>
+</header>
+<!-- END HEADER -->
 
-        <div class="container">
+<div class="container">
 
-            <%= yield %>
+  <%= yield %>
 
-            <!-- BEGIN FOOTER -->
-            <footer class="footer">
-            <small>
-                <%# #link_to 'Pixel', 'https://github.com/floored1585/pixel' %>
-                by Ian Clark
-            </small>
-            <nav>
-            <ul>
-                <li>Powered by <a href='http://rubyonrails.org'>Ruby on Rails</a>
-                <a href='http://influxdb.com'>InfluxDB</a>
-                <a href='http://grafana.org'>Grafana</a>
-                <%# #link_to 'PostgreSQL', 'http://postgresql.org' %>,
-                and <%# #link_to 'Nyan', 'http://www.slowbro.org/', :target => '_blank' %></li>
-                </li>
-            </ul>
-            <ul>
-                <li><%# #"db lookup: #{@db_elapsed}s" %></li>
-            </ul>
-            </nav>
-            </footer>
-            <!-- END FOOTER -->
-        </div>
-    </body>
+  <!-- BEGIN FOOTER -->
+  <footer class="footer">
+    <small>
+      <a href='https://github.com/floored1585/pixel'>Pixel</a>
+      by Ian Clark
+    </small>
+    <nav>
+      <ul>
+        <li>Powered by <a href='http://rubyonrails.org'>Ruby on Rails</a>,
+        <a href='http://influxdb.com'>InfluxDB</a>,
+        <a href='http://grafana.org'>Grafana</a>,
+        <a href='http://postgresql.org'>PostgreSQL</a>,
+        and <a href='http://www.slowbro.org/', target='_blank'>Nyan</a>
+        </li>
+      </ul>
+      <ul>
+        <li><%# #"db lookup: #{@db_elapsed}s" %></li>
+      </ul>
+    </nav>
+  </footer>
+  <!-- END FOOTER -->
+</div>
+</body>
 </html>

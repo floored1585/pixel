@@ -136,7 +136,7 @@ module Helper
       :si_short => [' b', ' K', ' M', ' G', ' T', ' P', ' E', ' Z', ' Y'],
     }
     step = si ? 1000 : 1024
-    while raw > step do
+    while raw >= step do
       raw = raw.to_f / step
       i += 1
     end

@@ -19,6 +19,7 @@ doc/
 .DS_Store
 .idea
 .secret
+.sass-cache
 Capfile
 
 config/settings.yaml

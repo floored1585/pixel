@@ -2,6 +2,7 @@ require 'sinatra'
 require 'yaml'
 require 'sinatra/reloader'
 require 'pg'
+require 'sass/plugin/rack'
 
 require_relative 'lib/core_ext/string.rb'
 require_relative 'lib/yaml'
@@ -18,6 +19,13 @@ include Helper
 
 settings = Configfile.retrieve
 db_handle = SQ.initiate
+
+# SASS PLZ
+Sass::Plugin.options[:style] = :compressed
+use Sass::Plugin::Rack
+
+# COFFEESCRIPT PLZ
+use Rack::Coffee, root: 'public', urls: '/javascripts'
 
 get '/' do
   erb :dashboard
@@ -50,4 +58,4 @@ def pg_connect(settings)
     :password => settings['pg_conn']['pass'])
 end
 
-  
+

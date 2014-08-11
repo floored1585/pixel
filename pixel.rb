@@ -4,11 +4,8 @@ require 'sinatra/reloader'
 require 'pg'
 require 'rack/coffee'
 
-require_relative 'lib/core_ext/string.rb'
-require_relative 'lib/yaml'
-require_relative 'lib/sequel'
-require_relative 'lib/base'
-require_relative 'lib/helper'
+# Load the modules
+Dir["#{File.dirname(__FILE__)}/lib/**/*.rb"].each { |f| require(f) }
 
 set :environment, :development
 
@@ -25,6 +22,11 @@ use Rack::Coffee, root: 'public', urls: '/javascripts'
 
 get '/' do
   erb :dashboard
+end
+
+get '/device/search' do
+    target = params[:device_input] || 'Enter a device in the search box'
+    redirect to(target.empty? ? '/' : "/device/#{target}")
 end
 
 get '/device/:device' do |device|

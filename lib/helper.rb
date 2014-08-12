@@ -94,7 +94,7 @@ module Helper
   end
 
   def device_link(oids)
-    "<a href='/device/#{oids['device']}'>"
+    "<a href='/device/#{oids['device']}'>#{oids['device']}</a>"
   end
 
   def link_status_color(interfaces,oids)

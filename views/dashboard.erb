@@ -33,7 +33,7 @@
   <!-- DISCARDING PORTS -->
   <div class='col-md-6'>
     <h2>Top Discarding Ports</h2>
-    <% if !ints_dis.empty? %>
+    <% if !ints_discarding.empty? %>
       <table id='discardTable' class='table table-hover table-condensed tablesorter'>
       <thead>
         <tr>
@@ -47,7 +47,7 @@
         </tr>
       </thead>
       <tbody>
-      <% ints_dis.each do |device,ints| %>
+      <% ints_discarding.each do |device,ints| %>
         <% ints.each do |if_index,oids| %>
           <tr <%= tr_attributes(oids) %>>
             <td class='pxl-hidden'><%= oids[:discards_out] %></td>
@@ -85,7 +85,7 @@
   <!-- SATURATED PORTS -->
   <div class='col-md-6'>
     <h2>Saturated Links</h2>
-    <% if !ints_sat.empty? %>
+    <% if !ints_saturated.empty? %>
       <table id='discardTable' class='table table-hover table-condensed tablesorter'>
       <thead>
         <tr>
@@ -99,7 +99,7 @@
         </tr>
       </thead>
       <tbody>
-      <% ints_sat.each do |device,ints| %>
+      <% ints_saturated.each do |device,ints| %>
         <% ints.each do |if_index,oids| %>
           <tr <%= tr_attributes(oids) %>>
             <td class='pxl-hidden'><%= oids[:discards_out] %></td>

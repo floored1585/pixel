@@ -2,6 +2,7 @@ require 'sinatra'
 require 'yaml'
 require 'sinatra/reloader'
 require 'pg'
+require 'pp'
 require 'rack/coffee'
 
 # Load the modules
@@ -21,70 +22,34 @@ db_handle = SQ.initiate
 use Rack::Coffee, root: 'public', urls: '/javascripts'
 
 get '/' do
+  # Start timer
+  beginning = Time.now
 
-    # Start timer
-    beginning = Time.now
+  ints_saturated = interfaces_saturated(settings,db_handle)
+  ints_discarded = interfaces_discarded(settings,db_handle)
+  ints_down = interfaces_down(settings,db_handle)
 
-    pg = pg_connect(settings)
-    query_bb_down = "
-      SELECT * FROM current
-      WHERE
-        ( ifalias LIKE 'sub%' OR ifalias LIKE 'bb%' )
-        AND ifoperstatus != 1
-        AND device<>'test'"
-    query_dis = "
-      SELECT * FROM current
-      WHERE discardsout > 9
-      AND ifalias NOT LIKE 'sub%'
-      AND device<>'test'
-      ORDER BY discardsout DESC
-      LIMIT 10"
-    query_sat = "
-      SELECT * FROM current
-      WHERE ( bpsin_util > 90 OR bpsout_util > 90 )
-      AND device<>'test'
-      LIMIT 10"
-
-    ints_down = populate(settings, pg, query_bb_down)
-
-    # Remove from down list if parent interface is down
-    # and parent interface is on the same device.
-    ints_down.each do |device,interfaces|
-      interfaces.delete_if do |index,oids|
-        oids['myParent'] &&
-          interfaces[oids['myParent']]
-      end
-    end
-
-    ints_dis = populate(settings, pg, query_dis)
-    ints_sat = populate(settings, pg, query_sat)
-    pg.close
-
-    # How long did it take us to query the database
-    db_elapsed = '%.2f' % (Time.now - beginning)
+  db_elapsed = '%.2f' % (Time.now - beginning)
 
   erb :dashboard, :locals => {
     :title => 'Dashboard!',
     :settings => settings,
-    :ints_dis => ints_dis,
-    :ints_sat => ints_sat,
+    :ints_dis => ints_discarded,
+    :ints_sat => ints_saturated,
     :ints_down => ints_down,
   }
 end
 
 get '/device/search' do
-    target = params[:device_input] || 'Enter a device in the search box'
-    redirect to(target.empty? ? '/' : "/device/#{target}")
+  target = params[:device_input] || 'Enter a device in the search box'
+  redirect to(target.empty? ? '/' : "/device/#{target}")
 end
 
 get '/device/:device' do |device|
   # Start timer
   beginning = Time.now
 
-  pg = pg_connect(settings)
-  query = 'SELECT * FROM current WHERE device=$1'
-  interfaces = Pixel::populate(settings, pg, query, { params: [device], device: device } ) || {}
-  pg.close
+  interfaces = device_interfaces(settings,db_handle,device)
 
   # How long did it take us to query the database
   db_elapsed = '%.2f' % (Time.now - beginning)
@@ -95,14 +60,3 @@ get '/device/:device' do |device|
     :interfaces => interfaces,
   }
 end
-
-# DB Connection
-def pg_connect(settings)
-  PG::Connection.new(
-    :host => settings['pg_conn']['host'],
-    :dbname => settings['pg_conn']['db'],
-    :user => settings['pg_conn']['user'],
-    :password => settings['pg_conn']['pass'])
-end
-
-

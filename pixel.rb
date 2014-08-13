@@ -37,6 +37,7 @@ get '/' do
     :ints_dis => ints_discarded,
     :ints_sat => ints_saturated,
     :ints_down => ints_down,
+    :db_elapsed => db_elapsed,
   }
 end
 
@@ -58,5 +59,6 @@ get '/device/:device' do |device|
     :settings => settings,
     :device => device,
     :interfaces => interfaces,
+    :db_elapsed => db_elapsed,
   }
 end

@@ -23,19 +23,19 @@
         <td><table class='pxl-linkUp pxl-linkUp-<%= link_status_color(interfaces, oids) %>'><tr>
               <td data-toggle='tooltip' data-container='body' title='<%= link_status_tooltip(interfaces, oids) %>' data-rel='tooltip-right'></td>
           </tr></table></td>
-        <td class='<%= 'pxl-child-td' if oids['isChild'] %>'>
-          <%= oids['linkType'] %>
-          <% if oids['isParent'] %>
+        <td class='<%= 'pxl-child-td' if oids[:isChild] %>'>
+          <%= oids[:linkType] %>
+          <% if oids[:isParent] %>
             <button type='button' class='swapPlusMinus btn btn-default btn-xs' data-toggle='collapse' data-target='.<%= if_index %>_child'>
               <span class="glyphicon glyphicon-plus"></span>
             </button>
-          <% elsif oids['isChild'] %>
-            <span class='pxl-hidden'><%= "[#{oids['myParentName']}]" %></span>
+          <% elsif oids[:isChild] %>
+            <span class='pxl-hidden'><%= "[#{oids[:myParentName]}]" %></span>
           <% end %>
         </td>
         <td><%= neighbor_link(oids) %></td>
-        <td class='pxl-histogram' data-pxl-meta='<%= oids['bpsIn_util'] %>'><%= bps_cell('In', oids) %></td>
-        <td class='pxl-histogram' data-pxl-meta='<%= oids['bpsOut_util'] %>'><%= bps_cell('Out', oids) %></td>
+        <td class='pxl-histogram' data-pxl-meta='<%= oids[:bpsIn_util] %>'><%= bps_cell('In', oids) %></td>
+        <td class='pxl-histogram' data-pxl-meta='<%= oids[:bpsOut_util] %>'><%= bps_cell('Out', oids) %></td>
         <td><%= speed_cell(oids) %>&nbsp;&nbsp;&nbsp;&nbsp;</td>
       </tr>
     <% end %>

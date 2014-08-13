@@ -17,7 +17,7 @@
               Link Down&nbsp;&nbsp;
             </span>
             <span class='badge'>
-              <%= humanize_time(Time.now.to_i - oids['ifOperStatus_time']) %>
+              <%= humanize_time(Time.now.to_i - oids[:ifOperStatus_time]) %>
             </span>
             </li>
           <% end %>
@@ -50,15 +50,15 @@
       <% ints_dis.each do |device,ints| %>
         <% ints.each do |if_index,oids| %>
           <tr <%= tr_attributes(oids) %>>
-            <td class='pxl-hidden'><%= oids['discardsOut'] %></td>
+            <td class='pxl-hidden'><%= oids[:discardsOut] %></td>
             <td>
-              <span class='text-danger'><b><%= oids['discardsOut'] %></b></span>
-              <%= "(#{oids['discardsOut_pct']}%)" %>
+              <span class='text-danger'><b><%= oids[:discardsOut] %></b></span>
+              <%= "(#{oids[:discardsOut_pct]}%)" %>
             </td>
             <td><%= device_link(oids) %></td>
             <td><%= interface_link(settings, oids) %></td>
             <td><%= neighbor_link(oids, { device_only: true }) %></td>
-            <td class='pxl-histogram pxl-meta <%= 'pxl-hoverswap' unless /^10+/.match(oids['ifHighSpeed'].to_s) %>' data-pxl-meta='<%= oids['bpsIn_util']%>'>
+            <td class='pxl-histogram pxl-meta <%= 'pxl-hoverswap' unless /^10+/.match(oids[:ifHighSpeed].to_s) %>' data-pxl-meta='<%= oids[:bpsIn_util]%>'>
               <span class='pxl-swap-pri'>
                 <%= bps_cell('In', oids, { compact: true, bps_only: true }) %>
               </span>
@@ -66,7 +66,7 @@
                 <%= bps_cell('In', oids, { pct_only: true }) %>
               </span>
             </td>
-            <td class='pxl-histogram pxl-meta <%= 'pxl-hoverswap' unless /^10+/.match(oids['ifHighSpeed'].to_s) %>' data-pxl-meta='<%= oids['bpsOut_util']%>'>
+            <td class='pxl-histogram pxl-meta <%= 'pxl-hoverswap' unless /^10+/.match(oids[:ifHighSpeed].to_s) %>' data-pxl-meta='<%= oids[:bpsOut_util]%>'>
               <span class='pxl-swap-pri'>
                 <%= bps_cell('Out', oids, { compact: true, bps_only: true }) %>
               </span>
@@ -102,16 +102,16 @@
       <% ints_sat.each do |device,ints| %>
         <% ints.each do |if_index,oids| %>
           <tr <%= tr_attributes(oids) %>>
-            <td class='pxl-hidden'><%= oids['discardsOut'] %></td>
+            <td class='pxl-hidden'><%= oids[:discardsOut] %></td>
             <td><%= device_link(oids) %></td>
             <td><%= interface_link(settings, oids) %></td>
-            <td><%= oids['linkType'] %>
-              <% if oids['isChild'] %>
-                <span> <%= "[#{oids['myParentName']}]" %></span>
+            <td><%= oids[:linkType] %>
+              <% if oids[:isChild] %>
+                <span> <%= "[#{oids[:myParentName]}]" %></span>
               <% end %>
             </td>
             <td><%= neighbor_link(oids, { device_only: true }) %></td>
-            <td class='pxl-histogram pxl-meta <%= 'pxl-hoverswap' unless /^10+/.match(oids['ifHighSpeed'].to_s) %>' data-pxl-meta='<%= oids['bpsIn_util']%>'>
+            <td class='pxl-histogram pxl-meta <%= 'pxl-hoverswap' unless /^10+/.match(oids[:ifHighSpeed].to_s) %>' data-pxl-meta='<%= oids[:bpsIn_util]%>'>
               <span class='pxl-swap-pri'>
                 <%= bps_cell('In', oids, { compact: true, bps_only: true }) %>
               </span>
@@ -119,7 +119,7 @@
                 <%= bps_cell('In', oids, { pct_only: true }) %>
               </span>
             </td>
-            <td class='pxl-histogram pxl-meta <%= 'pxl-hoverswap' unless /^10+/.match(oids['ifHighSpeed'].to_s) %>' data-pxl-meta='<%= oids['bpsOut_util']%>'>
+            <td class='pxl-histogram pxl-meta <%= 'pxl-hoverswap' unless /^10+/.match(oids[:ifHighSpeed].to_s) %>' data-pxl-meta='<%= oids[:bpsOut_util]%>'>
               <span class='pxl-swap-pri'>
                 <%= bps_cell('Out', oids, { compact: true, bps_only: true }) %>
               </span>

@@ -55,6 +55,9 @@ module Helper
   end
 
   def total_bps_cell(interfaces, oids)
+    # If interface is child, set total to just under parent total,
+    # so that the interface is sorted to sit directly under parent
+    # when tablesorter runs.
     if oids['isChild']
       p_oids = interfaces[oids['myParent']]
       if p_oids && p_oids['bpsIn'] && p_oids['bpsOut']
@@ -66,12 +69,14 @@ module Helper
         return '0'
       end
     end
+    # If not child, just return the total bps
     oids['bpsIn'] + oids['bpsOut'] if oids['bpsIn'] && oids['bpsOut']
   end
 
   def speed_cell(oids)
     return '' unless oids['linkUp']
-    number_to_human(oids['ifHighSpeed'] * 1000000, :bps, true, '%.0f')
+    speed_in_bps = oids['ifHighSpeed'] * 1000000
+    number_to_human(speed_in_bps, :bps, true, '%.0f')
   end
 
   def neighbor_link(oids, opts={})

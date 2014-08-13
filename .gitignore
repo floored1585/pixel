@@ -23,6 +23,7 @@ doc/
 Capfile
 
 config/settings.yaml
+config/settings.production.yaml
 config/deploy.rb
 config/deploy/
 public/assets/

@@ -4,7 +4,7 @@ require_relative 'core_ext/string.rb'
 
 module Pixel
   def interfaces_down(settings,db_handle,opts = {})
-    query = "( ifalias LIKE 'sub%' OR ifalias LIKE 'bb%' ) AND ifoperstatus != 1"
+    query = "( if_alias LIKE 'sub%' OR if_alias LIKE 'bb%' ) AND if_oper_status != 1"
 
     interfaces = _return_interfaces(db_handle,query)
     (devices,name_to_index) = _device_map(settings,interfaces)
@@ -12,7 +12,7 @@ module Pixel
 
     metadata.each do |device,int|
       int.delete_if do |index,oids|
-       oids[:myParent] && int[oids[:myParent]]
+        oids[:my_parent] && int[oids[:my_parent]]
       end 
     end
     return metadata
@@ -20,7 +20,7 @@ module Pixel
 
   # done
   def interfaces_saturated(settings,db_handle,opts = {})
-    query = "( bpsin_util > 90 OR bpsout_util > 90 )"
+    query = "( bps_in_util > 90 OR bps_out_util > 90 )"
     query_option = "limit"
 
     interfaces = _return_interfaces(db_handle,query,query_option)
@@ -30,7 +30,7 @@ module Pixel
   end
 
   def interfaces_discarded(settings,db_handle,opts = {})
-    query = "discardsout > 9 AND ifalias NOT LIKE 'sub%'"
+    query = "discards_out > 9 AND if_alias NOT LIKE 'sub%'"
     query_option = "orderby"
 
     interfaces = _return_interfaces(db_handle,query,query_option)
@@ -55,7 +55,7 @@ module Pixel
   def _return_interfaces(db_handle,query, option= {})
     current_table = db_handle[:current]
     if option.eql?("oderby")
-      dataset = current_table.where(query).exclude(:device => 'test').order(Sequel.desc(:discardsout)).limit(10).all
+      dataset = current_table.where(query).exclude(:device => 'test').order(Sequel.desc(:discards_out)).limit(10).all
     elsif option.eql?("limit")
       dataset = current_table.where(query).exclude(:device => 'test').limit(10).all
     else
@@ -79,12 +79,11 @@ module Pixel
       devices[device][if_index] = {}
 
       settings['pg_attrs'].each do |attr|
-        attr_down = attr.downcase.to_sym
         attr = attr.to_sym
-        devices[device][if_index][attr] = row[attr_down].to_s.to_i_if_numeric
+        devices[device][if_index][attr] = row[attr].to_s.to_i_if_numeric
         devices[device][if_index][attr] = nil if devices[device][if_index][attr].to_s.empty?
       end
-      name_to_index[device][row[:ifname].downcase] = if_index
+      name_to_index[device][row[:if_name].downcase] = if_index
     end
 
     return devices,name_to_index
@@ -94,36 +93,36 @@ module Pixel
     devices.each do |device,interfaces|
       interfaces.each do |index,oids|
         # Populate 'neighbor' value
-        oids[:ifAlias].to_s.match(/__[a-zA-Z0-9-_]+__/) do |neighbor|
+        oids[:if_alias].to_s.match(/__[a-zA-Z0-9-_]+__/) do |neighbor|
           interfaces[index][:neighbor] = neighbor.to_s.gsub('__','')
         end
 
         time_since_poll = Time.now.to_i - oids[:last_updated]
         oids[:stale] = time_since_poll if time_since_poll > settings['stale_timeout']
 
-        if oids[:ppsOut] && oids[:ppsOut] != 0
-          oids[:discardsOut_pct] = '%.2f' % (oids[:discardsOut].to_f / oids[:ppsOut] * 100)
+        if oids[:pps_out] && oids[:pps_out] != 0
+          oids[:discards_out_pct] = '%.2f' % (oids[:discards_out].to_f / oids[:pps_out] * 100)
         end
 
-        # Populate 'linkType' value (Backbone, Access, etc...)
-        oids[:ifAlias].match(/^[a-z]+(__|\[)/) do |type|
+        # Populate 'link_type' value (Backbone, Access, etc...)
+        oids[:if_alias].match(/^[a-z]+(__|\[)/) do |type|
           type = type.to_s.gsub(/(_|\[)/,'')
-            oids[:linkType] = settings['link_types'][type]
+            oids[:link_type] = settings['link_types'][type]
             if type == 'sub'
-              oids[:isChild] = true
+              oids[:is_child] = true
               # This will return po1 from sub[po1]__gar-k11u1-dist__g1/47
-              parent = oids[:ifAlias][/\[[a-zA-Z0-9\/-]+\]/].gsub(/(\[|\])/, '')
+              parent = oids[:if_alias][/\[[a-zA-Z0-9\/-]+\]/].gsub(/(\[|\])/, '')
               if parent && parent_index = name_to_index[device][parent.downcase]
-                interfaces[parent_index][:isParent] = true
+                interfaces[parent_index][:is_parent] = true
                 interfaces[parent_index][:children] ||= []
                 interfaces[parent_index][:children] << index
-                oids[:myParent] = parent_index
+                oids[:my_parent] = parent_index
               end
-              oids[:myParentName] = parent.gsub('po','Po')
+              oids[:my_parent_name] = parent.gsub('po','Po')
             end
         end
 
-        oids[:ifOperStatus] == 1 ? oids[:linkUp] = true : oids[:linkUp] = false
+        oids[:if_oper_status] == 1 ? oids[:link_up] = true : oids[:link_up] = false
       end
     end
 

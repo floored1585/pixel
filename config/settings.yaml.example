@@ -1,0 +1,80 @@
+#
+# Link to the scripted dashboard for interface statistics
+grafana_if_dash: 'http://example.com/#/dashboard/script/interface.js'
+
+#
+# This is how device names are parsed.
+dev_rxps: { 
+  standard: !ruby/regexp '/^([a-zA-Z0-9]+)-([a-zA-Z]+)([0-9]+)([a-zA-Z0-9]+)-([a-zA-Z]+)(?:-([a-zA-Z]+))?$/',
+  iad1: !ruby/regexp '/^([a-zA-Z0-9]+)-(\w)-([0-9])$/',
+  special: !ruby/regexp '/^([a-zA-Z0-9]+)-([a-zA-Z0-9]+)-([0-9])$/',
+}
+
+# 
+# dev_rxp_matchkeys associate each dev_rxp with the appropriate device attributes.
+# Order in the sub-arrays are important, as the first value will define the first match
+# from the regexp, etc.
+# 
+# Also, make sure there are an equal # of dev_rxp matches as array values in each 
+# key set below.  It is OK to leave out values that you don't use in your device names, 
+# but do not use any values other than the following:
+#   - name (required)
+#   - location
+#   - row
+#   - rack
+#   - ru
+#   - type
+#   - subtype
+#
+dev_rxp_matchkeys: {
+  standard: [
+    'device', # Name represents the entire match, which is always returned first
+    'location',
+    'row',
+    'rack',
+    'ru',
+    'type',
+    'subtype',
+  ],
+  iad1: [
+    'device', # Name represents the entire match, which is always returned first
+    'location',
+    'row',
+    'number',
+  ],
+  special: [
+    'device', # Name represents the entire match, which is always returned first
+    'location',
+    'type',
+    'number',
+  ],
+}
+
+# This is used for converting location abbreviations to formal names.
+locations: {
+  gar: 'Garland',
+  irv: 'Irvine',
+  iad1: 'IAD1',
+  aon: 'AON Office',
+  brea: 'Brea Office',
+  sf: 'SF Office',
+}
+
+# Interfaces are considered 'stale' this many seconds after the last poll.
+stale_timeout: 600
+
+# For converting link type abbreviations to formal names.
+link_types: { 
+  bb: 'Backbone', 
+  acc: 'Access', 
+  sub: 'Child', 
+  trn: 'Transit',
+}
+
+# PostgrSQL database connection
+pg_conn: {
+  host: '127.0.0.1',
+  db: 'pixel',
+  user: 'postgres',
+  pass: 'password',
+}

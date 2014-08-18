@@ -2,7 +2,8 @@
 
 require_relative 'core_ext/string.rb'
 
-module Pixel
+module Core
+
   def get_ints_down(settings, db)
     rows = db[:current].filter(Sequel.like(:if_alias, 'sub%') | Sequel.like(:if_alias, 'bb%'))
     rows = rows.exclude(:device => 'test')
@@ -108,4 +109,5 @@ module Pixel
       end
     end
   end
+
 end

@@ -4,4 +4,4 @@ require 'bundler'
 Bundler.require
 
 require './pixel'
-run Sinatra::Application
+run Pixel

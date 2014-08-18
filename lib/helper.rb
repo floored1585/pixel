@@ -28,7 +28,7 @@ module Helper
       "data-container='body'",
       "title='index: #{oids[:if_index]}'",
       "data-rel='tooltip-left'",
-      "data-pxl-index='#{oids[:if_index]}'"
+        "data-pxl-index='#{oids[:if_index]}'"
     ]
     attributes.push "data-pxl-parent='#{oids[:my_parent]}'" if oids[:is_child] && opts[:hl_relation]
     classes = []
@@ -120,7 +120,7 @@ module Helper
     discards = oids[:discards_out] || 0
     errors = oids[:errors_in] || 0
     stale_warn = oids[:stale] ? "Last polled: #{humanize_time(oids[:stale])} ago\n" : ''
-      discard_warn = discards == 0 ? '' : "#{discards} outbound discards/sec\n"
+    discard_warn = discards == 0 ? '' : "#{discards} outbound discards/sec\n"
     error_warn = errors == 0 ? '' : "#{errors} receive errors/sec\n"
     child_warn = ''
     if oids[:is_parent]
@@ -148,4 +148,5 @@ module Helper
 
     return (sprintf format % raw).to_s + ' ' + units[unit][i]
   end
+
 end

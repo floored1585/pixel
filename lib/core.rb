@@ -48,14 +48,14 @@ module Core
   end
 
   def post_devices(settings, db, devices)
-    devices.each do |device,ints|
-      ints.each do |if_index,oids|
-        # Convert oids hash to symbol keys
+    devices.each do |device,interfaces|
+      interfaces.each do |if_index,oids|
+        # Convert oids hash keys to symbols
         oids.keys.each { |key| oids[(key.to_sym rescue key) || key] = oids.delete(key) }
 
-        update = db[:current].where(:device => oids[:device], :if_index => if_index)
-
-        if 1 != update.update(oids)
+        # Try updating, and if we don't affect a row, insert instead
+        existing = db[:current].where(:device => oids[:device], :if_index => if_index)
+        if existing.update(oids) != 1
           db[:current].insert(oids)
         end
       end

@@ -84,7 +84,7 @@ module Core
     devices.each do |device,interfaces|
       interfaces.each do |index,oids|
         # Populate 'neighbor' value
-        oids[:if_alias].to_s.match(/__[a-zA-Z0-9-_]+__/) do |neighbor|
+        oids[:if_alias].to_s.match(/__[a-zA-Z0-9\-_]+__/) do |neighbor|
           interfaces[index][:neighbor] = neighbor.to_s.gsub('__','')
         end
 

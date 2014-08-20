@@ -82,7 +82,7 @@ module Helper
   def neighbor_link(oids, opts={})
     if oids[:neighbor]
       neighbor = oids[:neighbor] ? "<a href='/device/#{oids[:neighbor]}'>#{oids[:neighbor]}</a>" : oids[:neighbor]
-      port = oids[:if_alias][/__[0-9a-zA-Z-.: \/]+$/] || ''
+      port = oids[:if_alias][/__[0-9a-zA-Z\-.: \/]+$/] || ''
       port.empty? || opts[:device_only] ? neighbor : "#{neighbor} (#{port.gsub('__','')})"
     else
       ''

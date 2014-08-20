@@ -133,7 +133,7 @@ module Helper
     return stale_warn + discard_warn + error_warn + child_warn + "#{state} for #{time}"
   end
 
-  def number_to_human(raw, unit, si, format='%.2f')
+  def number_to_human(raw, unit, si=true, format='%.2f')
     i = 0
     units = {
       :bps => [' bps', ' Kbps', ' Mbps', ' Gbps', ' Tbps', ' Pbps', ' Ebps', ' Zbps', ' Ybps'],

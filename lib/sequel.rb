@@ -13,8 +13,7 @@ module SQ
     database = config_file['pg_conn']['db']
     host = config_file['pg_conn']['host']
 
-    db = Sequel.connect(:adapter => 'postgres', :host => host, :user => user, :password => pass, :database => database)
-    return db
+    Sequel.connect(:adapter => 'postgres', :host => host, :user => user, :password => pass, :database => database)
   end
 
 end

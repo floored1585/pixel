@@ -1,7 +1,5 @@
-require 'sinatra'
+require 'sinatra/base'
 require 'yaml'
-require 'sinatra/reloader'
-require 'pg'
 require 'pp'
 require 'rack/coffee'
 require 'json'

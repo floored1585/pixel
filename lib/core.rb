@@ -47,6 +47,21 @@ module Core
     return devices
   end
 
+  def post_devices(settings, db, devices)
+    devices.each do |device,ints|
+      ints.each do |if_index,oids|
+        # Convert oids hash to symbol keys
+        oids.keys.each { |key| oids[(key.to_sym rescue key) || key] = oids.delete(key) }
+
+        update = db[:current].where(:device => oids[:device], :if_index => if_index)
+
+        if 1 != update.update(oids)
+          db[:current].insert(oids)
+        end
+      end
+    end
+  end
+
   def _device_map(rows)
     devices = {}
     name_to_index = {}
@@ -90,19 +105,19 @@ module Core
         # Populate 'link_type' value (Backbone, Access, etc...)
         oids[:if_alias].match(/^[a-z]+(__|\[)/) do |type|
           type = type.to_s.gsub(/(_|\[)/,'')
-            oids[:link_type] = settings['link_types'][type]
-            if type == 'sub'
-              oids[:is_child] = true
-              # This will return po1 from sub[po1]__gar-k11u1-dist__g1/47
-              parent = oids[:if_alias][/\[[a-zA-Z0-9\/-]+\]/].gsub(/(\[|\])/, '')
-              if parent && parent_index = name_to_index[device][parent.downcase]
-                interfaces[parent_index][:is_parent] = true
-                interfaces[parent_index][:children] ||= []
-                interfaces[parent_index][:children] << index
-                oids[:my_parent] = parent_index
-              end
-              oids[:my_parent_name] = parent.gsub('po','Po')
+          oids[:link_type] = settings['link_types'][type]
+          if type == 'sub'
+            oids[:is_child] = true
+            # This will return po1 from sub[po1]__gar-k11u1-dist__g1/47
+            parent = oids[:if_alias][/\[[a-zA-Z0-9\/-]+\]/].gsub(/(\[|\])/, '')
+            if parent && parent_index = name_to_index[device][parent.downcase]
+              interfaces[parent_index][:is_parent] = true
+              interfaces[parent_index][:children] ||= []
+              interfaces[parent_index][:children] << index
+              oids[:my_parent] = parent_index
             end
+            oids[:my_parent_name] = parent.gsub('po','Po')
+          end
         end
 
         oids[:if_oper_status] == 1 ? oids[:link_up] = true : oids[:link_up] = false

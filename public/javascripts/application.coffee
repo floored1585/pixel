@@ -8,7 +8,6 @@ ready = ->
   set_onclicks()
   check_refresh()
   set_hoverswaps()
-  charts()
 
 toReadable = (raw,unit,si) ->
   i = 0
@@ -21,36 +20,6 @@ toReadable = (raw,unit,si) ->
     raw = raw / step
     i++
   return raw.toFixed(2) + units[unit][i]
-
-charts = ->
-  google.setOnLoadCallback(drawChart) if($('.pxl-chart')[0])
-
-# This is janky, just a test to try google graphs api
-drawChart = ->
-  generic_options = {
-    width: 500,
-    height: 330,
-    chartArea: {
-      width: '90%',
-      height: '90%',
-    },
-  }
-  data_bps_loc = new google.visualization.DataTable()
-  data_bps_loc.addColumn('string', 'Location')
-  data_bps_loc.addColumn('number', 'Bits per Second')
-  for location, value of gon.stats['bpsOut']['location']
-    data_bps_loc.addRow([location, {v: value, f: toReadable(value,'bps',true)}])
-
-  data_bps_row = new google.visualization.DataTable()
-  data_bps_row.addColumn('string', 'Row')
-  data_bps_row.addColumn('number', 'Bits per Second')
-  for row, value of gon.stats['bpsOut']['row']
-    data_bps_row.addRow([row, {v: value, f: toReadable(value,'bps',true)}])
-
-  chart_bps_loc = new google.visualization.PieChart(document.getElementById('chart_bps_loc'))
-  chart_bps_row = new google.visualization.PieChart(document.getElementById('chart_bps_row'))
-  chart_bps_loc.draw(data_bps_loc, generic_options)
-  chart_bps_row.draw(data_bps_row, generic_options)
 
 check_refresh = ->
   if $.cookie('auto-refresh') != 'false'
@@ -105,7 +74,7 @@ sort_table = ->
       else
         node.innerText
   })
-  # This is run on each sort
+  # This is run on each sort to separate the child parent relationship somewhat
   $('table').bind 'sortStart', ->
     $('.pxl-child-tr').removeClass('pxl-child-tr')
     $('tbody tr td span.pxl-hidden').removeClass('pxl-hidden')

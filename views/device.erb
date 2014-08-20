@@ -34,8 +34,8 @@
           <% end %>
         </td>
         <td><%= neighbor_link(oids) %></td>
-        <td class='pxl-histogram' data-pxl-meta='<%= oids[:bps_in_util] %>'><%= bps_cell('in', oids) %></td>
-        <td class='pxl-histogram' data-pxl-meta='<%= oids[:bps_out_util] %>'><%= bps_cell('out', oids) %></td>
+        <td class='pxl-histogram pxl-meta' data-pxl-meta='<%= oids[:bps_in_util] %>'><%= bps_cell('in', oids) %></td>
+        <td class='pxl-histogram pxl-meta' data-pxl-meta='<%= oids[:bps_out_util] %>'><%= bps_cell('out', oids) %></td>
         <td><%= speed_cell(oids) %>&nbsp;&nbsp;&nbsp;&nbsp;</td>
       </tr>
     <% end %>

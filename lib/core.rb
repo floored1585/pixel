@@ -66,21 +66,14 @@ module Core
     devices = {}
     name_to_index = {}
 
-    # If params were passed, use exec_params.  Otherwise just exec.
-    columns = rows.columns
     rows.each do |row|
-
       if_index = row[:if_index]
       device = row[:device]
 
       devices[device] ||= {}
       name_to_index[device] ||= {}
-      devices[device][if_index] = {}
 
-      columns.each do |column|
-        devices[device][if_index][column] = row[column].to_s.to_i_if_numeric
-        devices[device][if_index][column] = nil if devices[device][if_index][column].to_s.empty?
-      end
+      devices[device][if_index] = row
       name_to_index[device][row[:if_name].downcase] = if_index
     end
 

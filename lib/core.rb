@@ -6,7 +6,6 @@ module Core
 
   def get_ints_down(settings, db)
     rows = db[:current].filter(Sequel.like(:if_alias, 'sub%') | Sequel.like(:if_alias, 'bb%'))
-    rows = rows.exclude(:device => 'test')
     rows = rows.exclude(:if_oper_status => 1)
 
     (devices, name_to_index) = _device_map(rows)
@@ -22,7 +21,6 @@ module Core
   # done
   def get_ints_saturated(settings, db)
     rows = db[:current].filter{ (bps_in_util > 90) | (bps_out_util > 90) }
-    rows = rows.exclude(:device => 'test')
 
     (devices, name_to_index) = _device_map(rows)
     _fill_metadata!(devices, settings, name_to_index)
@@ -31,7 +29,6 @@ module Core
 
   def get_ints_discarding(settings, db)
     rows = db[:current].filter{Sequel.&(discards_out > 9, ~Sequel.like(:if_alias, 'sub%'))}
-    rows = rows.exclude(:device => 'test')
     rows = rows.order(:discards_out).reverse.limit(10)
 
     (devices, name_to_index) = _device_map(rows)

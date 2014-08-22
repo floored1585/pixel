@@ -1,11 +1,10 @@
 #!/usr/bin/env ruby
 
-require "sequel"
-require_relative 'yaml'
+require 'sequel'
 
 module SQ
 
-  def SQ.initiate
+  def self.initiate
     config_file = Configfile.retrieve
 
     user = config_file['pg_conn']['user']

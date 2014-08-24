@@ -7,10 +7,13 @@ require 'json'
 # Load the modules
 Dir["#{File.dirname(__FILE__)}/lib/**/*.rb"].each { |file| require(file) }
 
+APP_ROOT = File.dirname(__FILE__)
+
 class Pixel < Sinatra::Base
 
   @@settings = Configfile.retrieve
   @@db = SQ.initiate
+  @@db.disconnect
 
   include Core
   include Helper

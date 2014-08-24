@@ -4,11 +4,44 @@ require_relative 'core_ext/string.rb'
 
 module Core
 
+  def add_devices(settings, db, devices)
+    devices.each do |device, ip|
+      existing = db[:device].where(:device => device)
+      if existing.update(:ip => ip) != 1
+        db[:device].insert(:device => device, :ip => ip)
+      end
+    end
+
+    # need error detection
+    return true
+  end
+
+  def get_devices_poller(settings, db, count, poller_name)
+
+    # Refresh the devices table from file/db/etc
+    # This is how devices get into pixel.
+    _populate_device_table(settings, db)
+
+    devices = {}
+    # Fetch some devices and mark them as polling
+    db.transaction do
+      rows = db[:device].filter{ next_poll < Time.now.to_i }
+      rows = rows.filter(:currently_polling => 0).limit(count).for_update
+      rows.each do |row|
+        devices[row[:device]] = row
+        db[:device].where(:device => row[:device]).update(:currently_polling => 1)
+      end
+    end
+
+
+    return devices
+  end
+
   def get_ints_down(settings, db)
     rows = db[:current].filter(Sequel.like(:if_alias, 'sub%') | Sequel.like(:if_alias, 'bb%'))
     rows = rows.exclude(:if_oper_status => 1)
 
-    (devices, name_to_index) = _device_map(rows)
+    (devices, name_to_index) = _interface_map(rows)
     _fill_metadata!(devices, settings, name_to_index)
 
     # Delete the interface from the hash if its parent is present, to reduce clutter
@@ -22,7 +55,7 @@ module Core
   def get_ints_saturated(settings, db)
     rows = db[:current].filter{ (bps_in_util > 90) | (bps_out_util > 90) }
 
-    (devices, name_to_index) = _device_map(rows)
+    (devices, name_to_index) = _interface_map(rows)
     _fill_metadata!(devices, settings, name_to_index)
     return devices
   end
@@ -31,7 +64,7 @@ module Core
     rows = db[:current].filter{Sequel.&(discards_out > 9, ~Sequel.like(:if_alias, 'sub%'))}
     rows = rows.order(:discards_out).reverse.limit(10)
 
-    (devices, name_to_index) = _device_map(rows)
+    (devices, name_to_index) = _interface_map(rows)
     _fill_metadata!(devices, settings, name_to_index)
     return devices
   end
@@ -39,7 +72,7 @@ module Core
   def get_ints_device(settings, db, device)
     rows = db[:current].filter(:device => device)
 
-    (devices, name_to_index) = _device_map(rows)
+    (devices, name_to_index) = _interface_map(rows)
     _fill_metadata!(devices, settings, name_to_index)
     return devices
   end
@@ -57,9 +90,11 @@ module Core
         end
       end
     end
+    db[:device].where(:device => device).update(:currently_polling => 0, :worker => nil)
+    return true
   end
 
-  def _device_map(rows)
+  def _interface_map(rows)
     devices = {}
     name_to_index = {}
 
@@ -113,6 +148,22 @@ module Core
         oids[:if_oper_status] == 1 ? oids[:link_up] = true : oids[:link_up] = false
       end
     end
+  end
+
+  def _populate_device_table(settings, db)
+    devices = {}
+
+    # Load from file
+    if settings['device_source']['type'] = 'file'
+      device_file = settings['device_source']['file_path']
+      if File.exists?(device_file)
+        devices = YAML.load_file(File.join(APP_ROOT, device_file))
+      else
+        # ERROR MESSAGE
+      end
+    end
+
+    API.post('core', '/v1/devices/add', devices)
   end
 
 end

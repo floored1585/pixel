@@ -11,16 +11,20 @@ module Core
         db[:device].insert(:device => device, :ip => ip)
       end
     end
-
     # need error detection
     return true
   end
 
   def get_devices_poller(settings, db, count, poller_name)
-
     # Refresh the devices table from file/db/etc
     # This is how devices get into pixel.
     _populate_device_table(settings, db)
+
+    currently_polling = db[:device].filter(:currently_polling => 1, :worker => poller_name).count
+    count = count - currently_polling
+
+    # Don't return more work if this poller is maxed out
+    return {} if count < 1
 
     devices = {}
     # Fetch some devices and mark them as polling
@@ -29,11 +33,10 @@ module Core
       rows = rows.filter(:currently_polling => 0).limit(count).for_update
       rows.each do |row|
         devices[row[:device]] = row
-        db[:device].where(:device => row[:device]).update(:currently_polling => 1)
+        device_row = db[:device].where(:device => row[:device])
+        device_row.update(:currently_polling => 1, :worker => poller_name)
       end
     end
-
-
     return devices
   end
 

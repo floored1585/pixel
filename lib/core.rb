@@ -89,8 +89,8 @@ module Core
           db[:current].insert(oids)
         end
       end
+      db[:device].where(:device => device).update(:currently_polling => 0, :worker => nil)
     end
-    db[:device].where(:device => device).update(:currently_polling => 0, :worker => nil)
     return true
   end
 

@@ -78,6 +78,7 @@ sort_table = ->
   $('table').bind 'sortStart', ->
     $('.pxl-child-tr').removeClass('pxl-child-tr')
     $('tbody tr td span.pxl-hidden').removeClass('pxl-hidden')
+    set_hoverswaps()
   # Show the th sort arrows when hovering
   $('.pxl-th').hover ->
     $(this).find('span').toggleClass('pxl-hidden')

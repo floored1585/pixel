@@ -165,7 +165,7 @@ module Poller
 
         # Update the application
         return_data( {device => interfaces} )
-        puts "#{device} polled successfully (#{interfaces.keys.size} interfaces)"
+        puts "#{device} polled successfully (#{count} interfaces)"
 
       end # End fork
       puts "Forked PID #{pid} (#{device})"

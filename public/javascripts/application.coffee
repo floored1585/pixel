@@ -12,8 +12,8 @@ ready = ->
 toReadable = (raw,unit,si) ->
   i = 0
   units = {
-    bps: [' bps', ' Kbps', ' Mbps', ' Gbps', ' Tbps', 'Pbps', 'Ebps', 'Zbps', 'Ybps']
-    pps: [' pps', ' Kpps', ' Mpps', ' Gpps', ' Tpps', 'Ppps', 'Epps', 'Zpps', 'Ypps']
+    bps: [' bps', ' Kbps', ' Mbps', ' Gbps', ' Tbps', ' Pbps', ' Ebps', ' Zbps', ' Ybps']
+    pps: [' pps', ' Kpps', ' Mpps', ' Gpps', ' Tpps', ' Ppps', ' Epps', ' Zpps', ' Ypps']
   }
   step = if si then 1000 else 1024
   while (raw > step)
@@ -57,7 +57,7 @@ parent_child = ->
   $('tr[class*=child]').mouseleave -> hl_parent($(this),'#FFF')
 
 hl_parent = (child,color) ->
-  parent = $(child).data('pxl-parent') 
+  parent = $(child).data('pxl-parent')
   parent_row = $("tr[data-pxl-index='"+parent+"']")
   parent_row.css('background-color',color)
   for cell in parent_row.find('.pxl-histogram')

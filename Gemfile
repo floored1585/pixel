@@ -7,4 +7,6 @@ gem 'pg'
 gem 'sequel'
 gem 'mysql'
 gem 'rack-coffee'
+gem 'influxdb'
+gem 'snmp'
 

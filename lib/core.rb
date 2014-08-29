@@ -18,7 +18,7 @@ module Core
   def get_devices_poller(settings, db, count, poller_name)
     # Refresh the devices table from file/db/etc
     # This is how devices get into pixel.
-    _populate_device_table(settings, db)
+#    _populate_device_table(settings, db)
 
     currently_polling = db[:device].filter(:currently_polling => 1, :worker => poller_name).count
     count = count - currently_polling
@@ -34,7 +34,11 @@ module Core
       rows.each do |row|
         devices[row[:device]] = row
         device_row = db[:device].where(:device => row[:device])
-        device_row.update(:currently_polling => 1, :worker => poller_name)
+        device_row.update(
+          :currently_polling => 1,
+          :worker => poller_name,
+          :last_poll => Time.now.to_i,
+        )
       end
     end
     return devices
@@ -82,17 +86,28 @@ module Core
 
   def post_devices(settings, db, devices)
     devices.each do |device,interfaces|
+      # Extract metadata from poll results
+      metadata = interfaces.delete('metadata') || {}
+
       interfaces.each do |if_index,oids|
         # Convert oids hash keys to symbols
         oids.keys.each { |key| oids[(key.to_sym rescue key) || key] = oids.delete(key) }
-
         # Try updating, and if we don't affect a row, insert instead
         existing = db[:current].where(:device => oids[:device], :if_index => if_index)
         if existing.update(oids) != 1
           db[:current].insert(oids)
         end
       end
-      db[:device].where(:device => device).update(:currently_polling => 0, :worker => nil)
+      # Update the device metadata
+      next_poll = Time.now.to_i + 100
+      db[:device].where(:device => device).update(
+        :currently_polling => 0,
+        :worker => nil,
+        :last_poll_duration => metadata['last_poll_duration'],
+        :last_poll_result => metadata['last_poll_result'],
+        :last_poll_text => metadata['last_poll_text'],
+        :next_poll => next_poll,
+      )
     end
     return true
   end

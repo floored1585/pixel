@@ -3,7 +3,7 @@ class Pixel < Sinatra::Base
   get '/v1/devices/fetch_poll' do
     count = params[:count] || 10
     poller_name = params[:hostname] || 'unknown'
-    JSON.generate(get_devices_poller(@@settings, @@db, count.to_i, poller_name))
+    JSON.generate( get_devices_poller(@@settings, @@db, count.to_i, poller_name) )
   end
 
   get '/v1/devices/:device' do |device|

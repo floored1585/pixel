@@ -79,20 +79,9 @@ module Poller
         begin
           count, if_table = query_device(ip, poller_cfg[:snmpv2_community], oid_numbers)
         rescue RuntimeError, ArgumentError => e
-          # Write a point to the SNMP failure series for this device
-          #influxdb = InfluxDB::Client.new(
-          #  poller_cfg[:influx_db],
-          #  :host => poller_cfg[:influx_ip],
-          #  :username => poller_cfg[:influx_user],
-          #  :password => poller_cfg[:influx_pass],
-          #  :retry => 1)
-
-          #name = "#{device}.snmp_failure"
-          #data = { :value => e.to_s, :time => Time.now.to_i }
-          #influxdb.write_point(name, data)
-
           puts "Error encountered while polling #{device}: " + e.to_s
-          return_data( {device => {}} )
+          metadata = { :last_poll_result => 1 }
+          return_data( {device => { :metadata => metadata }} )
           abort
         end
 
@@ -105,12 +94,7 @@ module Poller
 
         stale_indexes = []
 
-        # API call to get previous poll data
-        uri = URI("http://pixel.sd.dreamhost.com/v1/devices/#{device}")
-        req = Net::HTTP::Get.new(uri)
-        response = Net::HTTP.start(uri.host, uri.port) { |http| http.request(req) }
-
-        last_values = JSON.parse(response.body)[device] || {}
+        last_values = (API.get('core', "/v1/devices/#{device}"))[device] || {}
         last_values.each do |index,oids|
           oids.each { |name,value| oids[name] = to_i_if_numeric(value) }
           stale_indexes.push(index) unless if_table[index]
@@ -164,6 +148,11 @@ module Poller
         end # End if_index.each
 
         # Update the application
+        interfaces['metadata'] = {
+          :last_poll_duration => Time.now.to_i - beginning.to_i,
+          :last_poll_result => 0,
+          :last_poll_text => '',
+        }
         return_data( {device => interfaces} )
         puts "#{device} polled successfully (#{count} interfaces polled, #{interfaces.keys.size} returned)"
 
@@ -193,11 +182,7 @@ module Poller
   end
 
   def self.return_data(devices)
-    # Use the API to update the application
-    uri = URI("http://pixel.sd.dreamhost.com/v1/devices")
-    req = Net::HTTP::Post.new(uri, {'Content-Type' => 'application/json'})
-    req.body = JSON.generate(devices)
-    res = Net::HTTP.start(uri.host, uri.port) { |http| http.request(req) }
+    res = API.post('core', '/v1/devices', devices)
   end
 
   def self.to_i_if_numeric(str)

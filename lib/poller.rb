@@ -96,13 +96,6 @@ module Poller
           abort
         end
 
-        # Delete values if we don't want to process them
-        puts "\n\nBEFORE DELETE:"
-        pp if_table
-        if_table.delete_if {|k,v| !(v['if_alias'] =~ poller_cfg['interesting_alias']) }
-        puts "\n AFTER DELETE:"
-        pp if_table
-
         influxdb = InfluxDB::Client.new(
           poller_cfg[:influx_db],
           :host => poller_cfg[:influx_ip],
@@ -127,6 +120,9 @@ module Poller
         interfaces = {}
         until if_table.empty?
           if_index, oids = if_table.shift
+
+          # Skip if we're not interested in processing this interface
+          next unless oids['if_alias'] =~ poller_cfg[:interesting_alias]
 
           interfaces[if_index] = oids.dup
           interfaces[if_index]['if_index'] = if_index
@@ -159,7 +155,7 @@ module Poller
                 interfaces[if_index][avg_names[oid_text] + '_util'] = util
               end
               # write the average
-              unless test_run || average < 0
+              unless average < 0
                 interfaces[if_index][avg_names[oid_text]] = average
                 influxdb.write_point(avg_series_name, avg_series_data)
               end
@@ -169,8 +165,6 @@ module Poller
 
         # Update the application
         return_data( {device => interfaces} )
-        pp device
-        pp interfaces
         puts "#{device} polled successfully (#{count} interfaces polled, #{interfaces.keys.size} returned)"
 
       end # End fork

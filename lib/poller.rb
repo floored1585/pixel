@@ -97,7 +97,11 @@ module Poller
         end
 
         # Delete values if we don't want to process them
+        puts "\n\nBEFORE DELETE:"
+        pp if_table
         if_table.delete_if {|k,v| !(v['if_alias'] =~ poller_cfg['interesting_alias']) }
+        puts "\n AFTER DELETE:"
+        pp if_table
 
         influxdb = InfluxDB::Client.new(
           poller_cfg[:influx_db],

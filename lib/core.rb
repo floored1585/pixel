@@ -1,7 +1,5 @@
 #!/usr/bin/env ruby
 
-require_relative 'core_ext/string.rb'
-
 module Core
 
   def add_devices(settings, db, devices)
@@ -90,8 +88,7 @@ module Core
       metadata = interfaces.delete('metadata') || {}
 
       interfaces.each do |if_index,oids|
-        # Convert oids hash keys to symbols
-        oids.keys.each { |key| oids[(key.to_sym rescue key) || key] = oids.delete(key) }
+        oids.symbolize! # Convert hash keys to symbols
         # Try updating, and if we don't affect a row, insert instead
         existing = db[:current].where(:device => oids[:device], :if_index => if_index)
         if existing.update(oids) != 1

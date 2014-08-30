@@ -157,6 +157,7 @@ module Poller
         puts "#{device} polled successfully (#{count} interfaces polled, #{interfaces.keys.size} returned)"
 
       end # End fork
+      Process.detach(pid)
       puts "Forked PID #{pid} (#{device})"
 
     rescue StandardError => error

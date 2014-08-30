@@ -28,7 +28,8 @@ module Core
     # Fetch some devices and mark them as polling
     db.transaction do
       rows = db[:device].filter{ next_poll < Time.now.to_i }
-      rows = rows.filter(:currently_polling => 0).limit(count).for_update
+      rows = rows.filter{Sequel.|({:currently_polling => 0}, (next_poll < Time.now.to_i - 1000))}
+      rows = rows.limit(count).for_update
       rows.each do |row|
         devices[row[:device]] = row
         device_row = db[:device].where(:device => row[:device])

@@ -4,15 +4,14 @@ require 'snmp'
 require 'net/http'
 require 'json'
 require 'uri'
+require_relative 'core_ext/hash'
 
 module Poller
 
   def self.check_for_work(settings, db)
     concurrency = settings['poller']['concurrency']
     hostname = Socket.gethostname
-    request = '/v1/devices/fetch_poll'
-    request = request + "?count=#{concurrency}"
-    request = request + "&hostname=#{hostname}"
+    request = "/v1/devices/fetch_poll?count=#{concurrency}&hostname=#{hostname}"
 
     devices = API.get('core', request)
     devices.each { |device, attributes| _poll(settings, device, attributes['ip']) }
@@ -21,18 +20,10 @@ module Poller
 
   def self._poll(settings, device, ip)
     # Convert poller settings into hash with symbols as keys
-    poller_cfg = settings['poller'].each_with_object({}){|(k,v), h| h[k.to_sym] = v}
+    poller_cfg = settings['poller'].dup
+    poller_cfg.symbolize!
 
     beginning = Time.now
-
-    # Columns that are in PG but not polled or calculated
-    pg_extras = %w(
-      last_updated
-      ifAdminStatus_time
-      ifOperStatus_time
-      bpsIn_util
-      bpsOut_util
-    )
 
     # This determines which OID names will get turned into per-second averages.
     avg_oid_regex = /octets|discards|errors|pkts/
@@ -75,8 +66,8 @@ module Poller
 
         if_table = {}
         count = nil
-        # get SNMP data from the device
         begin
+          # get SNMP data from the device
           count, if_table = query_device(ip, poller_cfg[:snmpv2_community], oid_numbers)
         rescue RuntimeError, ArgumentError => e
           puts "Error encountered while polling #{device}: " + e.to_s
@@ -92,7 +83,7 @@ module Poller
           :password => poller_cfg[:influx_pass],
           :retry => 1)
 
-        stale_indexes = []
+        stale_indexes = [] # TODO: Need to use this to delete old interfaces
 
         last_values = (API.get('core', "/v1/devices/#{device}"))[device] || {}
         last_values.each do |index,oids|
@@ -102,9 +93,8 @@ module Poller
 
         # Run through the hash we got from poll, processing the interesting interfaces
         interfaces = {}
-        until if_table.empty?
-          if_index, oids = if_table.shift
 
+        if_table.each do |if_index, oids|
           # Skip if we're not interested in processing this interface
           next unless oids['if_alias'] =~ poller_cfg[:interesting_alias]
 
@@ -144,7 +134,7 @@ module Poller
                 influxdb.write_point(avg_series_name, avg_series_data)
               end
             end
-          end
+          end # End oids.each
         end # End if_index.each
 
         # Update the application
@@ -154,7 +144,7 @@ module Poller
           :last_poll_text => '',
         }
         return_data( {device => interfaces} )
-        puts "#{device} polled successfully (#{count} interfaces polled, #{interfaces.keys.size} returned)"
+        puts "#{device} polled successfully (#{count} interfaces polled, #{interfaces.keys.size - 1} returned)"
 
       end # End fork
       Process.detach(pid)

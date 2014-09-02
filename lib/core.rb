@@ -24,8 +24,8 @@ module Core
     # Fetch some devices and mark them as polling
     db.transaction do
       rows = db[:device].filter{ next_poll < Time.now.to_i }
-      # Ignore currently_polling value if the next_poll is more than 1000 seconds ago
-      rows = rows.filter{Sequel.|({:currently_polling => 0}, (next_poll < Time.now.to_i - 1000))}
+      # Ignore currently_polling value if the last_poll is more than 1000 seconds ago
+      rows = rows.filter{Sequel.|({:currently_polling => 0}, (last_poll < Time.now.to_i - 1000))}
       rows = rows.limit(count).for_update
 
       rows.each do |row|

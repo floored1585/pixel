@@ -14,10 +14,6 @@ module Core
   end
 
   def get_devices_poller(settings, db, count, poller_name)
-    # Refresh the devices table from file/db/etc
-    # This is how devices get into pixel.
-#    _populate_device_table(settings, db)
-
     currently_polling = db[:device].filter(:currently_polling => 1, :worker => poller_name).count
     count = count - currently_polling
 
@@ -28,8 +24,10 @@ module Core
     # Fetch some devices and mark them as polling
     db.transaction do
       rows = db[:device].filter{ next_poll < Time.now.to_i }
+      # Ignore currently_polling value if the next_poll is more than 1000 seconds ago
       rows = rows.filter{Sequel.|({:currently_polling => 0}, (next_poll < Time.now.to_i - 1000))}
       rows = rows.limit(count).for_update
+
       rows.each do |row|
         devices[row[:device]] = row
         device_row = db[:device].where(:device => row[:device])
@@ -86,7 +84,7 @@ module Core
   def post_devices(settings, db, devices)
     devices.each do |device,interfaces|
       # Extract metadata from poll results
-      metadata = interfaces.delete('metadata') || {}
+      metadata = interfaces.delete('metadata').symbolize! || {}
 
       interfaces.each do |if_index,oids|
         oids.symbolize! # Convert hash keys to symbols
@@ -101,9 +99,9 @@ module Core
       db[:device].where(:device => device).update(
         :currently_polling => 0,
         :worker => nil,
-        :last_poll_duration => metadata['last_poll_duration'],
-        :last_poll_result => metadata['last_poll_result'],
-        :last_poll_text => metadata['last_poll_text'],
+        :last_poll_duration => metadata[:last_poll_duration],
+        :last_poll_result => metadata[:last_poll_result],
+        :last_poll_text => metadata[:last_poll_text],
         :next_poll => next_poll,
       )
     end
@@ -166,7 +164,7 @@ module Core
     end
   end
 
-  def _populate_device_table(settings, db)
+  def populate_device_table(settings, db)
     devices = {}
 
     # Load from file
@@ -175,7 +173,7 @@ module Core
       if File.exists?(device_file)
         devices = YAML.load_file(File.join(APP_ROOT, device_file))
       else
-        # ERROR MESSAGE
+        puts "NO FILE FOUND: #{device_file}"
       end
     end
 

@@ -1,9 +1,16 @@
 class Pixel < Sinatra::Base
 
+  #
+  # GETS
+  #
   get '/v1/devices/fetch_poll' do
     count = params[:count] || 10
     poller_name = params[:hostname] || 'unknown'
     JSON.generate( get_devices_poller(@@settings, @@db, count.to_i, poller_name) )
+  end
+
+  get '/v1/devices/populate' do
+    populate_device_table(@@settings, @@db)
   end
 
   get '/v1/devices/:device' do |device|
@@ -14,6 +21,9 @@ class Pixel < Sinatra::Base
     Poller.check_for_work(@@settings, @@db)
   end
 
+  #
+  # POSTS
+  #
   post '/v1/devices/add' do
     request.body.rewind
     devices = JSON.parse(request.body.read)

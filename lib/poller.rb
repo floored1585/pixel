@@ -90,10 +90,11 @@ module Poller
 
         stale_indexes = [] # TODO: Need to use this to delete old interfaces
 
-        devices = API.get('core', "/v1/devices?device=#{device}")
+        request = "/v1/devices?device=#{device}"
+        devices = API.get('core', request)
         unless devices # HTTP request failed
           puts Time.now.strftime('%T: ') + "HTTP request to get previous data failed: #{request}"
-          return 500
+          devices = {}
         end
         last_values = devices[device] || {}
         last_values.each do |index,oids|
@@ -192,10 +193,10 @@ module Poller
   def self.post_data(devices, first_try=true)
     res = API.post('core', '/v1/devices', devices)
     unless res # HTTP request failed
-      puts Time.now.strftime('%T: ') + "HTTP request to post device #{device} failed"
+      puts Time.now.strftime('%T: ') + "HTTP request to post device #{devices.keys[0]} failed"
       # If this is the first try, retry, otherwise return 500
       if first_try
-        puts Time.now.strftime('%T: ') + "Retrying post for device #{device} in 5 seconds..."
+        puts Time.now.strftime('%T: ') + "Retrying post for device #{devices.keys[0]} in 5 seconds..."
         sleep 5
         return post_data(devices, false)
       else

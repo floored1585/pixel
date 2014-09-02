@@ -10,7 +10,9 @@ module API
       request = Net::HTTP::Get.new(uri)
       response = Net::HTTP.start(uri.host, uri.port) { |http| http.request(request) }
       JSON.parse(response.body) if response.code == '200'
-    rescue SystemCallError
+    rescue Timeout::Error, Errno::ETIMEDOUT, Errno::EINVAL, Errno::ECONNRESET,
+      Errno::ECONNREFUSED, EOFError, Net::HTTPBadResponse,
+      Net::HTTPHeaderSyntaxError, Net::ProtocolError
       # HTTP request failed
       return false
     end
@@ -24,7 +26,9 @@ module API
         request.body = JSON.generate(rawdata)
         response = Net::HTTP.start(uri.host, uri.port) { |http| http.request(request) }
       end
-    rescue SystemCallError
+    rescue Timeout::Error, Errno::ETIMEDOUT, Errno::EINVAL, Errno::ECONNRESET,
+      Errno::ECONNREFUSED, EOFError, Net::HTTPBadResponse,
+      Net::HTTPHeaderSyntaxError, Net::ProtocolError
       # HTTP request failed
       return false
     end

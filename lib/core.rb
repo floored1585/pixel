@@ -6,6 +6,7 @@ module Core
     devices.each do |device, ip|
       existing = db[:device].where(:device => device)
       if existing.update(:ip => ip) != 1
+        $LOG.info("CORE: Adding new device: #{device}")
         db[:device].insert(:device => device, :ip => ip)
       end
     end
@@ -26,7 +27,7 @@ module Core
       rows = db[:device].filter{ next_poll < Time.now.to_i }
       # Ignore currently_polling value if the last_poll is more than 1000 seconds ago
       rows.filter{ last_poll < Time.now.to_i - 1000 }.each do |stale_row|
-        $LOG.warn("CORE: Overriding currently_polling for #{stale_row[:device]}")
+        $LOG.warn("CORE: Overriding currently_polling for #{stale_row[:device]} (#{poller_name})")
       end
       rows = rows.filter{Sequel.|({:currently_polling => 0}, (last_poll < Time.now.to_i - 1000))}
       rows = rows.limit(count).for_update
@@ -91,6 +92,7 @@ module Core
       # Extract metadata from poll results
       metadata = interfaces.delete('metadata') || {}
       metadata.symbolize!
+      $LOG.info("CORE: Received data for #{device} from #{metadata[:worker]}")
 
       interfaces.each do |if_index,oids|
         oids.symbolize! # Convert hash keys to symbols
@@ -181,6 +183,7 @@ module Core
       else
         $LOG.error("CORE: Error populating devices from file: No device file found: #{device_file}")
       end
+      $LOG.info("CORE: Importing #{devices.size} devices from file: #{device_file}")
     end
 
     API.post('core', '/v1/devices/add', devices)

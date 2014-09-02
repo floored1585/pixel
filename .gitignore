@@ -22,6 +22,8 @@ doc/
 .sass-cache
 Capfile
 
+messages.*
+
 config/settings.yaml
 config/settings.production.yaml
 config/deploy.rb

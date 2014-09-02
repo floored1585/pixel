@@ -14,8 +14,13 @@ module Poller
     request = "/v1/devices/fetch_poll?count=#{concurrency}&hostname=#{hostname}"
 
     devices = API.get('core', request)
-    devices.each { |device, attributes| _poll(settings, device, attributes['ip']) }
-    return true
+    if devices
+      devices.each { |device, attributes| _poll(settings, device, attributes['ip']) }
+      return 200 # Doesn't do any error checking here
+    else # HTTP request failed
+      puts Time.now.strftime('%T: ') + "HTTP request to check for work failed: #{request}"
+      return 500
+    end
   end
 
   def self._poll(settings, device, ip)
@@ -72,7 +77,7 @@ module Poller
         rescue RuntimeError, ArgumentError => e
           puts "Error encountered while polling #{device}: " + e.to_s
           metadata = { :last_poll_result => 1 }
-          return_data( {device => { :metadata => metadata }} )
+          post_data( {device => { :metadata => metadata }} )
           abort
         end
 
@@ -85,7 +90,12 @@ module Poller
 
         stale_indexes = [] # TODO: Need to use this to delete old interfaces
 
-        last_values = (API.get('core', "/v1/devices?device=#{device}"))[device] || {}
+        devices = API.get('core', "/v1/devices?device=#{device}")
+        unless devices # HTTP request failed
+          puts Time.now.strftime('%T: ') + "HTTP request to get previous data failed: #{request}"
+          return 500
+        end
+        last_values = devices[device] || {}
         last_values.each do |index,oids|
           oids.each { |name,value| oids[name] = to_i_if_numeric(value) }
           stale_indexes.push(index) unless if_table[index]
@@ -143,10 +153,17 @@ module Poller
           :last_poll_result => 0,
           :last_poll_text => '',
         }
-        return_data( {device => interfaces} )
-        puts "#{device} polled successfully (#{count} interfaces polled, #{interfaces.keys.size - 1} returned)"
+        post_data( {device => interfaces} )
+        if post_data == 500
+          puts Time.now.strftime('%T: ') + "Failed to contact main instance for post " + 
+            "(#{device}: #{count} interfaces polled, #{interfaces.keys.size - 1} returned)"
+        else
+          puts Time.now.strftime('%T: ') + "Poll succeeded " + 
+            "(#{device}: #{count} interfaces polled, #{interfaces.keys.size - 1} returned)"
+        end
 
       end # End fork
+
       Process.detach(pid)
       puts "Forked PID #{pid} (#{device})"
 
@@ -172,8 +189,20 @@ module Poller
     end
   end
 
-  def self.return_data(devices)
+  def self.post_data(devices, first_try=true)
     res = API.post('core', '/v1/devices', devices)
+    unless res # HTTP request failed
+      puts Time.now.strftime('%T: ') + "HTTP request to post device #{device} failed"
+      # If this is the first try, retry, otherwise return 500
+      if first_try
+        puts Time.now.strftime('%T: ') + "Retrying post for device #{device} in 5 seconds..."
+        sleep 5
+        return post_data(devices, false)
+      else
+        return 500
+      end
+    end
+    return res
   end
 
   def self.to_i_if_numeric(str)

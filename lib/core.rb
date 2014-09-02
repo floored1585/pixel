@@ -25,6 +25,9 @@ module Core
     db.transaction do
       rows = db[:device].filter{ next_poll < Time.now.to_i }
       # Ignore currently_polling value if the last_poll is more than 1000 seconds ago
+      rows.filter{ last_poll < Time.now.to_i - 1000 }.each do |stale_row|
+        $LOG.warn("CORE: Overriding currently_polling for #{stale_row[:device]}")
+      end
       rows = rows.filter{Sequel.|({:currently_polling => 0}, (last_poll < Time.now.to_i - 1000))}
       rows = rows.limit(count).for_update
 
@@ -176,7 +179,7 @@ module Core
       if File.exists?(device_file)
         devices = YAML.load_file(File.join(APP_ROOT, device_file))
       else
-        puts "NO FILE FOUND: #{device_file}"
+        $LOG.error("CORE: Error populating devices from file: No device file found: #{device_file}")
       end
     end
 

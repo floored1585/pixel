@@ -14,6 +14,7 @@ module API
       Errno::ECONNREFUSED, EOFError, Net::HTTPBadResponse,
       Net::HTTPHeaderSyntaxError, Net::ProtocolError
       # HTTP request failed
+      $LOG.error("API: API call GET failed: #{uri}")
       return false
     end
   end
@@ -30,6 +31,7 @@ module API
       Errno::ECONNREFUSED, EOFError, Net::HTTPBadResponse,
       Net::HTTPHeaderSyntaxError, Net::ProtocolError
       # HTTP request failed
+      $LOG.error("API: API call POST failed: #{uri}")
       return false
     end
   end

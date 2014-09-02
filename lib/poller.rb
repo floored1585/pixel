@@ -20,7 +20,8 @@ module Poller
 
   def self._poll(settings, device, ip)
     # Convert poller settings into hash with symbols as keys
-    poller_cfg = settings['poller'].dup.symbolize!
+    poller_cfg = settings['poller'].dup || {}
+    poller_cfg.symbolize!
 
     beginning = Time.now
 

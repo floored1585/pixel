@@ -84,7 +84,8 @@ module Core
   def post_devices(settings, db, devices)
     devices.each do |device,interfaces|
       # Extract metadata from poll results
-      metadata = interfaces.delete('metadata').symbolize! || {}
+      metadata = interfaces.delete('metadata') || {}
+      metadata.symbolize!
 
       interfaces.each do |if_index,oids|
         oids.symbolize! # Convert hash keys to symbols

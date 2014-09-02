@@ -18,7 +18,7 @@ module Poller
       devices.each { |device, attributes| _poll(settings, device, attributes['ip']) }
       return 200 # Doesn't do any error checking here
     else # HTTP request failed
-      $LOG.error("HTTP request to check for work failed: #{request}")
+      $LOG.error("POLLER: HTTP request to check for work failed: #{request}")
       return 500
     end
   end
@@ -70,13 +70,14 @@ module Poller
       pid = fork do
 
         if_table = {}
+        metadata = { :worker => Socket.gethostname }
         count = nil
         begin
           # get SNMP data from the device
           count, if_table = query_device(ip, poller_cfg[:snmpv2_community], oid_numbers)
         rescue RuntimeError, ArgumentError => e
-          $LOG.error("Error encountered while polling #{device}: #{e}")
-          metadata = { :last_poll_result => 1 }
+          $LOG.error("POLLER: Error encountered while polling #{device}: #{e}")
+          metadata[:last_poll_result] = 1
           post_data( {device => { :metadata => metadata }} )
           abort
         end
@@ -93,7 +94,7 @@ module Poller
         request = "/v1/devices?device=#{device}"
         devices = API.get('core', request)
         unless devices # HTTP request failed
-          $LOG.error("HTTP request to get previous data failed: #{request}")
+          $LOG.error("POLLER: HTTP request to get previous data failed: #{request}")
           devices = {}
         end
         last_values = devices[device] || {}
@@ -149,26 +150,26 @@ module Poller
         end # End if_index.each
 
         # Update the application
-        interfaces['metadata'] = {
-          :last_poll_duration => Time.now.to_i - beginning.to_i,
-          :last_poll_result => 0,
-          :last_poll_text => '',
-        }
+        metadata[:last_poll_duration] = Time.now.to_i - beginning.to_i
+        metadata[:last_poll_result] = 0
+        metadata[:last_poll_text] = ''
+        interfaces['metadata'] = metadata
         result = post_data( {device => interfaces} )
         if result == 500
-          $LOG.error("Failed to contact main instance for post " + 
+          $LOG.error("POLLER: Failed to contact main instance for post " + 
                      "(#{device}: #{count} interfaces polled, #{interfaces.keys.size - 1} returned)")
         else
-          $LOG.info("Poll succeeded " + 
+          $LOG.info("POLLER: Poll succeeded " + 
                     "(#{device}: #{count} interfaces polled, #{interfaces.keys.size - 1} returned)")
         end
 
       end # End fork
 
       Process.detach(pid)
-      $LOG.info("Forked PID #{pid} (#{device})")
+      $LOG.info("POLLER: Forked PID #{pid} (#{device})")
 
     rescue StandardError => error
+      $LOG.error("POLLER: #{error}")
       raise error
     end
   end
@@ -193,10 +194,10 @@ module Poller
   def self.post_data(devices, first_try=true)
     res = API.post('core', '/v1/devices', devices)
     unless res # HTTP request failed
-      $LOG.error("HTTP request to post device #{devices.keys[0]} failed")
+      $LOG.error("POLLER: HTTP request to post device #{devices.keys[0]} failed")
       # If this is the first try, retry, otherwise return 500
       if first_try
-        $LOG.error("Retrying post for device #{devices.keys[0]} in 5 seconds...")
+        $LOG.error("POLLER: Retrying post for device #{devices.keys[0]} in 5 seconds...")
         sleep 5
         return post_data(devices, false)
       else

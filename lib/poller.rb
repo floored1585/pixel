@@ -153,8 +153,8 @@ module Poller
           :last_poll_result => 0,
           :last_poll_text => '',
         }
-        post_data( {device => interfaces} )
-        if post_data == 500
+        result = post_data( {device => interfaces} )
+        if result == 500
           puts Time.now.strftime('%T: ') + "Failed to contact main instance for post " + 
             "(#{device}: #{count} interfaces polled, #{interfaces.keys.size - 1} returned)"
         else

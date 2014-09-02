@@ -74,7 +74,9 @@ module Core
   end
 
   def get_ints_device(settings, db, device)
-    rows = db[:current].filter(:device => device)
+    rows = db[:current]
+    # Filter If a device was specified, otherwise return all
+    rows = rows.filter(:device => device) if device
 
     (devices, name_to_index) = _interface_map(rows)
     _fill_metadata!(devices, settings, name_to_index)

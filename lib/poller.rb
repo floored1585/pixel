@@ -85,7 +85,7 @@ module Poller
 
         stale_indexes = [] # TODO: Need to use this to delete old interfaces
 
-        last_values = (API.get('core', "/v1/devices/#{device}"))[device] || {}
+        last_values = (API.get('core', "/v1/devices?device=#{device}"))[device] || {}
         last_values.each do |index,oids|
           oids.each { |name,value| oids[name] = to_i_if_numeric(value) }
           stale_indexes.push(index) unless if_table[index]

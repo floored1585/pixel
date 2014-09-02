@@ -13,7 +13,8 @@ class Pixel < Sinatra::Base
     populate_device_table(@@settings, @@db)
   end
 
-  get '/v1/devices/:device' do |device|
+  get '/v1/devices' do
+    device = params[:device]
     JSON.generate( get_ints_device(@@settings, @@db, device) )
   end
 

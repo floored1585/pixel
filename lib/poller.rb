@@ -78,10 +78,17 @@ module Poller
         rescue RuntimeError, ArgumentError => e
           $LOG.error("POLLER: Error encountered while polling #{device}: #{e}")
           metadata[:last_poll_result] = 1
-          post_data( {device => { :metadata => metadata }} )
+          post_devices = {
+            device => {
+              :metadata => metadata,
+              :interfaces => {},
+            },
+          }
+          post_data(post_devices)
           abort
         end
 
+        InfluxDB::Logging.logger = $LOG
         influxdb = InfluxDB::Client.new(
           poller_cfg[:influx_db],
           :host => poller_cfg[:influx_ip],
@@ -153,14 +160,19 @@ module Poller
         metadata[:last_poll_duration] = Time.now.to_i - beginning.to_i
         metadata[:last_poll_result] = 0
         metadata[:last_poll_text] = ''
-        interfaces['metadata'] = metadata
-        result = post_data( {device => interfaces} )
+        post_devices = {
+          device => {
+            'metadata' => metadata,
+            'interfaces' => interfaces,
+          },
+        }
+        result = post_data(post_devices)
         if result == 500
           $LOG.error("POLLER: Failed to contact main instance for post " + 
-                     "(#{device}: #{count} interfaces polled, #{interfaces.keys.size - 1} returned)")
+                     "(#{device}: #{count} interfaces polled, #{interfaces.keys.size} returned)")
         else
           $LOG.info("POLLER: Poll succeeded " + 
-                    "(#{device}: #{count} interfaces polled, #{interfaces.keys.size - 1} returned)")
+                    "(#{device}: #{count} interfaces polled, #{interfaces.keys.size} returned)")
         end
 
       end # End fork

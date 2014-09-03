@@ -3,6 +3,7 @@
 module Core
 
   def add_devices(settings, db, devices)
+    db.disconnect
     devices.each do |device, ip|
       existing = db[:device].where(:device => device)
       if existing.update(:ip => ip) != 1
@@ -15,6 +16,7 @@ module Core
   end
 
   def get_devices_poller(settings, db, count, poller_name)
+    db.disconnect
     currently_polling = db[:device].filter(:currently_polling => 1, :worker => poller_name).count
     count = count - currently_polling
 
@@ -26,11 +28,11 @@ module Core
     db.transaction do
       rows = db[:device].filter{ next_poll < Time.now.to_i }
       # Ignore currently_polling value if the last_poll is more than 1000 seconds ago
+      rows = rows.filter{Sequel.|({:currently_polling => 0}, (last_poll < Time.now.to_i - 1000))}
+      rows = rows.limit(count).for_update
       rows.filter{ last_poll < Time.now.to_i - 1000 }.each do |stale_row|
         $LOG.warn("CORE: Overriding currently_polling for #{stale_row[:device]} (#{poller_name})")
       end
-      rows = rows.filter{Sequel.|({:currently_polling => 0}, (last_poll < Time.now.to_i - 1000))}
-      rows = rows.limit(count).for_update
 
       rows.each do |row|
         devices[row[:device]] = row
@@ -87,21 +89,63 @@ module Core
     return devices
   end
 
-  def post_devices(settings, db, devices)
-    devices.each do |device,interfaces|
-      # Extract metadata from poll results
-      metadata = interfaces.delete('metadata') || {}
-      metadata.symbolize!
-      $LOG.info("CORE: Received data for #{device} from #{metadata[:worker]}")
+  def _validate_devices_post!(devices)
+    if devices.class == Hash
+      devices.each do |device, data|
+        if data.class == Hash
+          data.symbolize!
+          # Validata metadata
+          if data[:metadata].class == Hash
+            data[:metadata].symbolize!
+          else
+            $LOG.warn("Invalid or missing metadata received for #{device}")
+            data[:metadata] = {}
+          end
+          # Validate interfaces
+          if data[:interfaces].class == Hash
+            # Validate OIDs
+            data[:interfaces].each do |if_index, oids|
+              if oids.class == Hash
+                oids.symbolize!
+              else
+                $LOG.warn("Invalid or missing interface data for #{device}: if_index #{if_index}")
+                data[:interfaces].delete(if_index)
+              end
+            end
+          else
+            $LOG.warn("Invalid or missing interfaces received for #{device}")
+            data[:interfaces] = {}
+          end
+        else
+          $LOG.error("Invalid or missing data received for #{device}")
+          devices[device] = {}
+        end
+      end
+    else
+      $LOG.error("Invalid devices received")
+      devices = {}
+    end
+    return devices
+  end
 
-      interfaces.each do |if_index,oids|
-        oids.symbolize! # Convert hash keys to symbols
+  def post_devices(settings, db, devices)
+    _validate_devices_post!(devices)
+
+    devices.each do |device, data|
+
+      metadata = data[:metadata]
+      interfaces = data[:interfaces]
+
+      $LOG.info("CORE: Received data for #{device} from #{data[:metadata][:worker]}")
+
+      data[:interfaces].each do |if_index, oids|
         # Try updating, and if we don't affect a row, insert instead
         existing = db[:current].where(:device => oids[:device], :if_index => if_index)
         if existing.update(oids) != 1
           db[:current].insert(oids)
         end
       end
+
       # Update the device metadata
       next_poll = Time.now.to_i + 100
       db[:device].where(:device => device).update(
@@ -173,6 +217,7 @@ module Core
   end
 
   def populate_device_table(settings, db)
+    db.disconnect
     devices = {}
 
     # Load from file

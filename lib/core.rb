@@ -168,10 +168,10 @@ module Core
       if_index = row[:if_index]
       device = row[:device]
 
-      devices[device] ||= {}
+      devices[device] ||= { :interfaces => {} }
       name_to_index[device] ||= {}
 
-      devices[device][if_index] = row
+      devices[device][:interfaces][if_index] = row
       name_to_index[device][row[:if_name].downcase] = if_index
     end
 
@@ -179,7 +179,8 @@ module Core
   end
 
   def _fill_metadata!(devices, settings, name_to_index)
-    devices.each do |device,interfaces|
+    devices.each do |device,data|
+      interfaces = data[:interfaces]
       interfaces.each do |index,oids|
         # Populate 'neighbor' value
         oids[:if_alias].to_s.match(/__[a-zA-Z0-9\-_]+__/) do |neighbor|

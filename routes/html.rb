@@ -37,7 +37,7 @@ class Pixel < Sinatra::Base
     erb :device, :locals => {
       :settings => @@settings,
       :device => device,
-      :interfaces => interfaces[device],
+      :data => interfaces[device],
       :db_elapsed => db_elapsed,
     }
   end

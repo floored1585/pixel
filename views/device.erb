@@ -42,7 +42,7 @@
     <% end %>
     </tbody>
   </table>
-  <% else # This means we don't have any interfaces %>
+  <% else # This means we don't have any interfaces, or the device doesn't exist %>
     <% error = data ? 'Device found, but no interfaces are being recorded.' : 'Device not found.' %>
     <div class='row'>
     <div class='col-md-2'></div>

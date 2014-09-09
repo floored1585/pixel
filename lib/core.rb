@@ -96,6 +96,14 @@ module Core
           db[:interface].insert(oids)
         end
       end
+      data[:cpus].each do |cpu_index, data|
+        #$LOG.warn("Device: #{device}  CPU: #{cpu_index}\n  Data: #{data}")
+        # Try updating, and if we don't affect a row, insert instead
+        existing = db[:cpu].where(:device => data[:device], :cpu_index => cpu_index)
+        if existing.update(data) != 1
+          db[:cpu].insert(data)
+        end
+      end
 
       # Update the device metadata
       next_poll = Time.now.to_i + 100
@@ -164,10 +172,46 @@ module Core
                 $LOG.warn("Invalid or missing interface data for #{device}: if_index #{if_index}")
                 data[:interfaces].delete(if_index)
               end
+              required_data = [:device, :if_index, :last_updated, :if_alias, :if_name, :if_mtu,
+                               :if_hc_in_octets, :if_hc_out_octets, :if_hc_in_ucast_pkts,
+                               :if_hc_out_ucast_pkts, :if_high_speed, :if_admin_status, 
+                               :if_admin_status_time, :if_oper_status, :if_oper_status_time,
+                               :if_in_discards, :if_in_errors, :if_out_discards, :if_out_errors]
+              unless (required_data - oids.keys).empty?
+                $LOG.warn("Incomplete OIDs for #{device}: if_index #{if_index}. Missing: #{required_data - oids.keys}")
+                data[:interfaces].delete(if_index)
+              end
             end
           else
             $LOG.warn("Invalid or missing interfaces received for #{device}")
             data[:interfaces] = {}
+          end
+          # Validate CPUs
+          if data[:cpus].class == Hash
+            # Validate CPU data
+            data[:cpus].each do |cpu_index, cpu_data|
+              if cpu_data.class == Hash
+                cpu_data.symbolize!
+              else
+                $LOG.warn("Invalid CPU data for #{device}: cpu_index #{cpu_index}")
+                data[:cpus].delete(cpu_index)
+              end
+              # Convert utilization to numeric
+              cpu_data[:util] = cpu_data[:util].to_i_if_numeric if cpu_data[:util]
+              required_data = [:device, :cpu_index, :util, :description, :last_updated]
+              unless (required_data - cpu_data.keys).empty?
+                $LOG.warn("Invalid CPU for #{device}: cpu_index #{cpu_index}. Missing: #{required_data - cpu_data.keys}")
+                data[:cpus].delete(cpu_index)
+              end
+              unless cpu_data[:util] && cpu_data[:util].is_a?(Numeric)
+                $LOG.warn("Invalid or missing CPU utilization for #{device}: cpu_index #{cpu_index}")
+                data[:cpus].delete(cpu_index)
+              end
+              utilization = utilization.to_i_if_numeric
+            end
+          else
+            $LOG.warn("Invalid or missing CPU received for #{device}")
+            data[:cpus] = {}
           end
         else
           $LOG.error("Invalid or missing data received for #{device}")

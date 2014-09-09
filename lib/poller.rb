@@ -8,6 +8,7 @@ require_relative 'core_ext/hash'
 
 module Poller
 
+
   def self.check_for_work(settings, db)
     poller_cfg = _poller_cfg(settings)
     concurrency = poller_cfg[:concurrency]
@@ -21,19 +22,26 @@ module Poller
     end
   end
 
+
   def self._poll(poller_cfg, device, ip)
     pid = fork do
       start_time = Time.now
       if_table = {}
+      cpus = {}
       metadata = { :worker => Socket.gethostname }
 
       # get SNMP data from the device
       begin
-        if_table = _query_device(ip, poller_cfg)
+        vendor = _query_device_vendor(ip, poller_cfg)
+        cpus = _query_device_cpu(device, ip, poller_cfg, vendor)
+        if_table = _query_device_interfaces(ip, poller_cfg)
+        #puts "#{device} CPU Data:"
+        #pp cpu_table
+        #puts "\n"
       rescue RuntimeError, ArgumentError => e
         $LOG.error("POLLER: Error encountered while polling #{device}: #{e}")
         metadata[:last_poll_result] = 1
-        post_devices = { device => { :metadata => metadata, :interfaces => {} } }
+        post_devices = { device => { :metadata => metadata, :interfaces => {}, :cpus => {} } }
         _post_data(post_devices)
       end
 
@@ -62,7 +70,7 @@ module Poller
       metadata[:last_poll_duration] = Time.now.to_i - start_time.to_i
       metadata[:last_poll_result] = 0
       metadata[:last_poll_text] = ''
-      post_devices = { device => { :metadata => metadata, :interfaces => interfaces } }
+      post_devices = { device => { :metadata => metadata, :interfaces => interfaces, :cpus => cpus } }
 
       _post_data(post_devices)
 
@@ -70,6 +78,7 @@ module Poller
     Process.detach(pid)
     $LOG.info("POLLER: Forked PID #{pid} (#{device})")
   end
+
 
   def self._process_interface(device, if_index, oids, last_values, influxdb, poller_cfg)
     oids['if_index'] = if_index
@@ -82,6 +91,8 @@ module Poller
     %w( if_admin_status if_oper_status ).each do |oid|
       if(!last_oids || oids[oid].to_i != last_oids[oid])
         oids[oid + '_time'] = Time.now.to_i
+      else
+        oids[oid + '_time'] = last_oids[oid + '_time']
       end
     end
 
@@ -94,7 +105,7 @@ module Poller
       # First make sure we have 2 data points -- if not we can't average
       if oid_text =~ poller_cfg[:avg_oid_regex] && last_oids
         avg_series_name = device + '.' + if_index + '.' + poller_cfg[:avg_names][oid_text]
-        average = (value.to_i - last_oids[oid_text].to_i) / (Time.now.to_i - last_oids['last_updated'].to_i)
+        average = (value.to_i - last_oids[oid_text]) / (Time.now.to_i - last_oids['last_updated'])
         average = average * 8 if series_name =~ /octets/
         avg_series_data = { :value => average, :time => Time.now.to_i }
         # Calculate utilization if we're a bps OID
@@ -113,12 +124,13 @@ module Poller
     return oids
   end
 
-  def self._query_device(ip, poller_cfg)
+
+  def self._query_device_interfaces(ip, poller_cfg)
     SNMP::Manager.open(:host => ip, :community => poller_cfg[:snmpv2_community]) do |session|
       if_table = {}
-      session.walk(poller_cfg[:oid_numbers].keys) do |row|
+      session.walk(poller_cfg[:oid_numbers][:general].keys) do |row|
         row.each do |vb|
-          oid_text = poller_cfg[:oid_numbers][vb.name.to_str.gsub(/\.[0-9]+$/,'')]
+          oid_text = poller_cfg[:oid_numbers][:general][vb.name.to_str.gsub(/\.[0-9]+$/,'')]
           if_index = vb.name.to_str[/[0-9]+$/]
           if_table[if_index] ||= {}
           if_table[if_index][oid_text] = vb.value.to_s
@@ -128,6 +140,70 @@ module Poller
     end
   end
 
+
+  def self._query_device_vendor(ip, poller_cfg)
+    SNMP::Manager.open(:host => ip, :community => poller_cfg[:snmpv2_community]) do |session|
+      if_table = {}
+      session.get("1.3.6.1.2.1.1.1.0").each_varbind do |vb|
+        sys_descr = vb.value.to_s.gsub("\n",' ')
+        return 'Cisco' if sys_descr =~ /Cisco/
+        return 'Juniper' if sys_descr =~ /Juniper|SRX/
+        return 'Force10 S-Series' if sys_descr =~ /Force10.*Series: S/
+        # If we don't know what type of device this is:
+        $LOG.warn("POLLER: Unknown device at #{ip}: #{sys_descr}")
+        return 'Unknown'
+      end
+    end
+  end
+
+
+  def self._query_device_cpu(device, ip, poller_cfg, vendor)
+    return {} unless vendor_cfg = poller_cfg[:oid_numbers][vendor]
+    cpu_table = {}
+    cpu_hw_ids = {}
+
+    SNMP::Manager.open(:host => ip, :community => poller_cfg[:snmpv2_community]) do |session|
+      # Populate cpu_hw_ids if we have an explicit list of CPUs, Cisco style
+      if vendor_cfg['cpu_list']
+        session.walk(vendor_cfg['cpu_list']) do |row|
+          row.each do |vb|
+            cpu_index = vendor_cfg['cpu_index_regex'].match( vb.name.to_str )[0]
+            cpu_hw_ids[vb.value.to_s] = cpu_index
+          end
+        end
+      end
+      session.walk(vendor_cfg['hw_description']) do |row|
+        row.each do |vb|
+          hw_index = vendor_cfg['cpu_index_regex'].match( vb.name.to_str )[0]
+          # Continue only if one of the following occur:
+          #   (1) The hw_index was found in the cpu_list oid (Cisco style)
+          #   (2) The oid of our hw_index matches our cpu_list regex (Juniper style)
+          next unless cpu_hw_ids[hw_index] || vendor_cfg['cpu_list_regex'] =~ vb.name.to_str
+          cpu_index = cpu_hw_ids[hw_index] || hw_index
+          cpu_table[cpu_index] = {}
+          cpu_table[cpu_index][:description] = vb.value.to_s
+        end
+      end
+      session.walk(vendor_cfg['cpu_util']) do |row|
+        row.each do |vb|
+          cpu_index = vendor_cfg['cpu_index_regex'].match( vb.name.to_str )[0]
+
+          if cpu_table[cpu_index] || vendor_cfg['cpu_list']
+            cpu_table[cpu_index] ||= {}
+            cpu_table[cpu_index][:device] = device
+            cpu_table[cpu_index][:cpu_index] = cpu_index
+            cpu_table[cpu_index][:last_updated] = Time.now.to_i 
+            cpu_table[cpu_index][:description] ||= 'CPU'
+            cpu_table[cpu_index][:util] = vb.value.to_s 
+          end
+        end
+      end
+    end
+
+    return cpu_table
+  end
+
+
   def self._get_last_values(device, if_table)
     request = "/v1/devices?device=#{device}"
     if devices = API.get('core', request, 'POLLER', 'previous data')
@@ -136,7 +212,7 @@ module Poller
       last_values[:interfaces] ||= {}
       stale_indexes = []
       last_values[:interfaces].each do |index,oids|
-        oids.each { |name,value| oids[name] = to_i_if_numeric(value) }
+        oids.each { |name,value| oids[name] = value.to_i_if_numeric }
         stale_indexes.push(index) unless if_table[index]
       end
     else # HTTP request failed
@@ -144,6 +220,7 @@ module Poller
     end
     return stale_indexes, last_values
   end
+
 
   def self._post_data(devices)
     if API.post('core', '/v1/devices', devices, 'POLLER', 'poll results')
@@ -154,6 +231,7 @@ module Poller
     abort
   end
 
+
   def self._poller_cfg(settings)
     # Convert poller settings into hash with symbols as keys
     poller_cfg = settings['poller'].dup || {}
@@ -163,22 +241,43 @@ module Poller
     poller_cfg[:avg_oid_regex] = /octets|discards|errors|pkts/
 
     # These are the OIDs that will get pulled/stored for our interfaces.
-    poller_cfg[:oid_numbers] = Hash[
-      '1.3.6.1.2.1.31.1.1.1.1'  => 'if_name',
-      '1.3.6.1.2.1.31.1.1.1.6'  => 'if_hc_in_octets',
-      '1.3.6.1.2.1.31.1.1.1.10' => 'if_hc_out_octets',
-      '1.3.6.1.2.1.31.1.1.1.7'  => 'if_hc_in_ucast_pkts',
-      '1.3.6.1.2.1.31.1.1.1.11' => 'if_hc_out_ucast_pkts',
-      '1.3.6.1.2.1.31.1.1.1.15' => 'if_high_speed',
-      '1.3.6.1.2.1.31.1.1.1.18' => 'if_alias',
-      '1.3.6.1.2.1.2.2.1.4'     => 'if_mtu',
-      '1.3.6.1.2.1.2.2.1.7'     => 'if_admin_status',
-      '1.3.6.1.2.1.2.2.1.8'     => 'if_oper_status',
-      '1.3.6.1.2.1.2.2.1.13'    => 'if_in_discards',
-      '1.3.6.1.2.1.2.2.1.14'    => 'if_in_errors',
-      '1.3.6.1.2.1.2.2.1.19'    => 'if_out_discards',
-      '1.3.6.1.2.1.2.2.1.20'    => 'if_out_errors',
-    ]
+    poller_cfg[:oid_numbers] = {
+      :general => {
+        '1.3.6.1.2.1.31.1.1.1.1'  => 'if_name',
+        '1.3.6.1.2.1.31.1.1.1.6'  => 'if_hc_in_octets',
+        '1.3.6.1.2.1.31.1.1.1.10' => 'if_hc_out_octets',
+        '1.3.6.1.2.1.31.1.1.1.7'  => 'if_hc_in_ucast_pkts',
+        '1.3.6.1.2.1.31.1.1.1.11' => 'if_hc_out_ucast_pkts',
+        '1.3.6.1.2.1.31.1.1.1.15' => 'if_high_speed',
+        '1.3.6.1.2.1.31.1.1.1.18' => 'if_alias',
+        '1.3.6.1.2.1.2.2.1.4'     => 'if_mtu',
+        '1.3.6.1.2.1.2.2.1.7'     => 'if_admin_status',
+        '1.3.6.1.2.1.2.2.1.8'     => 'if_oper_status',
+        '1.3.6.1.2.1.2.2.1.13'    => 'if_in_discards',
+        '1.3.6.1.2.1.2.2.1.14'    => 'if_in_errors',
+        '1.3.6.1.2.1.2.2.1.19'    => 'if_out_discards',
+        '1.3.6.1.2.1.2.2.1.20'    => 'if_out_errors',
+      },
+      'Juniper' => {
+        'cpu_index_regex' => /([0-9]+\.?){4}$/,
+        'hw_description'  => '1.3.6.1.4.1.2636.3.1.13.1.5',
+        'cpu_util'        => '1.3.6.1.4.1.2636.3.1.13.1.8',
+        'cpu_list_regex'  => /2636\.3\.1\.13\.1\.\d\.[97]/,
+      },
+      'Cisco' => {
+        'cpu_index_regex' => /[0-9]+$/,
+        'hw_description'  => '1.3.6.1.2.1.47.1.1.1.1.7',
+        'cpu_util'        => '1.3.6.1.4.1.9.9.109.1.1.1.1.7', # 1 minute average
+        'cpu_list'        => '1.3.6.1.4.1.9.9.109.1.1.1.1.2',
+      },
+      'Force10 S-Series'  => {
+        'cpu_index_regex' => /[0-9]+$/,
+        'hw_description'  => '1.3.6.1.4.1.6027.3.10.1.2.2.1.9',
+        'cpu_util'        => '1.3.6.1.4.1.6027.3.10.1.2.9.1.3', # 1 minute average
+        'cpu_list_regex'  => /.*/, # No need to filter
+      },
+
+    }
 
     # This is where we define what the averages will be named
     poller_cfg[:avg_names] = Hash[
@@ -193,15 +292,6 @@ module Poller
     ]
 
     return poller_cfg
-  end
-
-  def self.to_i_if_numeric(str)
-    # This is sort of a hack, but gets shit converted to int
-    begin
-      ('%.0f' % str.to_s).to_i
-    rescue ArgumentError, TypeError
-      str
-    end
   end
 
 end

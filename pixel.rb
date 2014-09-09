@@ -9,7 +9,7 @@ require 'logger'
 Dir["#{File.dirname(__FILE__)}/lib/**/*.rb"].each { |file| require(file) }
 
 APP_ROOT = File.dirname(__FILE__)
-$LOG = Logger.new("#{APP_ROOT}/messages.log", 0, 10*1024*1024)
+$LOG = Logger.new("#{APP_ROOT}/messages.log", 5, 10*1024*1024)
 
 class Pixel < Sinatra::Base
 

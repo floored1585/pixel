@@ -29,7 +29,7 @@ class Pixel < Sinatra::Base
     # Start timer
     beginning = Time.now
 
-    interfaces = get_ints_device(@@settings, @@db, device)
+    devices = get_ints_device(@@settings, @@db, device)
 
     # How long did it take us to query the database
     db_elapsed = '%.2f' % (Time.now - beginning)
@@ -37,7 +37,7 @@ class Pixel < Sinatra::Base
     erb :device, :locals => {
       :settings => @@settings,
       :device => device,
-      :data => interfaces[device],
+      :data => devices[device],
       :db_elapsed => db_elapsed,
     }
   end

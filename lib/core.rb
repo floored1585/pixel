@@ -38,6 +38,9 @@ module Core
     # Filter If a device was specified, otherwise return all
     rows = rows.filter(:device => device) if device
 
+    # If the device has no interfaces but does exist, just return the device name
+    return { device => {} } if rows.empty? && !db[:device].filter(:device => device).empty?
+
     (devices, name_to_index) = _interface_map(rows)
     _fill_metadata!(devices, settings, name_to_index)
     return devices

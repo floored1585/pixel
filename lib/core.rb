@@ -58,7 +58,7 @@ module Core
       # Ignore currently_polling value if the last_poll is more than 1000 seconds ago
       rows = rows.filter{Sequel.|({:currently_polling => 0}, (last_poll < Time.now.to_i - 1000))}
       rows = rows.limit(count).for_update
-      rows.filter{ last_poll < Time.now.to_i - 1000 }.each do |stale_row|
+      rows.filter{Sequel.&({:currently_polling => 1}, (last_poll < Time.now.to_i - 1000))}.each do |stale_row|
         $LOG.warn("CORE: Overriding currently_polling for #{stale_row[:device]} (#{poller_name})")
       end
 

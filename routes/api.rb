@@ -19,7 +19,7 @@ class Pixel < Sinatra::Base
 
   get '/v1/devices' do
     device = params[:device]
-    JSON.generate( get_ints_device(@@settings, @@db, device) )
+    JSON.generate( get_device(@@settings, @@db, device) )
   end
 
   get '/v1/poller/poke' do

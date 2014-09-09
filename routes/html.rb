@@ -7,6 +7,7 @@ class Pixel < Sinatra::Base
     ints_saturated = get_ints_saturated(@@settings, @@db)
     ints_discarding = get_ints_discarding(@@settings, @@db)
     ints_down = get_ints_down(@@settings, @@db)
+    cpus_high = get_cpus_high(@@settings, @@db)
 
     db_elapsed = '%.2f' % (Time.now - beginning)
 
@@ -16,6 +17,7 @@ class Pixel < Sinatra::Base
       :ints_discarding => ints_discarding,
       :ints_saturated => ints_saturated,
       :ints_down => ints_down,
+      :cpus_high => cpus_high,
       :db_elapsed => db_elapsed,
     }
   end
@@ -29,7 +31,7 @@ class Pixel < Sinatra::Base
     # Start timer
     beginning = Time.now
 
-    devices = get_ints_device(@@settings, @@db, device)
+    devices = get_device(@@settings, @@db, device)
 
     # How long did it take us to query the database
     db_elapsed = '%.2f' % (Time.now - beginning)

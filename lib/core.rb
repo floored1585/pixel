@@ -3,10 +3,10 @@
 module Core
 
   def get_ints_down(settings, db)
-    rows = db[:interface].filter(Sequel.like(:if_alias, 'sub%') | Sequel.like(:if_alias, 'bb%'))
-    rows = rows.exclude(:if_oper_status => 1)
+    interfaces = db[:interface].filter(Sequel.like(:if_alias, 'sub%') | Sequel.like(:if_alias, 'bb%'))
+    interfaces = interfaces.exclude(:if_oper_status => 1)
 
-    (devices, name_to_index) = _interface_map(rows)
+    (devices, name_to_index) = _device_map(interfaces)
     _fill_metadata!(devices, settings, name_to_index)
 
     # Delete the interface from the hash if its parent is present, to reduce clutter
@@ -17,32 +17,44 @@ module Core
   end
 
   def get_ints_saturated(settings, db)
-    rows = db[:interface].filter{ (bps_in_util > 90) | (bps_out_util > 90) }
+    interfaces = db[:interface].filter{ (bps_in_util > 90) | (bps_out_util > 90) }
 
-    (devices, name_to_index) = _interface_map(rows)
+    (devices, name_to_index) = _device_map(interfaces)
     _fill_metadata!(devices, settings, name_to_index)
     return devices
   end
 
   def get_ints_discarding(settings, db)
-    rows = db[:interface].filter{Sequel.&(discards_out > 9, ~Sequel.like(:if_alias, 'sub%'))}
-    rows = rows.order(:discards_out).reverse.limit(10)
+    interfaces = db[:interface].filter{Sequel.&(discards_out > 9, ~Sequel.like(:if_alias, 'sub%'))}
+    interfaces = interfaces.order(:discards_out).reverse.limit(10)
 
-    (devices, name_to_index) = _interface_map(rows)
+    (devices, name_to_index) = _device_map(interfaces)
     _fill_metadata!(devices, settings, name_to_index)
     return devices
   end
 
-  def get_ints_device(settings, db, device)
-    rows = db[:interface]
-    # Filter If a device was specified, otherwise return all
-    rows = rows.filter(:device => device) if device
+  def get_device(settings, db, device)
+    # Return an empty hash if the device doesn't exist
+    return {} if db[:device].filter(:device => device).empty?
 
-    # If the device has no interfaces but does exist, just return the device name
-    return { device => {} } if rows.empty? && !db[:device].filter(:device => device).empty?
+    interfaces = db[:interface]
+    cpus = db[:cpu]
+    # Filter if a device was specified, otherwise return all
+    interfaces = interfaces.filter(:device => device) if device
+    cpus = cpus.filter(:device => device) if device
 
-    (devices, name_to_index) = _interface_map(rows)
+    # Return just an empty device if there are no CPUs or interfaces for the device
+    return { device => {} } if cpus.empty? && interfaces.empty? && device
+
+    (devices, name_to_index) = _device_map(interfaces, cpus)
     _fill_metadata!(devices, settings, name_to_index)
+    return devices
+  end
+
+  def get_cpus_high(settings, db)
+    cpus = db[:cpu].filter{ util > 85 }
+
+    (devices, name_to_index) = _device_map({}, cpus)
     return devices
   end
 
@@ -150,6 +162,71 @@ module Core
     return true
   end
 
+  def _device_map(interfaces, cpus={})
+    devices = {}
+    name_to_index = {}
+
+    interfaces.each do |row|
+      if_index = row[:if_index]
+      device = row[:device]
+
+      devices[device] ||= { :interfaces => {} }
+      name_to_index[device] ||= {}
+
+      devices[device][:interfaces][if_index] = row
+      name_to_index[device][row[:if_name].downcase] = if_index
+    end
+    cpus.each do |row|
+      cpu_index = row[:cpu_index]
+      device = row[:device]
+
+      devices[device] ||= {}
+      devices[device][:cpus] ||= {}
+      devices[device][:cpus][cpu_index] = row
+    end
+
+    return devices, name_to_index
+  end
+
+  def _fill_metadata!(devices, settings, name_to_index)
+    devices.each do |device,data|
+      interfaces = data[:interfaces] || {}
+      interfaces.each do |index,oids|
+        # Populate 'neighbor' value
+        oids[:if_alias].to_s.match(/__[a-zA-Z0-9\-_]+__/) do |neighbor|
+          interfaces[index][:neighbor] = neighbor.to_s.gsub('__','')
+        end
+
+        time_since_poll = Time.now.to_i - oids[:last_updated]
+        oids[:stale] = time_since_poll if time_since_poll > settings['stale_timeout']
+
+        if oids[:pps_out] && oids[:pps_out] != 0
+          oids[:discards_out_pct] = '%.2f' % (oids[:discards_out].to_f / oids[:pps_out] * 100)
+        end
+
+        # Populate 'link_type' value (Backbone, Access, etc...)
+        oids[:if_alias].match(/^[a-z]+(__|\[)/) do |type|
+          type = type.to_s.gsub(/(_|\[)/,'')
+          oids[:link_type] = settings['link_types'][type]
+          if type == 'sub'
+            oids[:is_child] = true
+            # This will return po1 from sub[po1]__gar-k11u1-dist__g1/47
+            parent = oids[:if_alias][/\[[a-zA-Z0-9\/-]+\]/].gsub(/(\[|\])/, '')
+            if parent && parent_index = name_to_index[device][parent.downcase]
+              interfaces[parent_index][:is_parent] = true
+              interfaces[parent_index][:children] ||= []
+              interfaces[parent_index][:children] << index
+              oids[:my_parent] = parent_index
+            end
+            oids[:my_parent_name] = parent.gsub('po','Po')
+          end
+        end
+
+        oids[:if_oper_status] == 1 ? oids[:link_up] = true : oids[:link_up] = false
+      end
+    end
+  end
+
   def _validate_devices_post!(devices)
     if devices.class == Hash
       devices.each do |device, data|
@@ -223,63 +300,6 @@ module Core
       devices = {}
     end
     return devices
-  end
-
-  def _interface_map(rows)
-    devices = {}
-    name_to_index = {}
-
-    rows.each do |row|
-      if_index = row[:if_index]
-      device = row[:device]
-
-      devices[device] ||= { :interfaces => {} }
-      name_to_index[device] ||= {}
-
-      devices[device][:interfaces][if_index] = row
-      name_to_index[device][row[:if_name].downcase] = if_index
-    end
-
-    return devices, name_to_index
-  end
-
-  def _fill_metadata!(devices, settings, name_to_index)
-    devices.each do |device,data|
-      interfaces = data[:interfaces]
-      interfaces.each do |index,oids|
-        # Populate 'neighbor' value
-        oids[:if_alias].to_s.match(/__[a-zA-Z0-9\-_]+__/) do |neighbor|
-          interfaces[index][:neighbor] = neighbor.to_s.gsub('__','')
-        end
-
-        time_since_poll = Time.now.to_i - oids[:last_updated]
-        oids[:stale] = time_since_poll if time_since_poll > settings['stale_timeout']
-
-        if oids[:pps_out] && oids[:pps_out] != 0
-          oids[:discards_out_pct] = '%.2f' % (oids[:discards_out].to_f / oids[:pps_out] * 100)
-        end
-
-        # Populate 'link_type' value (Backbone, Access, etc...)
-        oids[:if_alias].match(/^[a-z]+(__|\[)/) do |type|
-          type = type.to_s.gsub(/(_|\[)/,'')
-          oids[:link_type] = settings['link_types'][type]
-          if type == 'sub'
-            oids[:is_child] = true
-            # This will return po1 from sub[po1]__gar-k11u1-dist__g1/47
-            parent = oids[:if_alias][/\[[a-zA-Z0-9\/-]+\]/].gsub(/(\[|\])/, '')
-            if parent && parent_index = name_to_index[device][parent.downcase]
-              interfaces[parent_index][:is_parent] = true
-              interfaces[parent_index][:children] ||= []
-              interfaces[parent_index][:children] << index
-              oids[:my_parent] = parent_index
-            end
-            oids[:my_parent_name] = parent.gsub('po','Po')
-          end
-        end
-
-        oids[:if_oper_status] == 1 ? oids[:link_up] = true : oids[:link_up] = false
-      end
-    end
   end
 
 end

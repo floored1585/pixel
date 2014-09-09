@@ -3,7 +3,7 @@
 module Core
 
   def get_ints_down(settings, db)
-    rows = db[:current].filter(Sequel.like(:if_alias, 'sub%') | Sequel.like(:if_alias, 'bb%'))
+    rows = db[:interface].filter(Sequel.like(:if_alias, 'sub%') | Sequel.like(:if_alias, 'bb%'))
     rows = rows.exclude(:if_oper_status => 1)
 
     (devices, name_to_index) = _interface_map(rows)
@@ -17,7 +17,7 @@ module Core
   end
 
   def get_ints_saturated(settings, db)
-    rows = db[:current].filter{ (bps_in_util > 90) | (bps_out_util > 90) }
+    rows = db[:interface].filter{ (bps_in_util > 90) | (bps_out_util > 90) }
 
     (devices, name_to_index) = _interface_map(rows)
     _fill_metadata!(devices, settings, name_to_index)
@@ -25,7 +25,7 @@ module Core
   end
 
   def get_ints_discarding(settings, db)
-    rows = db[:current].filter{Sequel.&(discards_out > 9, ~Sequel.like(:if_alias, 'sub%'))}
+    rows = db[:interface].filter{Sequel.&(discards_out > 9, ~Sequel.like(:if_alias, 'sub%'))}
     rows = rows.order(:discards_out).reverse.limit(10)
 
     (devices, name_to_index) = _interface_map(rows)
@@ -34,7 +34,7 @@ module Core
   end
 
   def get_ints_device(settings, db, device)
-    rows = db[:current]
+    rows = db[:interface]
     # Filter If a device was specified, otherwise return all
     rows = rows.filter(:device => device) if device
 
@@ -88,9 +88,9 @@ module Core
       data[:interfaces].each do |if_index, oids|
         #$LOG.warn("Device: #{device}  Interface: #{if_index}\n  OIDs: #{oids}")
         # Try updating, and if we don't affect a row, insert instead
-        existing = db[:current].where(:device => oids[:device], :if_index => if_index)
+        existing = db[:interface].where(:device => oids[:device], :if_index => if_index)
         if existing.update(oids) != 1
-          db[:current].insert(oids)
+          db[:interface].insert(oids)
         end
       end
 

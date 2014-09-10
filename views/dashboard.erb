@@ -29,8 +29,37 @@
 
 <div class='row'>
 
-  <!-- DISCARDING PORTS -->
+  <!-- HIGH CPU USAGE -->
   <div class='col-md-6'>
+    <% if !cpus_high.empty? %>
+      <h2>High CPU Usage</h2>
+    <table id='highCpuTable' class='table table-hover table-condensed tablesorter'>
+      <thead>
+        <tr>
+          <th>Device</th>
+          <th>CPU Description </th>
+          <th>Utilization </th>
+        </tr>
+      </thead>
+      <tbody>
+      <% cpus_high.each do |device,data| %>
+        <% data[:cpus].each do |cpu_index,data| %>
+        <tr>
+        <td><%= device_link(data) %></td>
+        <td><%= data[:description] %></td>
+        <td>
+          <span class='text-danger'><b><%= data[:util] %>%</b></span>
+        </td>
+      </tr>
+    <% end %>
+    <% end %>
+      </tbody>
+    </table>
+  <% end %>
+
+  <br />
+
+  <!-- DISCARDING PORTS -->
     <h2>Top Discarding Ports</h2>
     <% if !ints_discarding.empty? %>
       <table id='discardTable' class='table table-hover table-condensed tablesorter'>

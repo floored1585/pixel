@@ -25,8 +25,16 @@ module Core
   end
 
   def get_ints_discarding(settings, db)
-    interfaces = db[:interface].filter{Sequel.&(discards_out > 9, ~Sequel.like(:if_alias, 'sub%'))}
-    interfaces = interfaces.order(:discards_out).reverse.limit(10)
+    interfaces = db[:interface].filter{Sequel.|(
+      Sequel.&(
+        pps_out > 0, # Prevent div by zero
+        discards_out > 20,
+        ~Sequel.like(:if_alias, 'sub%'), # Don't look at sub-interfaces
+        discards_out / pps_out.cast(:float) >= 0.01 # Filter out anything discarding <= 1%
+      ),
+      discards_out > 500 # Also include anything discarding over 500pps
+    )}
+    interfaces = interfaces.order(:discards_out).reverse
 
     (devices, name_to_index) = _device_map(interfaces)
     _fill_metadata!(devices, settings, name_to_index)

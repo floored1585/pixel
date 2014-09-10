@@ -98,8 +98,8 @@ module Helper
                    "' target='_blank'>" + oids[:if_name] + '</a>'
   end
 
-  def device_link(oids)
-    "<a href='/device/#{oids[:device]}'>#{oids[:device]}</a>"
+  def device_link(data)
+    "<a href='/device/#{data[:device]}'>#{data[:device]}</a>"
   end
 
   def link_status_color(interfaces,oids)

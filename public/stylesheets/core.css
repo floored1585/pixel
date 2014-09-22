@@ -44,9 +44,11 @@ li.list-group-item-danger a:hover {
 .pxl-btn-refresh-white {
   border-color: Transparent;
 }
+
 .pxl-btn-refresh-white span {
   color: white;
 }
+
 .pxl-btn-refresh-white:hover {
   border-color: limegreen;
 }
@@ -54,11 +56,22 @@ li.list-group-item-danger a:hover {
 .pxl-btn-refresh-green {
   border-color: limegreen;
 }
+
 .pxl-btn-refresh-green:hover {
   border-color: limegreen;
 }
+
 .pxl-btn-refresh-green span {
   color: limegreen;
+}
+
+.pxl-rickshaw-title {
+  font-weight: bold;
+  text-align: center;
+}
+
+.canvas-container {
+  margin-bottom: 10px;
 }
 
 /* universal */
@@ -129,6 +142,21 @@ table.tablesorter thead tr {
 .pxl-td-shrink {
   width: 1em;
   white-space: nowrap;
+}
+
+.pxl-rickshaw-y {
+  position: absolute;
+  height: 100px;
+}
+
+.pxl-rickshaw {
+  height: 100px;
+  margin-bottom: 30px;
+}
+
+.pxl-rickshaw .x_tick .title {
+  bottom: -18px;
+  left: -18px;
 }
 
 /* typography */

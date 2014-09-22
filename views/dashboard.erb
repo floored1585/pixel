@@ -69,7 +69,7 @@
           <th>Discards/sec </th>
           <th>Device</th>
           <th>Interface </th>
-          <th>Neighbor </th>
+          <th class='hidden-md hidden-sm hidden-xs'>Neighbor </th>
           <th>Ingress </th>
           <th>Egress </th>
         </tr>
@@ -85,7 +85,7 @@
             </td>
             <td><%= device_link(oids) %></td>
             <td><%= interface_link(settings, oids) %></td>
-            <td><%= neighbor_link(oids, { device_only: true }) %></td>
+            <td class='hidden-md hidden-sm hidden-xs'><%= neighbor_link(oids, { device_only: true }) %></td>
             <td class='pxl-histogram pxl-meta <%= 'pxl-hoverswap' unless /^10+/.match(oids[:if_high_speed].to_s) %>' data-pxl-meta='<%= oids[:bps_in_util]%>'>
               <span class='pxl-swap-pri'>
                 <%= bps_cell('in', oids, { compact: true, bps_only: true }) %>
@@ -121,7 +121,7 @@
           <th class='pxl-th'>Device</th>
           <th class='pxl-th'>Interface </th>
           <th class='pxl-th'>Type </th>
-          <th class='pxl-th'>Neighbor </th>
+          <th class='pxl-th hidden-md hidden-sm hidden-xs'>Neighbor </th>
           <th class='pxl-th'>Ingress </th>
           <th class='pxl-th'>Egress </th>
         </tr>
@@ -138,7 +138,7 @@
                 <span> <%= "[#{oids[:my_parent_name]}]" %></span>
               <% end %>
             </td>
-            <td><%= neighbor_link(oids, { device_only: true }) %></td>
+            <td class='hidden-md hidden-sm hidden-xs'><%= neighbor_link(oids, { device_only: true }) %></td>
             <td class='pxl-histogram pxl-meta <%= 'pxl-hoverswap' unless /^10+/.match(oids[:if_high_speed].to_s) %>' data-pxl-meta='<%= oids[:bps_in_util]%>'>
               <span class='pxl-swap-pri'>
                 <%= bps_cell('in', oids, { compact: true, bps_only: true }) %>

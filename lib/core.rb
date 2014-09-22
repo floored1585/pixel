@@ -41,7 +41,7 @@ module Core
     return devices
   end
 
-  def get_device(settings, db, device)
+  def get_device(settings, db, device, component=nil)
     # Return an empty hash if the device doesn't exist
     return {} if db[:device].filter(:device => device).empty?
 
@@ -56,6 +56,14 @@ module Core
 
     (devices, name_to_index) = _device_map(interfaces, cpus)
     _fill_metadata!(devices, settings, name_to_index)
+
+    # If we only want certain components, delete the others
+    if component
+      devices.each do |dev,data|
+        data.delete_if { |k,v| k.to_s != component }
+      end
+    end
+
     return devices
   end
 
@@ -68,7 +76,10 @@ module Core
 
   def get_devices_poller(settings, db, count, poller_name)
     db.disconnect
-    currently_polling = db[:device].filter(:currently_polling => 1, :worker => poller_name).count
+    currently_polling = db[:device].filter{Sequel.&(
+      {:currently_polling => 1, :worker => poller_name}, 
+      last_poll > Time.now.to_i - 1000,
+    )}.count
     count = count - currently_polling
 
     # Don't return more work if this poller is maxed out
@@ -81,7 +92,7 @@ module Core
       # Ignore currently_polling value if the last_poll is more than 1000 seconds ago
       rows = rows.filter{Sequel.|({:currently_polling => 0}, (last_poll < Time.now.to_i - 1000))}
       rows = rows.limit(count).for_update
-      rows.filter{Sequel.&({:currently_polling => 1}, (last_poll < Time.now.to_i - 1000))}.each do |stale_row|
+      rows.filter(:currently_polling => 1).each do |stale_row|
         $LOG.warn("CORE: Overriding currently_polling for #{stale_row[:device]} (#{poller_name})")
       end
 

@@ -19,7 +19,18 @@ class Pixel < Sinatra::Base
 
   get '/v1/devices' do
     device = params[:device]
-    JSON.generate( get_device(@@settings, @@db, device) )
+    component = params[:component]
+    JSON.generate( get_device(@@settings, @@db, device, component) )
+  end
+
+  get '/v1/series/rickshaw' do
+    query = params[:query]
+    JSON.generate( Influx.query(query, @@db, :rickshaw) )
+  end
+
+  get '/v1/series' do
+    query = params[:query]
+    JSON.generate( Influx.query(query) )
   end
 
   get '/v1/poller/poke' do

@@ -1,3 +1,4 @@
+charts = []
 
 ready = ->
   sort_table()
@@ -8,6 +9,53 @@ ready = ->
   set_onclicks()
   check_refresh()
   set_hoverswaps()
+  draw_charts()
+  $(window).resize(check_charts)
+
+draw_charts = ->
+  $('.pxl-rickshaw').each ->
+    element = $(this)
+    device = element.data('pxl-device')
+    attribute = element.data('pxl-attr')
+    timeframe = element.data('pxl-time')
+
+    # 'next' unless all the variables are defined and not empty
+    return true if (!device || !attribute || !timeframe)
+
+    url = '/v1/series/rickshaw?query=select%20*%20from%20%2F' + device + '.' + attribute +
+    '%2F%20where%20time%20>%20now()%20-%20' + timeframe
+
+    generate_charts(element, url)
+
+check_charts = ->
+  need_to_update = true
+  if need_to_update
+    for chart, i in charts
+      chart['graph'].setSize()
+      chart['graph'].render()
+      chart['axes']['x'].render()
+      chart['axes']['y'].render()
+
+generate_charts = (element, url) ->
+  element_y = element.parent().find('.pxl-rickshaw-y')[0]
+  graph = new Rickshaw.Graph.Ajax({
+    element: element[0],
+    min: 0,
+    max: 100 + element.height() / 20
+    renderer: 'line',
+    dataURL: url,
+    onComplete: (transport) ->
+      graph = transport.graph
+      graph.render()
+      detail = new Rickshaw.Graph.HoverDetail({ graph: graph })
+      axes = {
+        x: new Rickshaw.Graph.Axis.Time({ graph: graph }),
+        y: new Rickshaw.Graph.Axis.Y({ graph: graph, element: element_y })
+      }
+      charts.push({ graph: graph, axes: axes })
+      axes['x'].render()
+      axes['y'].render()
+  })
 
 toReadable = (raw,unit,si) ->
   i = 0

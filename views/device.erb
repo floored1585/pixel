@@ -2,7 +2,18 @@
 <% interfaces = data ? data[:interfaces] : nil %>
 
 <h1><%= device %></h1>
-<div>
+<div class='row'>
+  <div class='col-md-6'>
+    <div><span class='pxl-rickshaw-title'>CPU Utilization</span></div>
+    <div class='pxl-rickshaw-y'></div>
+    <div class='pxl-rickshaw' data-pxl-device='<%= device %>' data-pxl-attr='cpu' data-pxl-time='60m'></div>
+  </div>
+  <div class='col-md-6'>
+    <div class='pxl-rickshaw-y'></div>
+    <div class='pxl-rickshaw' data-pxl-device='<%= device %>'></div>
+  </div>
+</div>
+<div class='row'>
   <% if interfaces %>
   <table id='ifTable' class='table table-hover table-condensed tablesorter'>
     <thead>

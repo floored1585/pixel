@@ -47,9 +47,18 @@ generate_charts = (element, url) ->
     onComplete: (transport) ->
       graph = transport.graph
       graph.render()
-      detail = new Rickshaw.Graph.HoverDetail({ graph: graph })
+      detail = new Rickshaw.Graph.HoverDetail({
+        graph: graph,
+        formatter: (series, x, y) ->
+          date = 'Time: <span class="date">' + moment(x * 1000).format('HH:mm') + '</span>'
+          value = 'Value: <span class="value">' + parseInt(y) + '%</span>'
+          content = series.name + '<br>' + date + '&nbsp;&nbsp;&nbsp;' + value
+      })
       axes = {
-        x: new Rickshaw.Graph.Axis.Time({ graph: graph }),
+        x: new Rickshaw.Graph.Axis.Time({
+          graph: graph,
+          timeFixture: new Rickshaw.Fixtures.Time.Local()
+        }),
         y: new Rickshaw.Graph.Axis.Y({ graph: graph, element: element_y })
       }
       charts.push({ graph: graph, axes: axes })

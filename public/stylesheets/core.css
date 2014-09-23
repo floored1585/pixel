@@ -1,4 +1,7 @@
 /* mixins, variables, etc. */
+
+.rickshaw_graph .detail .x_label { display: none }
+
 /* boostrap mixin */
 li.list-group-item-danger a {
   color: inherit;

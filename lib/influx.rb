@@ -4,13 +4,12 @@ require_relative 'configfile'
 module Influx
 
   @settings = Configfile.retrieve
-  @colors = [
-    "#C04D67", "#A9CA7D", "#33865F", "#EEA8A4", "#A6D96A",
-    "#F46D43", "#FDAE61", "#D9EF8B", "#66BD63", "#1A9850",
-    "#C04D67", "#A9CA7D", "#33865F", "#EEA8A4", "#A6D96A",
-    "#F46D43", "#FDAE61", "#D9EF8B", "#66BD63", "#1A9850",
-    "#C04D67", "#A9CA7D", "#33865F", "#EEA8A4", "#A6D96A",
-    "#F46D43", "#FDAE61", "#D9EF8B", "#66BD63", "#1A9850",
+  @colors = [ 
+    '#b2a470', '#92875a', '#ecb796', '#dc8f70', '#716c49', '#d2ed82',
+    '#bbe468', '#a1d05d', '#e7cbe6', '#d8aad6', '#a888c2', '#9dc2d3',
+    '#649eb9', '#387aa3', '#ecb796', '#dc8f70', '#b2a470', '#92875a',
+    '#716c49', '#d2ed82', '#bbe468', '#a1d05d', '#e7cbe6', '#d8aad6',
+    '#a888c2', '#9dc2d3', '#649eb9',
   ]
 
   InfluxDB::Logging.logger = $LOG

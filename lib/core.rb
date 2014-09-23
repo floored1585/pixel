@@ -127,12 +127,20 @@ module Core
           db[:interface].insert(oids)
         end
       end
-      data[:cpus].each do |cpu_index, data|
-        #$LOG.warn("Device: #{device}  CPU: #{cpu_index}\n  Data: #{data}")
+      data[:cpus].each do |index, data|
+        #$LOG.warn("Device: #{device}  CPU: #{index}\n  Data: #{data}")
         # Try updating, and if we don't affect a row, insert instead
-        existing = db[:cpu].where(:device => data[:device], :cpu_index => cpu_index)
+        existing = db[:cpu].where(:device => data[:device], :index => index)
         if existing.update(data) != 1
           db[:cpu].insert(data)
+        end
+      end
+      data[:memory].each do |index, data|
+        #$LOG.warn("Device: #{device} Memory: #{index}\n  Data: #{data}")
+        # Try updating, and if we don't affect a row, insert instead
+        existing = db[:memory].where(:device => data[:device], :index => index)
+        if existing.update(data) != 1
+          db[:memory].insert(data)
         end
       end
 
@@ -196,12 +204,12 @@ module Core
       name_to_index[device][row[:if_name].downcase] = if_index
     end
     cpus.each do |row|
-      cpu_index = row[:cpu_index]
+      index = row[:index]
       device = row[:device]
 
       devices[device] ||= {}
       devices[device][:cpus] ||= {}
-      devices[device][:cpus][cpu_index] = row
+      devices[device][:cpus][index] = row
     end
 
     return devices, name_to_index
@@ -285,29 +293,54 @@ module Core
           # Validate CPUs
           if data[:cpus].class == Hash
             # Validate CPU data
-            data[:cpus].each do |cpu_index, cpu_data|
+            data[:cpus].each do |index, cpu_data|
               if cpu_data.class == Hash
                 cpu_data.symbolize!
               else
-                $LOG.warn("Invalid CPU data for #{device}: cpu_index #{cpu_index}")
-                data[:cpus].delete(cpu_index)
+                $LOG.warn("Invalid CPU data for #{device}: index #{index}")
+                data[:cpus].delete(index)
               end
               # Convert utilization to numeric
               cpu_data[:util] = cpu_data[:util].to_i_if_numeric if cpu_data[:util]
-              required_data = [:device, :cpu_index, :util, :description, :last_updated]
+              required_data = [:device, :index, :util, :description, :last_updated]
               unless (required_data - cpu_data.keys).empty?
-                $LOG.warn("Invalid CPU for #{device}: cpu_index #{cpu_index}. Missing: #{required_data - cpu_data.keys}")
-                data[:cpus].delete(cpu_index)
+                $LOG.warn("Invalid CPU for #{device}: index #{index}. Missing: #{required_data - cpu_data.keys}")
+                data[:cpus].delete(index)
               end
               unless cpu_data[:util] && cpu_data[:util].is_a?(Numeric)
-                $LOG.warn("Invalid or missing CPU utilization for #{device}: cpu_index #{cpu_index}")
-                data[:cpus].delete(cpu_index)
+                $LOG.warn("Invalid or missing CPU utilization for #{device}: index #{index}")
+                data[:cpus].delete(index)
               end
-              utilization = utilization.to_i_if_numeric
             end
           else
             $LOG.warn("Invalid or missing CPU received for #{device}")
             data[:cpus] = {}
+          end
+          # Validate Memory
+          if data[:memory].class == Hash
+            # Validate Memory data
+            data[:memory].each do |index, mem_data|
+              if mem_data.class == Hash
+                mem_data.symbolize!
+              else
+                $LOG.warn("Invalid Memory data for #{device}: index #{index}")
+                data[:memory].delete(index)
+              end
+              # Convert utilization to numeric
+              mem_data[:util] = mem_data[:util].to_i_if_numeric if mem_data[:util]
+              required_data = [:device, :index, :util, :description, :last_updated]
+              unless (required_data - mem_data.keys).empty?
+                $LOG.warn("Invalid Memory data for #{device}: index #{index}. Missing: #{required_data - mem_data.keys}")
+                data[:memory].delete(index)
+              end
+              unless mem_data[:util] && mem_data[:util].is_a?(Numeric)
+                $LOG.warn("Invalid or missing Memory utilization for #{device}: index #{index}")
+                data[:memory].delete(index)
+              end
+            end
+          else
+            $LOG.warn("Invalid or missing Memory data received for #{device}")
+            data[:memory] = {}
           end
         else
           $LOG.error("Invalid or missing data received for #{device}")

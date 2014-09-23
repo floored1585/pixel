@@ -22,11 +22,12 @@ module Influx
     :password => @settings['poller']['influx_pass'],
     :retry => 1)
 
-  def self.query(query, db, format=nil)
+
+  def self.query(query, attribute, db, format=nil)
     data = @influxdb.query(query)
     if format == :rickshaw
       # Format for rickshaw AJAX
-      response = _transform_rickshaw(data, db)
+      response = _transform_rickshaw(data, db, attribute)
     else
       # No special formatting; return raw influxdb
       response = data
@@ -34,18 +35,20 @@ module Influx
     return response
   end
 
+
   def self.post_series(name, object)
     data_point = { :value => object, :time => Time.now.to_i }
     @influxdb.write_point(name, data_point)
   end
 
-  def self._transform_rickshaw(original, db)
+
+  def self._transform_rickshaw(original, db, attribute)
     response = []
     counter = 0
     original.each do |series,points|
-      cpu_index = /cpu\.(.+)\.util/.match(series)[1]
-      device = /(.+)\.cpu/.match(series)[1]
-      name = db[:cpu].filter(:device => device, :cpu_index => cpu_index).first[:description]
+      index = /#{attribute}\.(.+)\.util/.match(series)[1]
+      device = /(.+)\.#{attribute}/.match(series)[1]
+      name = db[attribute.to_sym].filter(:device => device, :index => index).first[:description]
       data = []
       points.each do |point|
         data.unshift({
@@ -62,4 +65,6 @@ module Influx
     end
     return response
   end
+
+
 end

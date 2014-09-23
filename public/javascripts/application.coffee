@@ -23,7 +23,7 @@ draw_charts = ->
     return true if (!device || !attribute || !timeframe)
 
     url = '/v1/series/rickshaw?query=select%20*%20from%20%2F' + device + '.' + attribute +
-    '%2F%20where%20time%20>%20now()%20-%20' + timeframe
+    '%2F%20where%20time%20>%20now()%20-%20' + timeframe + '&attribute=' + attribute
 
     generate_charts(element, url)
 

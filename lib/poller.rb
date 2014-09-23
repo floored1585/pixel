@@ -28,20 +28,27 @@ module Poller
       start_time = Time.now
       if_table = {}
       cpus = {}
+      memory = {}
       metadata = { :worker => Socket.gethostname }
 
       # get SNMP data from the device
       begin
         vendor = _query_device_vendor(ip, poller_cfg)
         cpus = _query_device_cpu(device, ip, poller_cfg, vendor)
+        memory = _query_device_mem(device, ip, poller_cfg, vendor)
         if_table = _query_device_interfaces(ip, poller_cfg)
-        #puts "#{device} CPU Data:"
-        #pp cpu_table
+        #puts "#{device} Memory Data:"
+        #pp memory
         #puts "\n"
       rescue RuntimeError, ArgumentError => e
         $LOG.error("POLLER: Error encountered while polling #{device}: #{e}")
         metadata[:last_poll_result] = 1
-        post_devices = { device => { :metadata => metadata, :interfaces => {}, :cpus => {} } }
+        post_devices = { device => {
+          :metadata => metadata,
+          :interfaces => {},
+          :cpus => {},
+          :memory => {},
+        } }
         _post_data(post_devices)
       end
 
@@ -52,6 +59,16 @@ module Poller
         :username => poller_cfg[:influx_user],
         :password => poller_cfg[:influx_pass],
         :retry => 1)
+      cpus.each do |index, data|
+        series_name = "#{device}.cpu.#{index}.util"
+        series_data = { :value => data[:util], :time => Time.now.to_i }
+        influxdb.write_point(series_name, series_data)
+      end
+      memory.each do |index, data|
+        series_name = "#{device}.memory.#{index}.util"
+        series_data = { :value => data[:util], :time => Time.now.to_i }
+        influxdb.write_point(series_name, series_data)
+      end
 
       # TODO: Need to use stale_indexes to delete stuff
       stale_indexes, last_values = _get_last_values(device, if_table)
@@ -70,7 +87,12 @@ module Poller
       metadata[:last_poll_duration] = Time.now.to_i - start_time.to_i
       metadata[:last_poll_result] = 0
       metadata[:last_poll_text] = ''
-      post_devices = { device => { :metadata => metadata, :interfaces => interfaces, :cpus => cpus } }
+      post_devices = { device => {
+        :metadata => metadata,
+        :interfaces => interfaces,
+        :cpus => cpus,
+        :memory => memory,
+      } }
 
       _post_data(post_devices)
 
@@ -191,7 +213,7 @@ module Poller
           if cpu_table[cpu_index] || vendor_cfg['cpu_list']
             cpu_table[cpu_index] ||= {}
             cpu_table[cpu_index][:device] = device
-            cpu_table[cpu_index][:cpu_index] = cpu_index
+            cpu_table[cpu_index][:index] = cpu_index
             cpu_table[cpu_index][:last_updated] = Time.now.to_i 
             cpu_table[cpu_index][:description] ||= 'CPU'
             cpu_table[cpu_index][:util] = vb.value.to_s 
@@ -201,6 +223,57 @@ module Poller
     end
 
     return cpu_table
+  end
+
+
+  def self._query_device_mem(device, ip, poller_cfg, vendor)
+    return {} unless vendor_cfg = poller_cfg[:oid_numbers][vendor]
+    mem_table = {}
+
+    SNMP::Manager.open(:host => ip, :community => poller_cfg[:snmpv2_community]) do |session|
+      session.walk(vendor_cfg['mem_description']) do |row|
+        row.each do |vb|
+          # Skip this mem value if a regex is defined and doesn't match
+          next if vendor_cfg['mem_list_regex'] && !(vendor_cfg['mem_list_regex'] =~ vb.name.to_str)
+          mem_index = vendor_cfg['mem_index_regex'].match( vb.name.to_str )[0]
+          mem_table[mem_index] = {}
+          mem_table[mem_index][:index] = mem_index
+          mem_table[mem_index][:device] = device
+          mem_table[mem_index][:description] = vb.value.to_s
+          mem_table[mem_index][:last_updated] = Time.now.to_i 
+        end
+      end
+      if vendor_cfg['mem_util'] # We can get util directly
+        session.walk(vendor_cfg['mem_util']) do |row|
+          row.each do |vb|
+            # Skip this mem value if a regex is defined and doesn't match
+            next if vendor_cfg['mem_list_regex'] && !(vendor_cfg['mem_list_regex'] =~ vb.name.to_str)
+            mem_index = vendor_cfg['mem_index_regex'].match( vb.name.to_str )[0]
+            mem_table[mem_index][:util] = vb.value.to_i if mem_table[mem_index]
+          end
+        end
+      else # We're going to need to calculate utilization
+        session.walk(vendor_cfg['mem_used']) do |row|
+          row.each do |vb|
+            mem_index = vendor_cfg['mem_index_regex'].match( vb.name.to_str )[0]
+            next unless mem_table[mem_index]
+            mem_table[mem_index][:used] = vb.value.to_i
+          end
+        end
+        session.walk(vendor_cfg['mem_free']) do |row|
+          row.each do |vb|
+            mem_index = vendor_cfg['mem_index_regex'].match( vb.name.to_str )[0]
+            next unless mem_table[mem_index]
+            mem_table[mem_index][:free] = vb.value.to_i
+          end
+        end
+        mem_table.each do |index, data|
+          data[:util] = '%.2f' % (data[:used].to_f / (data[:used] + data[:free]) * 100)
+        end
+      end
+    end
+
+    return mem_table
   end
 
 
@@ -259,22 +332,33 @@ module Poller
         '1.3.6.1.2.1.2.2.1.20'    => 'if_out_errors',
       },
       'Juniper' => {
-        'cpu_index_regex' => /([0-9]+\.?){4}$/,
         'hw_description'  => '1.3.6.1.4.1.2636.3.1.13.1.5',
+        'cpu_index_regex' => /([0-9]+\.?){4}$/,
         'cpu_util'        => '1.3.6.1.4.1.2636.3.1.13.1.8',
         'cpu_list_regex'  => /2636\.3\.1\.13\.1\.\d\.[97]/,
+        'mem_index_regex' => /([0-9]+\.?){4}$/,
+        'mem_description' => '1.3.6.1.4.1.2636.3.1.13.1.5',
+        'mem_util'        => '1.3.6.1.4.1.2636.3.1.13.1.11',
+        'mem_list_regex'  => /2636\.3\.1\.13\.1\.[0-9]+\.[97]/,
       },
       'Cisco' => {
-        'cpu_index_regex' => /[0-9]+$/,
         'hw_description'  => '1.3.6.1.2.1.47.1.1.1.1.7',
+        'cpu_index_regex' => /[0-9]+$/,
         'cpu_util'        => '1.3.6.1.4.1.9.9.109.1.1.1.1.7', # 1 minute average
         'cpu_list'        => '1.3.6.1.4.1.9.9.109.1.1.1.1.2',
+        'mem_index_regex' => /[0-9]+$/,
+        'mem_description' => '1.3.6.1.4.1.9.9.48.1.1.1.2',
+        'mem_used'        => '1.3.6.1.4.1.9.9.48.1.1.1.5',
+        'mem_free'        => '1.3.6.1.4.1.9.9.48.1.1.1.6',
       },
       'Force10 S-Series'  => {
         'cpu_index_regex' => /[0-9]+$/,
         'hw_description'  => '1.3.6.1.4.1.6027.3.10.1.2.2.1.9',
         'cpu_util'        => '1.3.6.1.4.1.6027.3.10.1.2.9.1.3', # 1 minute average
         'cpu_list_regex'  => /.*/, # No need to filter
+        'mem_index_regex' => /[0-9]+$/,
+        'mem_description' => '1.3.6.1.4.1.6027.3.10.1.2.2.1.9',
+        'mem_util'        => '1.3.6.1.4.1.6027.3.10.1.2.9.1.5',
       },
 
     }

@@ -8,6 +8,7 @@ class Pixel < Sinatra::Base
     ints_discarding = get_ints_discarding(@@settings, @@db)
     ints_down = get_ints_down(@@settings, @@db)
     cpus_high = get_cpus_high(@@settings, @@db)
+    memory_high = get_memory_high(@@settings, @@db)
 
     db_elapsed = '%.2f' % (Time.now - beginning)
 
@@ -18,6 +19,7 @@ class Pixel < Sinatra::Base
       :ints_saturated => ints_saturated,
       :ints_down => ints_down,
       :cpus_high => cpus_high,
+      :memory_high => memory_high,
       :db_elapsed => db_elapsed,
     }
   end

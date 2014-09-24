@@ -43,7 +43,7 @@
       </thead>
       <tbody>
       <% cpus_high.each do |device,data| %>
-        <% data[:cpus].each do |cpu_index,data| %>
+        <% data[:cpus].each do |index,data| %>
         <tr>
         <td><%= device_link(data) %></td>
         <td><%= data[:description] %></td>
@@ -60,8 +60,8 @@
   <br />
 
   <!-- DISCARDING PORTS -->
-    <h2>Top Discarding Ports</h2>
     <% if !ints_discarding.empty? %>
+      <h2>Top Discarding Ports</h2>
       <table id='discardTable' class='table table-hover table-condensed tablesorter'>
       <thead>
         <tr>
@@ -110,10 +110,39 @@
     <% end %>
   </div>
 
-  <!-- SATURATED PORTS -->
+  <!-- HIGH CPU USAGE -->
   <div class='col-md-6'>
-    <h2>Saturated Links</h2>
+    <% if !memory_high.empty? %>
+      <h2>High Memory Usage</h2>
+    <table id='highMemTable' class='table table-hover table-condensed tablesorter'>
+      <thead>
+        <tr>
+          <th>Device</th>
+          <th>Memory Description </th>
+          <th>Utilization </th>
+        </tr>
+      </thead>
+      <tbody>
+      <% memory_high.each do |device,data| %>
+        <% data[:memory].each do |index,data| %>
+        <tr>
+        <td><%= device_link(data) %></td>
+        <td><%= data[:description] %></td>
+        <td>
+          <span class='text-danger'><b><%= data[:util] %>%</b></span>
+        </td>
+      </tr>
+    <% end %>
+    <% end %>
+      </tbody>
+    </table>
+  <% end %>
+
+  <br />
+
+  <!-- SATURATED PORTS -->
     <% if !ints_saturated.empty? %>
+      <h2>Saturated Links</h2>
       <table id='discardTable' class='table table-hover table-condensed tablesorter'>
       <thead>
         <tr>

@@ -4,19 +4,45 @@
 <h1><%= device %></h1>
 <div class='row'>
   <div class='col-md-6'>
-    <div class='pxl-rickshaw-title'>CPU Utilization</div>
-    <div class='pxl-rickshaw-y'></div>
-    <div class='pxl-rickshaw' data-pxl-device='<%= device %>' data-pxl-attr='cpu' data-pxl-time='60m'></div>
+    <div class="panel panel-default">
+      <div class="panel-heading">
+        <div class="row">
+          <div>
+            <center>
+              <span>CPU Utilization</span>
+            </center>
+          </div>
+        </div>
+      </div>
+      <div class="panel-footer">
+        <div class='pxl-rickshaw-y'></div>
+        <div class='pxl-rickshaw' data-pxl-device='<%= device %>' data-pxl-attr='cpu' data-pxl-time='60m'></div>
+        <div class="clearfix"></div>
+      </div>
+    </div>
   </div>
   <div class='col-md-6'>
-    <div class='pxl-rickshaw-title'>Memory Utilization</div>
-    <div class='pxl-rickshaw-y'></div>
-    <div class='pxl-rickshaw' data-pxl-device='<%= device %>' data-pxl-attr='memory' data-pxl-time='60m'></div>
+    <div class="panel panel-default">
+      <div class="panel-heading">
+        <div class="row">
+          <div>
+            <center>
+              <span>Memory Utilization</span>
+            </center>
+          </div>
+        </div>
+      </div>
+      <div class="panel-footer">
+        <div class='pxl-rickshaw-y'></div>
+        <div class='pxl-rickshaw' data-pxl-device='<%= device %>' data-pxl-attr='memory' data-pxl-time='60m'></div>
+        <div class="clearfix"></div>
+      </div>
+    </div>
   </div>
 </div>
 <div class='row'>
   <% if interfaces %>
-  <table id='ifTable' class='table table-hover table-condensed tablesorter'>
+    <table id='ifTable' class='table table-hover table-condensed tablesorter'>
     <thead>
       <tr>
         <th class='pxl-hidden'>Total</th>

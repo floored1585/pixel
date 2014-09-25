@@ -178,7 +178,8 @@ table.tablesorter thead tr {
 
 .pxl-rickshaw {
   height: 100px;
-  margin-bottom: 30px;
+  margin-bottom: 20px;
+  margin-right: 5px;
 }
 
 .pxl-rickshaw .x_tick .title {

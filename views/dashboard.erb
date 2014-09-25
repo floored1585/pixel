@@ -40,7 +40,7 @@
           </div>
           <div class="col-xs-9 text-right">
             <span class="huge"><%= i=0; cpus_high.each { |dev,data| i += data[:cpus].count }; i %></span>
-            <span>&nbsp;Device<%= 's' if cpus_high.count != 1 %> w/ High CPU Usage</span>
+            <span>&nbsp;Device<%= 's' if cpus_high.count != 1 %> with high CPU utilization</span>
           </div>
         </div>
       </div>
@@ -84,7 +84,7 @@
           </div>
           <div class="col-xs-9 text-right">
             <span class="huge"><%= i=0; ints_discarding.each { |dev,data| i += data[:interfaces].count }; i %></span>
-            <span>&nbsp;Interface<%= 's' if ints_discarding.count != 1 %> discarding over threshold</span>
+            <span>&nbsp;Interface<%= 's' if ints_discarding.count != 1 %> discarding over thresholds</span>
           </div>
         </div>
       </div>
@@ -150,7 +150,7 @@
           </div>
           <div class="col-xs-9 text-right">
             <span class="huge"><%= i=0; memory_high.each { |dev,data| i += data[:memory].count }; i %></span>
-            <span>&nbsp;Device<%= 's' if memory_high.count != 1 %> w/ High Memory Usage</span>
+            <span>&nbsp;Device<%= 's' if memory_high.count != 1 %> with high memory utilization</span>
           </div>
         </div>
       </div>

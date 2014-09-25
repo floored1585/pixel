@@ -39,7 +39,7 @@
             <i class="fa fa-clock-o fa-2x pxl-top-margin"></i>
           </div>
           <div class="col-xs-9 text-right">
-            <span class="huge"><%= cpus_high.count %></span>
+            <span class="huge"><%= i=0; cpus_high.each { |dev,data| i += data[:cpus].count }; i %></span>
             <span>&nbsp;Device<%= 's' if cpus_high.count != 1 %> w/ High CPU Usage</span>
           </div>
         </div>
@@ -74,7 +74,7 @@
 
   <br />
 
-    <!-- HIGH CPU USAGE -->
+    <!-- DISCARDING INTERFACES -->
     <% if !ints_discarding.empty? %>
       <div class="panel panel-ltblue">
       <div class="panel-heading">
@@ -83,8 +83,8 @@
             <i class="fa fa-trash-o fa-2x pxl-top-margin"></i>
           </div>
           <div class="col-xs-9 text-right">
-            <span class="huge"><%= ints_discarding.count %></span>
-            <span>&nbsp;Interface<%= 's' if ints_discarding.count != 1 %> discarding >1% or 500pps</span>
+            <span class="huge"><%= i=0; ints_discarding.each { |dev,data| i += data[:interfaces].count }; i %></span>
+            <span>&nbsp;Interface<%= 's' if ints_discarding.count != 1 %> discarding over threshold</span>
           </div>
         </div>
       </div>
@@ -149,7 +149,7 @@
             <i class="fa fa-file-o fa-2x pxl-top-margin"></i>
           </div>
           <div class="col-xs-9 text-right">
-            <span class="huge"><%= memory_high.count %></span>
+            <span class="huge"><%= i=0; memory_high.each { |dev,data| i += data[:memory].count }; i %></span>
             <span>&nbsp;Device<%= 's' if memory_high.count != 1 %> w/ High Memory Usage</span>
           </div>
         </div>
@@ -193,7 +193,7 @@
             <i class="fa fa-chain fa-2x pxl-top-margin"></i>
           </div>
           <div class="col-xs-9 text-right">
-            <span class="huge"><%= ints_saturated.count %></span>
+            <span class="huge"><%= i=0; ints_saturated.each { |dev,data| i += data[:interfaces].count }; i %></span>
             <span>&nbsp;Saturated interface<%= 's' if ints_saturated.count != 1 %></span>
           </div>
         </div>

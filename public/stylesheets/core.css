@@ -23,6 +23,10 @@ li.list-group-item-danger a:hover {
   color: #0000aa;
 }
 
+.panel-footer {
+  background-color: white;
+}
+
 .tooltip-inner {
   white-space: pre;
   max-width: none;
@@ -77,7 +81,27 @@ li.list-group-item-danger a:hover {
   margin-bottom: 10px;
 }
 
+.pxl-top-margin {
+  margin-top: 3px;
+}
+
+.panel-ltblue {
+  border-color: #2E618D;
+}
+
+.panel-ltblue .panel-heading {
+  color: #242E36;
+  border-color: #428bca;
+  background-color: #95BEE1;
+}
+
 /* universal */
+
+.huge {
+  font-size: 20px;
+  font-weight: bold;
+}
+
 html {
   overflow-y: scroll;
 }

@@ -1,5 +1,5 @@
-<%# provide(:title, 'Dashboard') %>
 <h1>Dashboard!</h1>
+
 <!-- INTERFACE DOWN WARNINGS -->
 <% if !ints_down.empty? %>
   <div class='row'>
@@ -28,40 +28,67 @@
 <% end %>
 
 <div class='row'>
-
-  <!-- HIGH CPU USAGE -->
   <div class='col-md-6'>
+
+    <!-- HIGH CPU USAGE -->
     <% if !cpus_high.empty? %>
-      <h2>High CPU Usage</h2>
-    <table id='highCpuTable' class='table table-hover table-condensed tablesorter'>
-      <thead>
-        <tr>
-          <th>Device</th>
-          <th>CPU Description </th>
-          <th>Utilization </th>
-        </tr>
-      </thead>
-      <tbody>
-      <% cpus_high.each do |device,data| %>
-        <% data[:cpus].each do |index,data| %>
-        <tr>
-        <td><%= device_link(data) %></td>
-        <td><%= data[:description] %></td>
-        <td>
-          <span class='text-danger'><b><%= data[:util] %>%</b></span>
-        </td>
-      </tr>
-    <% end %>
-    <% end %>
-      </tbody>
-    </table>
+      <div class="panel panel-ltblue">
+      <div class="panel-heading">
+        <div class="row">
+          <div class="col-xs-3">
+            <i class="fa fa-clock-o fa-2x pxl-top-margin"></i>
+          </div>
+          <div class="col-xs-9 text-right">
+            <span class="huge"><%= cpus_high.count %></span>
+            <span>&nbsp;Device<%= 's' if cpus_high.count != 1 %> w/ High CPU Usage</span>
+          </div>
+        </div>
+      </div>
+      <div class="panel-footer">
+        <table id='highCpuTable' class='table table-hover table-condensed tablesorter'>
+          <thead>
+            <tr>
+              <th>Device</th>
+              <th>CPU Description </th>
+              <th>Utilization </th>
+            </tr>
+          </thead>
+          <tbody>
+          <% cpus_high.each do |device,data| %>
+            <% data[:cpus].each do |index,data| %>
+            <tr>
+            <td><%= device_link(data) %></td>
+            <td><%= data[:description] %></td>
+            <td>
+              <span class='text-danger'><b><%= data[:util] %>%</b></span>
+            </td>
+          </tr>
+        <% end %>
+        <% end %>
+          </tbody>
+        </table>
+        <div class="clearfix"></div>
+      </div>
+    </div>
   <% end %>
 
   <br />
 
-  <!-- DISCARDING PORTS -->
+    <!-- HIGH CPU USAGE -->
     <% if !ints_discarding.empty? %>
-      <h2>Top Discarding Ports</h2>
+      <div class="panel panel-ltblue">
+      <div class="panel-heading">
+        <div class="row">
+          <div class="col-xs-3">
+            <i class="fa fa-trash-o fa-2x pxl-top-margin"></i>
+          </div>
+          <div class="col-xs-9 text-right">
+            <span class="huge"><%= ints_discarding.count %></span>
+            <span>&nbsp;Interface<%= 's' if ints_discarding.count != 1 %> discarding >1% or 500pps</span>
+          </div>
+        </div>
+      </div>
+      <div class="panel-footer">
       <table id='discardTable' class='table table-hover table-condensed tablesorter'>
       <thead>
         <tr>
@@ -69,7 +96,6 @@
           <th>Discards/sec </th>
           <th>Device</th>
           <th>Interface </th>
-          <th class='hidden-md hidden-sm hidden-xs'>Neighbor </th>
           <th>Ingress </th>
           <th>Egress </th>
         </tr>
@@ -85,7 +111,6 @@
             </td>
             <td><%= device_link(oids) %></td>
             <td><%= interface_link(settings, oids) %></td>
-            <td class='hidden-md hidden-sm hidden-xs'><%= neighbor_link(oids, { device_only: true }) %></td>
             <td class='pxl-histogram pxl-meta <%= 'pxl-hoverswap' unless /^10+/.match(oids[:if_high_speed].to_s) %>' data-pxl-meta='<%= oids[:bps_in_util]%>'>
               <span class='pxl-swap-pri'>
                 <%= bps_cell('in', oids, { compact: true, bps_only: true }) %>
@@ -107,43 +132,74 @@
       <% end %>
       </tbody>
       </table>
-    <% end %>
-  </div>
+        <div class="clearfix"></div>
+      </div>
+    </div>
+  <% end %>
+</div>
 
-  <!-- HIGH CPU USAGE -->
   <div class='col-md-6'>
+
+    <!-- HIGH MEMORY USAGE -->
     <% if !memory_high.empty? %>
-      <h2>High Memory Usage</h2>
-    <table id='highMemTable' class='table table-hover table-condensed tablesorter'>
-      <thead>
-        <tr>
-          <th>Device</th>
-          <th>Memory Description </th>
-          <th>Utilization </th>
-        </tr>
-      </thead>
-      <tbody>
-      <% memory_high.each do |device,data| %>
-        <% data[:memory].each do |index,data| %>
-        <tr>
-        <td><%= device_link(data) %></td>
-        <td><%= data[:description] %></td>
-        <td>
-          <span class='text-danger'><b><%= data[:util] %>%</b></span>
-        </td>
-      </tr>
-    <% end %>
-    <% end %>
-      </tbody>
-    </table>
+      <div class="panel panel-ltblue">
+      <div class="panel-heading">
+        <div class="row">
+          <div class="col-xs-3">
+            <i class="fa fa-file-o fa-2x pxl-top-margin"></i>
+          </div>
+          <div class="col-xs-9 text-right">
+            <span class="huge"><%= memory_high.count %></span>
+            <span>&nbsp;Device<%= 's' if memory_high.count != 1 %> w/ High Memory Usage</span>
+          </div>
+        </div>
+      </div>
+      <div class="panel-footer">
+        <table id='highMemTable' class='table table-hover table-condensed tablesorter'>
+          <thead>
+            <tr>
+              <th>Device</th>
+              <th>Memory Description </th>
+              <th>Utilization </th>
+            </tr>
+          </thead>
+          <tbody>
+          <% memory_high.each do |device,data| %>
+            <% data[:memory].each do |index,data| %>
+            <tr>
+            <td><%= device_link(data) %></td>
+            <td><%= data[:description] %></td>
+            <td>
+              <span class='text-danger'><b><%= data[:util] %>%</b></span>
+            </td>
+          </tr>
+        <% end %>
+        <% end %>
+          </tbody>
+        </table>
+        <div class="clearfix"></div>
+      </div>
+    </div>
   <% end %>
 
   <br />
 
   <!-- SATURATED PORTS -->
     <% if !ints_saturated.empty? %>
-      <h2>Saturated Links</h2>
-      <table id='discardTable' class='table table-hover table-condensed tablesorter'>
+      <div class="panel panel-ltblue">
+      <div class="panel-heading">
+        <div class="row">
+          <div class="col-xs-3">
+            <i class="fa fa-chain fa-2x pxl-top-margin"></i>
+          </div>
+          <div class="col-xs-9 text-right">
+            <span class="huge"><%= ints_saturated.count %></span>
+            <span>&nbsp;Saturated interface<%= 's' if ints_saturated.count != 1 %></span>
+          </div>
+        </div>
+      </div>
+      <div class="panel-footer">
+      <table id='saturatedTable' class='table table-hover table-condensed tablesorter'>
       <thead>
         <tr>
           <th class='pxl-hidden'>Total</th>
@@ -189,7 +245,10 @@
       <% end %>
       </tbody>
       </table>
-    <% end %>
+        <div class="clearfix"></div>
+      </div>
+    </div>
+  <% end %>
   </div>
 
 </div>

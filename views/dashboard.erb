@@ -36,7 +36,7 @@
       <div class="panel-heading">
         <div class="row">
           <div class="col-xs-3">
-            <i class="fa fa-clock-o fa-2x pxl-top-margin"></i>
+            <i class="fa fa-clock-o fa-2x"></i>
           </div>
           <div class="col-xs-9 text-right">
             <span class="huge"><%= i=0; cpus_high.each { |dev,data| i += data[:cpus].count }; i %></span>
@@ -80,7 +80,7 @@
       <div class="panel-heading">
         <div class="row">
           <div class="col-xs-3">
-            <i class="fa fa-trash-o fa-2x pxl-top-margin"></i>
+            <i class="fa fa-trash-o fa-2x"></i>
           </div>
           <div class="col-xs-9 text-right">
             <span class="huge"><%= i=0; ints_discarding.each { |dev,data| i += data[:interfaces].count }; i %></span>
@@ -146,7 +146,7 @@
       <div class="panel-heading">
         <div class="row">
           <div class="col-xs-3">
-            <i class="fa fa-tasks fa-2x pxl-top-margin"></i>
+            <i class="fa fa-tasks fa-2x"></i>
           </div>
           <div class="col-xs-9 text-right">
             <span class="huge"><%= i=0; memory_high.each { |dev,data| i += data[:memory].count }; i %></span>
@@ -190,7 +190,7 @@
       <div class="panel-heading">
         <div class="row">
           <div class="col-xs-3">
-            <i class="fa fa-exchange fa-2x pxl-top-margin"></i>
+            <i class="fa fa-exchange fa-2x"></i>
           </div>
           <div class="col-xs-9 text-right">
             <span class="huge"><%= i=0; ints_saturated.each { |dev,data| i += data[:interfaces].count }; i %></span>

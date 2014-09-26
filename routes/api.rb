@@ -14,7 +14,7 @@ class Pixel < Sinatra::Base
   end
 
   get '/v1/devices/list' do
-    list_devices(@@settings, @@db)
+    JSON.generate( list_devices(@@settings, @@db) )
   end
 
   get '/v1/devices' do

@@ -2,6 +2,12 @@
 
 module Core
 
+  def list_devices(settings, db)
+    devices = []
+    db[:device].select(:device).each { |row| devices.push(row[:device]) }
+    return devices
+  end
+
   def get_ints_down(settings, db)
     interfaces = db[:interface].filter(Sequel.like(:if_alias, 'sub%') | Sequel.like(:if_alias, 'bb%'))
     interfaces = interfaces.exclude(:if_oper_status => 1)

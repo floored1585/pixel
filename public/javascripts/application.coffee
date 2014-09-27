@@ -5,11 +5,12 @@ ready = ->
   color_table()
   tooltips()
   parent_child()
-  set_focus()
   set_onclicks()
   check_refresh()
   set_hoverswaps()
   draw_charts()
+  typeahead()
+  set_focus()
   $(window).resize(check_charts)
 
 draw_charts = ->
@@ -170,6 +171,50 @@ set_hoverswaps = ->
   $('td span.pxl-swap-alt').addClass('pxl-hidden')
   $('tr td.pxl-hoverswap').hover ->
     $(this).find("[class^='pxl-swap']").toggleClass('pxl-hidden')
+
+typeahead = ->
+  devices = new Bloodhound({
+    datumTokenizer: (d) ->
+      test = Bloodhound.tokenizers.whitespace(d.value)
+      $.each(test, (k,v) ->
+        i = 0
+        while( (i+1) < v.length )
+          test.push(v.substr(i,v.length))
+          i++
+      )
+      return test
+    ,
+    queryTokenizer: Bloodhound.tokenizers.whitespace,
+    limit: 10,
+    prefetch: {
+      url: '/v1/devices/list',
+      filter: (list) ->
+        $.map(list, (device) -> { value: device })
+        # the json file contains an array of strings, but the Bloodhound
+        # suggestion engine expects JavaScript objects so this converts all of
+        # those strings
+    }
+  })
+
+  # kicks off the loading/processing of `local` and `prefetch`
+  devices.clearPrefetchCache()
+  devices.initialize()
+
+
+  # passing in `null` for the `options` arguments will result in the default
+  # options being used
+  $('.typeahead').typeahead(
+    {
+      highlight: true,
+    },
+    {
+      name: 'devices',
+      # `ttAdapter` wraps the suggestion engine in an adapter that
+      # is compatible with the typeahead jQuery plugin
+      source: devices.ttAdapter()
+    },
+  )
+  $('input.typeahead').bind("typeahead:selected", -> $("form").submit() )
 
 $(document).ready(ready)
 $(document).on('page:load', ready)

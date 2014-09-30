@@ -52,22 +52,15 @@ module Poller
         _post_data(post_devices)
       end
 
-      InfluxDB::Logging.logger = $LOG
-      influxdb = InfluxDB::Client.new(
-        poller_cfg[:influx_db],
-        :host => poller_cfg[:influx_ip],
-        :username => poller_cfg[:influx_user],
-        :password => poller_cfg[:influx_pass],
-        :retry => 1)
       cpus.each do |index, data|
         series_name = "#{device}.cpu.#{index}.util"
         series_data = { :value => data[:util], :time => Time.now.to_i }
-        influxdb.write_point(series_name, series_data)
+        _write_influxdb(series_name, series_data, poller_cfg)
       end
       memory.each do |index, data|
         series_name = "#{device}.memory.#{index}.util"
         series_data = { :value => data[:util], :time => Time.now.to_i }
-        influxdb.write_point(series_name, series_data)
+        _write_influxdb(series_name, series_data, poller_cfg)
       end
 
       # TODO: Need to use stale_indexes to delete stuff
@@ -78,7 +71,7 @@ module Poller
       if_table.each do |if_index, oids|
         # Skip if we're not interested in processing this interface
         next unless oids['if_alias'] =~ poller_cfg[:interesting_alias]
-        interfaces[if_index] = _process_interface(device, if_index, oids, last_values, influxdb, poller_cfg)
+        interfaces[if_index] = _process_interface(device, if_index, oids, last_values, poller_cfg)
       end
       $LOG.info("SNMP poll successful for #{device}: " + 
                 "#{if_table.size} interfaces polled, #{interfaces.size} processed")
@@ -102,7 +95,7 @@ module Poller
   end
 
 
-  def self._process_interface(device, if_index, oids, last_values, influxdb, poller_cfg)
+  def self._process_interface(device, if_index, oids, last_values, poller_cfg)
     oids['if_index'] = if_index
     oids['device'] = device
     oids['last_updated'] = Time.now.to_i
@@ -139,7 +132,7 @@ module Poller
         # write the average
         unless average < 0
           oids[poller_cfg[:avg_names][oid_text]] = average
-          influxdb.write_point(avg_series_name, avg_series_data)
+          _write_influxdb(avg_series_name, avg_series_data, poller_cfg)
         end
       end
     end # End oids.each
@@ -302,6 +295,39 @@ module Poller
       $LOG.error("POLLER: POST failed for #{devices.keys[0]}; Aborting")
     end
     abort
+  end
+
+
+  def self._write_influxdb(series_name, series_data, poller_cfg, retry_count=0)
+    InfluxDB::Logging.logger = $LOG
+    influxdb = InfluxDB::Client.new(
+      poller_cfg[:influx_db],
+      :host => poller_cfg[:influx_ip],
+      :username => poller_cfg[:influx_user],
+      :password => poller_cfg[:influx_pass],
+      :retry => 1)
+
+    retry_limit = 5
+    retry_delay = 5
+    base_log = "POLLER: InfluxDB request to #{poller_cfg[:influx_ip]} failed."
+
+    begin # Attempt the connection
+      influxdb.write_point(series_name, series_data)
+    rescue Timeout::Error, Errno::ETIMEDOUT, Errno::EINVAL, Errno::ECONNRESET,
+      Errno::ECONNREFUSED, EOFError, Net::HTTPBadResponse,
+      Net::HTTPHeaderSyntaxError, Net::ProtocolError
+      # The request failed; Retry if allowed
+      if retry_count <= retry_limit
+        retry_count += 1
+        retry_log = "Retry ##{retry_count} (limit: #{retry_limit}) in #{retry_delay} seconds."
+        $LOG.error("#{base_log} #{retry_log}")
+        sleep retry_delay
+        _write_influxdb(series_name, series_data, poller_cfg, retry_count)
+      else
+        $LOG.error("#{base_log}\n  Retry limit (#{retry_limit}) exceeded; Aborting.")
+        return false
+      end
+    end
   end
 
 

@@ -48,16 +48,17 @@ module Core
   end
 
   def get_device(settings, db, device, component=nil)
-    # Return an empty hash if the device doesn't exist
-    return {} if db[:device].filter(:device => device).empty?
-
     interfaces = db[:interface]
     memory = db[:memory]
     cpus = db[:cpu]
     # Filter if a device was specified, otherwise return all
-    interfaces = interfaces.filter(:device => device) if device
-    memory = memory.filter(:device => device) if device
-    cpus = cpus.filter(:device => device) if device
+    if device
+      # Return an empty hash if the device doesn't exist
+      return {} if db[:device].filter(:device => device).empty?
+      interfaces = interfaces.filter(:device => device)
+      memory = memory.filter(:device => device)
+      cpus = cpus.filter(:device => device)
+    end
 
     # Return just an empty device if there are no CPUs or interfaces for the device
     return { device => {} } if cpus.empty? && interfaces.empty? && device

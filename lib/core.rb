@@ -10,7 +10,7 @@ module Core
 
   def get_ints_down(settings, db)
     interfaces = db[:interface].filter(Sequel.like(:if_alias, 'sub%') | Sequel.like(:if_alias, 'bb%'))
-    interfaces = interfaces.exclude(:if_oper_status => 1)
+    interfaces = interfaces.exclude(:if_oper_status => 1).exclude(:if_type => 'acc')
 
     (devices, name_to_index) = _device_map(interfaces, {}, {})
     _fill_metadata!(devices, settings, name_to_index)
@@ -104,15 +104,12 @@ module Core
     # Fetch some devices and mark them as polling
     db.transaction do
       rows = db[:device].filter{ next_poll < Time.now.to_i }
-      # Ignore currently_polling value if the last_poll is more than 1000 seconds ago
       rows = rows.filter{Sequel.|({:currently_polling => 0}, (last_poll < Time.now.to_i - 1000))}
       rows = rows.limit(count).for_update
-      rows.filter(:currently_polling => 1).each do |stale_row|
-        $LOG.warn("CORE: Overriding currently_polling for #{stale_row[:device]} (#{poller_name})")
-      end
 
       rows.each do |row|
         devices[row[:device]] = row
+        $LOG.warn("CORE: Overriding currently_polling for #{row[:device]} (#{poller_name})") if row[:currently_polling] == 1
         device_row = db[:device].where(:device => row[:device])
         device_row.update(
           :currently_polling => 1,
@@ -134,12 +131,12 @@ module Core
 
       $LOG.info("CORE: Received data for #{device} from #{data[:metadata][:worker]}")
 
-      data[:interfaces].each do |if_index, oids|
+      data[:interfaces].each do |index, data|
         #$LOG.warn("Device: #{device}  Interface: #{if_index}\n  OIDs: #{oids}")
         # Try updating, and if we don't affect a row, insert instead
-        existing = db[:interface].where(:device => oids[:device], :if_index => if_index)
-        if existing.update(oids) != 1
-          db[:interface].insert(oids)
+        existing = db[:interface].where(:device => data[:device], :if_index => index)
+        if existing.update(data) != 1
+          db[:interface].insert(data)
         end
       end
       data[:cpus].each do |index, data|
@@ -158,16 +155,16 @@ module Core
           db[:memory].insert(data)
         end
       end
+      existing = db[:device].where(:device => device)
+      if existing.update(metadata) != 1
+        $LOG.error("Problem updating metadata for #{device}")
+      end
 
-      # Update the device metadata
-      next_poll = Time.now.to_i + 100
+      # Update the rest of the device attributes
       db[:device].where(:device => device).update(
         :currently_polling => 0,
         :worker => nil,
-        :last_poll_duration => metadata[:last_poll_duration],
-        :last_poll_result => metadata[:last_poll_result],
-        :last_poll_text => metadata[:last_poll_text],
-        :next_poll => next_poll,
+        :next_poll => Time.now.to_i + 100,
       )
     end
     return true

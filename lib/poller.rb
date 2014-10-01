@@ -52,6 +52,12 @@ module Poller
         _post_data(post_devices)
       end
 
+      # Delete interfaces we're not interested in
+      if_table.delete_if { |index,oids| !(oids['if_alias'] =~ poller_cfg[:interesting_alias]) }
+      # Populate name_to_index hash
+      name_to_index = {}
+      if_table.each { |index,oids| name_to_index[oids['if_name'].downcase] = index }
+
       cpus.each do |index, data|
         series_name = "#{device}.cpu.#{index}.util"
         series_data = { :value => data[:util], :time => Time.now.to_i }
@@ -68,10 +74,35 @@ module Poller
 
       # Run through the hash we got from poll, processing the interesting interfaces
       interfaces = {}
+      totals = { 'pps_out' => 0, 'bps_out' => 0, 'discards_out' => 0 }
       if_table.each do |if_index, oids|
-        # Skip if we're not interested in processing this interface
-        next unless oids['if_alias'] =~ poller_cfg[:interesting_alias]
+        # Call _process_interface to do the heavy lifting
         interfaces[if_index] = _process_interface(device, if_index, oids, last_values, poller_cfg)
+        # Update totals
+        totals.keys.each { |key| totals[key] += interfaces[if_index][key] || 0 }
+        # Find the parent interface if it exists, and transfer its type to child.
+        # Otherwise (if we're not a child) look at our own type.
+        # I hate this logic, but can't think of a better way to do it.
+        parent_iface_match = oids['if_alias'].match(/^[a-z]+\[([\w\/\-\s]+)\]/) || []
+        if parent_iface = parent_iface_match[1]
+          if parent_index = name_to_index[parent_iface.downcase]
+            parent_alias = if_table[parent_index]['if_alias'] 
+            oids[:if_type] = parent_alias.match(/^([a-z]+)(__|\[)/)[1]
+          else
+            $LOG.error("POLLER: Can't find parent interface #{parent_iface} on device #{device} (child: #{oids['if_name']})")
+            oids[:if_type] = 'unknown'
+          end
+        else
+          oids[:if_type] = oids['if_alias'].match(/^([a-z]+)(__|\[)/)[1]
+        end
+      end
+
+      # Push the totals to influx
+      totals.keys.each do |key|
+        metadata[key.to_sym] = totals[key] # for application
+        series_name = "#{device}.#{key}"
+        series_data = { :value => totals[key], :time => Time.now.to_i }
+        _write_influxdb(series_name, series_data, poller_cfg)
       end
       $LOG.info("SNMP poll successful for #{device}: " + 
                 "#{if_table.size} interfaces polled, #{interfaces.size} processed")

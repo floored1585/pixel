@@ -86,7 +86,7 @@ module Poller
         parent_iface_match = oids['if_alias'].match(/^[a-z]+\[([\w\/\-\s]+)\]/) || []
         if parent_iface = parent_iface_match[1]
           if parent_index = name_to_index[parent_iface.downcase]
-            parent_alias = if_table[parent_index]['if_alias'] 
+            parent_alias = if_table[parent_index]['if_alias']
             oids[:if_type] = parent_alias.match(/^([a-z]+)(__|\[)/)[1]
           else
             $LOG.error("POLLER: Can't find parent interface #{parent_iface} on device #{device} (child: #{oids['if_name']})")

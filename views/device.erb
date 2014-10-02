@@ -55,7 +55,7 @@
       </tr>
     </thead>
     <tbody>
-    <% interfaces.each do |if_index,oids| %>
+    <% interfaces.each do |index,oids| %>
       <tr <%= tr_attributes(oids, { hide_if_child: true, hl_relation: true }) %>>
         <td class='pxl-hidden'><%= total_bps_cell(interfaces, oids) %></td>
         <td class='pxl-td-shrink'><%= interface_link(settings, oids) %></td>
@@ -65,7 +65,7 @@
         <td class='<%= 'pxl-child-td' if oids[:is_child] %>'>
           <%= oids[:link_type] %>
           <% if oids[:is_parent] %>
-            <button type='button' class='swapPlusMinus btn btn-default btn-xs' data-toggle='collapse' data-target='.<%= if_index %>_child'>
+            <button type='button' class='swapPlusMinus btn btn-default btn-xs' data-toggle='collapse' data-target='.<%= index %>_child'>
               <span class="glyphicon glyphicon-plus"></span>
             </button>
           <% elsif oids[:is_child] %>

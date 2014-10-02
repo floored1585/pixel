@@ -133,9 +133,9 @@ module Core
       $LOG.info("CORE: Received data for #{device} from #{data[:metadata][:worker]}")
 
       data[:interfaces].each do |index, data|
-        #$LOG.warn("Device: #{device}  Interface: #{if_index}\n  OIDs: #{oids}")
+        #$LOG.warn("Device: #{device}  Interface: #{index}\n  OIDs: #{oids}")
         # Try updating, and if we don't affect a row, insert instead
-        existing = db[:interface].where(:device => data[:device], :if_index => index)
+        existing = db[:interface].where(:device => data[:device], :index => index)
         if existing.update(data) != 1
           db[:interface].insert(data)
         end
@@ -202,19 +202,41 @@ module Core
     return true
   end
 
+  def delete_devices(settings, db, devices, partial)
+    db.disconnect
+    # If partial is true, we're going to delete individual things
+    # Otherwise, delete the whole device
+    if partial
+      devices.each do |device, components|
+        components.each do |component, indexes|
+          indexes.each do |index|
+            $LOG.warn("CORE: Removing interface ID #{index} on #{device} from database")
+            db[component.to_sym].filter(:index => index).delete
+          end
+        end
+      end
+    else
+      devices.keys.each do |device|
+        $LOG.warn("CORE: Removing device #{device} from database")
+        db[:device].filter(:device => device).delete
+      end
+    end
+    return true
+  end
+
   def _device_map(interfaces, cpus, memory)
     devices = {}
     name_to_index = {}
 
     interfaces.each do |row|
-      if_index = row[:if_index]
+      index = row[:index]
       device = row[:device]
 
       devices[device] ||= { :interfaces => {} }
       name_to_index[device] ||= {}
 
-      devices[device][:interfaces][if_index] = row
-      name_to_index[device][row[:if_name].downcase] = if_index
+      devices[device][:interfaces][index] = row
+      name_to_index[device][row[:if_name].downcase] = index
     end
     cpus.each do |row|
       index = row[:index]
@@ -290,21 +312,21 @@ module Core
           # Validate interfaces
           if data[:interfaces].class == Hash
             # Validate OIDs
-            data[:interfaces].each do |if_index, oids|
+            data[:interfaces].each do |index, oids|
               if oids.class == Hash
                 oids.symbolize!
               else
-                $LOG.warn("Invalid or missing interface data for #{device}: if_index #{if_index}")
-                data[:interfaces].delete(if_index)
+                $LOG.warn("Invalid or missing interface data for #{device}: index #{index}")
+                data[:interfaces].delete(index)
               end
-              required_data = [:device, :if_index, :last_updated, :if_alias, :if_name, :if_mtu,
+              required_data = [:device, :index, :last_updated, :if_alias, :if_name, :if_mtu,
                                :if_hc_in_octets, :if_hc_out_octets, :if_hc_in_ucast_pkts,
                                :if_hc_out_ucast_pkts, :if_high_speed, :if_admin_status, 
                                :if_admin_status_time, :if_oper_status, :if_oper_status_time,
                                :if_in_discards, :if_in_errors, :if_out_discards, :if_out_errors]
               unless (required_data - oids.keys).empty?
-                $LOG.warn("Incomplete OIDs for #{device}: if_index #{if_index}. Missing: #{required_data - oids.keys}")
-                data[:interfaces].delete(if_index)
+                $LOG.warn("Incomplete OIDs for #{device}: index #{index}. Missing: #{required_data - oids.keys}")
+                data[:interfaces].delete(index)
               end
             end
           else

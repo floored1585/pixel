@@ -47,11 +47,16 @@ class Pixel < Sinatra::Base
     add_devices(@@settings, @@db, devices)
   end
 
-  post '/v1/devices/delete' do
-    partial = params[:partial]
+  post '/v1/devices/delete/components' do
     request.body.rewind
     devices = JSON.parse(request.body.read)
-    delete_devices(@@settings, @@db, devices, partial)
+    delete_devices(@@settings, @@db, devices, true)
+  end
+
+  post '/v1/devices/delete' do
+    request.body.rewind
+    devices = JSON.parse(request.body.read)
+    delete_devices(@@settings, @@db, devices, false)
   end
 
   post '/v1/devices' do

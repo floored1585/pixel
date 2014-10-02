@@ -1,9 +1,14 @@
-#
-# Link to the scripted dashboard for interface statistics
-grafana_if_dash: 'http://example.com/#/dashboard/script/interface.js'
+# Pixel components
+components: {
+  core: '127.0.0.1:9292',
+}
 
 #
-# This is how device names are parsed.
+# Link to the scripted dashboard for interface statistics
+grafana_if_dash: 'http://graph.pixel.sd.dreamhost.com/#/dashboard/script/ne_interface.js'
+
+#
+# This is how device names are parsed.  See dev_rxp_matchkeys for more information.
 dev_rxps: { 
   standard: !ruby/regexp '/^([a-zA-Z0-9]+)-([a-zA-Z]+)([0-9]+)([a-zA-Z0-9]+)-([a-zA-Z]+)(?:-([a-zA-Z]+))?$/',
   iad1: !ruby/regexp '/^([a-zA-Z0-9]+)-(\w)-([0-9])$/',
@@ -28,7 +33,7 @@ dev_rxps: {
 #
 dev_rxp_matchkeys: {
   standard: [
-    'device', # Name represents the entire match, which is always returned first
+    'device', # device represents the entire match, which is always returned first
     'location',
     'row',
     'rack',
@@ -64,6 +69,9 @@ locations: {
 stale_timeout: 600
 
 # For converting link type abbreviations to formal names.
+# If you change these, make sure you update interesting_alias
+#   in the poller section as well.
+# TODO: This needs to be reversed!
 link_types: { 
   bb: 'Backbone', 
   acc: 'Access', 
@@ -71,10 +79,35 @@ link_types: {
   trn: 'Transit',
 }
 
-# PostgrSQL database connection
+# PostgreSQL database connection
 pg_conn: {
   host: '127.0.0.1',
   db: 'pixel',
   user: 'postgres',
   pass: 'password',
+}
+
+# Poller configuration
+poller: {
+  concurrency: 15,
+  influx_ip: '127.0.0.1',
+  influx_user: 'user',
+  influx_pass: 'pass',
+  influx_db: 'snmp_data',
+  snmpv2_community: 'public',
+  # interesting_alias is the regex that determines whether or not
+  # we process & store data, based on the interface description.
+  interesting_alias: !ruby/regexp '/^trn__|^bb__|^acc__|^sub(\[|__)/',
+}
+
+# Where we're gonna get our devices
+device_source: {
+  type: 'file',
+  file_path: 'config/hosts.yaml', # Must be a file with a list of yaml hashes { device => ip }
+}
+
+# API settings (for making calls between components)
+api: {
+  retry_count: 5,
+  retry_delay: 5,
 }

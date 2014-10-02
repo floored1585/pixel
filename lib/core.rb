@@ -186,16 +186,25 @@ module Core
       $LOG.info("CORE: Importing #{devices.size} devices from file: #{device_file}")
     end
 
-    API.post('core', '/v1/devices/add', devices, 'CORE', 'new devices')
+    API.post('core', '/v1/devices/replace', devices, 'CORE', 'new devices')
   end
 
-  def add_devices(settings, db, devices)
+  def add_devices(settings, db, devices, replace)
     db.disconnect
     devices.each do |device, ip|
       existing = db[:device].where(:device => device)
       if existing.update(:ip => ip) != 1
         $LOG.info("CORE: Adding new device: #{device}")
         db[:device].insert(:device => device, :ip => ip)
+      end
+    end
+    if replace
+      # Delete any devices that weren't provided
+      existing = db[:device].select(:device, :ip).to_hash(:device).keys
+      to_delete = existing - devices.keys
+      to_delete.each do |device|
+        $LOG.warn("CORE: Deleting device #{device}; not in new device set")
+        db[:device].filter(:device => device).delete
       end
     end
     # need error detection

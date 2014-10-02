@@ -41,10 +41,16 @@ class Pixel < Sinatra::Base
   #
   # POSTS
   #
+  post '/v1/devices/replace' do
+    request.body.rewind
+    devices = JSON.parse(request.body.read)
+    add_devices(@@settings, @@db, devices, true)
+  end
+
   post '/v1/devices/add' do
     request.body.rewind
     devices = JSON.parse(request.body.read)
-    add_devices(@@settings, @@db, devices)
+    add_devices(@@settings, @@db, devices, false)
   end
 
   post '/v1/devices/delete/components' do

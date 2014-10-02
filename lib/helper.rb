@@ -26,9 +26,9 @@ module Helper
     attributes = [
       "data-toggle='tooltip'",
       "data-container='body'",
-      "title='index: #{oids[:if_index]}'",
+      "title='index: #{oids[:index]}'",
       "data-rel='tooltip-left'",
-        "data-pxl-index='#{oids[:if_index]}'"
+        "data-pxl-index='#{oids[:index]}'"
     ]
     attributes.push "data-pxl-parent='#{oids[:my_parent]}'" if oids[:is_child] && opts[:hl_relation]
     classes = []
@@ -92,7 +92,7 @@ module Helper
   def interface_link(settings, oids)
     "<a href='#{settings['grafana_if_dash']}" +
       "?title=#{oids[:device]}%20::%20#{CGI::escape(oids[:if_name])}" +
-    "&name=#{oids[:device]}.#{oids[:if_index]}" +
+    "&name=#{oids[:device]}.#{oids[:index]}" +
     "&ifSpeedBps=#{oids[:if_high_speed].to_i * 1000000 }" +
     "&ifMaxBps=#{[ oids[:bps_in].to_i, oids[:bps_out].to_i ].max}" + 
                    "' target='_blank'>" + oids[:if_name] + '</a>'

@@ -7,7 +7,7 @@
     <div class='col-md-8'>
       <ul class='list-group'>
         <% ints_down.each do |device,data| %>
-          <% data[:interfaces].each do |if_index,oids| %>
+          <% data[:interfaces].each do |index,oids| %>
             <li class='center list-group-item list-group-item-danger'>
             <%= device_link(oids) + ' PORT ' + interface_link(settings, oids) %> 
             TO <%= neighbor_link(oids) %> is <b>DOWN!</b>
@@ -102,7 +102,7 @@
       </thead>
       <tbody>
       <% ints_discarding.each do |device,data| %>
-        <% data[:interfaces].each do |if_index,oids| %>
+        <% data[:interfaces].each do |index,oids| %>
           <tr <%= tr_attributes(oids) %>>
             <td class='pxl-hidden'><%= oids[:discards_out] %></td>
             <td>
@@ -213,7 +213,7 @@
       </thead>
       <tbody>
       <% ints_saturated.each do |device,data| %>
-        <% data[:interfaces].each do |if_index,oids| %>
+        <% data[:interfaces].each do |index,oids| %>
           <tr <%= tr_attributes(oids) %>>
             <td class='pxl-hidden'><%= oids[:discards_out] %></td>
             <td><%= device_link(oids) %></td>

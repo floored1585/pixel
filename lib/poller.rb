@@ -71,7 +71,7 @@ module Poller
 
       # TODO: Need to use stale_indexes to delete stuff
       stale_indexes, last_values = _get_last_values(device, if_table)
-      _delete_interfaces(stale_indexes)
+      _delete_interfaces(stale_indexes) if stale_indexes[device][:interface].length > 0
 
       # Run through the hash we got from poll, processing the interesting interfaces
       interfaces = {}
@@ -128,7 +128,7 @@ module Poller
 
 
   def self._process_interface(device, if_index, oids, last_values, poller_cfg)
-    oids['if_index'] = if_index
+    oids['index'] = if_index
     oids['device'] = device
     oids['last_updated'] = Time.now.to_i
 
@@ -308,10 +308,10 @@ module Poller
       last_values = devices[device] || {}
       last_values.symbolize!
       last_values[:interfaces] ||= {}
-      stale_indexes = { device => [] }
+      stale_indexes = { device => { :interface => [] } }
       last_values[:interfaces].each do |index,oids|
         oids.each { |name,value| oids[name] = value.to_i_if_numeric }
-        stale_indexes[device].push(index) unless if_table[index]
+        stale_indexes[device][:interface].push(index) unless if_table[index]
       end
     else # HTTP request failed
       abort
@@ -331,14 +331,13 @@ module Poller
 
 
   def self._delete_interfaces(data)
-    request = '/v1/devices/delete?partial=true'
     device = data.keys[0]
-    count = data[device][:interfaces].length
-    #if API.post('core', request, data, 'POLLER', 'interfaces to delete')
-    #  $LOG.info("POLLER: DELETE successful for #{device} (#{count} interfaces removed)")
-    #else
-    #  $LOG.error("POLLER: POST failed for #{devices.keys[0]} interface removal")
-    #end
+    count = data[device][:interface].length
+    if API.post('core', '/v1/devices/delete/components', data, 'POLLER', 'interfaces to delete')
+      $LOG.warn("POLLER: DELETE successful for #{device} (#{count} interfaces removed)")
+    else
+      $LOG.error("POLLER: POST failed for #{devices.keys[0]} interface removal")
+    end
   end
 
 

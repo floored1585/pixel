@@ -44,11 +44,15 @@ module Helper
 
   def bps_cell(direction, oids, opts={:pct_precision => 2})
     pct_precision = opts[:pct_precision]
+    units = :bps
     # If bps_in/Out doesn't exist, return blank
     return '' unless oids["bps_#{direction}".to_sym] && oids[:link_up]
     util = ("%.3g" % oids["bps_#{direction}_util".to_sym]) + '%'
-    util.gsub!(/\.[0-9]+/,'') if opts[:compact]
-    traffic = number_to_human(oids["bps_#{direction}".to_sym], :bps, true, '%.3g')
+    if opts[:compact]
+      util.gsub!(/\.[0-9]+/,'')
+      units = :si_short
+    end
+    traffic = number_to_human(oids["bps_#{direction}".to_sym], units, true, '%.3g')
     return traffic if opts[:bps_only]
     return util if opts[:pct_only]
     return "#{util} (#{traffic})"

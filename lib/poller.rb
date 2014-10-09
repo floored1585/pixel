@@ -57,16 +57,17 @@ module Poller
       # Populate name_to_index hash
       name_to_index = {}
       if_table.each { |index,oids| name_to_index[oids['if_name'].downcase] = index }
+      influx_is_up = true
 
       cpus.each do |index, data|
         series_name = "#{device}.cpu.#{index}.util"
         series_data = { :value => data[:util], :time => Time.now.to_i }
-        _write_influxdb(series_name, series_data, poller_cfg)
+        influx_is_up = _write_influxdb(series_name, series_data, poller_cfg) if influx_is_up
       end
       memory.each do |index, data|
         series_name = "#{device}.memory.#{index}.util"
         series_data = { :value => data[:util], :time => Time.now.to_i }
-        _write_influxdb(series_name, series_data, poller_cfg)
+        influx_is_up = _write_influxdb(series_name, series_data, poller_cfg) if influx_is_up
       end
 
       # TODO: Need to use stale_indexes to delete stuff
@@ -78,7 +79,7 @@ module Poller
       totals = { 'pps_out' => 0, 'bps_out' => 0, 'discards_out' => 0 }
       if_table.each do |if_index, oids|
         # Call _process_interface to do the heavy lifting
-        interfaces[if_index] = _process_interface(device, if_index, oids, last_values, poller_cfg)
+        interfaces[if_index] = _process_interface(device, if_index, oids, last_values, poller_cfg, influx_is_up)
         # Update totals
         totals.keys.each { |key| totals[key] += interfaces[if_index][key] || 0 }
         # Find the parent interface if it exists, and transfer its type to child.
@@ -103,9 +104,9 @@ module Poller
         metadata[key.to_sym] = totals[key] # for application
         series_name = "#{device}.#{key}"
         series_data = { :value => totals[key], :time => Time.now.to_i }
-        _write_influxdb(series_name, series_data, poller_cfg)
+        influx_is_up = _write_influxdb(series_name, series_data, poller_cfg) if influx_is_up
       end
-      $LOG.info("SNMP poll successful for #{device}: " + 
+      $LOG.info("POLLER: SNMP poll successful for #{device}: " + 
                 "#{if_table.size} interfaces polled, #{interfaces.size} processed")
 
       # Update the application
@@ -127,7 +128,7 @@ module Poller
   end
 
 
-  def self._process_interface(device, if_index, oids, last_values, poller_cfg)
+  def self._process_interface(device, if_index, oids, last_values, poller_cfg, influx_is_up)
     oids['index'] = if_index
     oids['device'] = device
     oids['last_updated'] = Time.now.to_i
@@ -164,7 +165,7 @@ module Poller
         # write the average
         unless average < 0
           oids[poller_cfg[:avg_names][oid_text]] = average
-          _write_influxdb(avg_series_name, avg_series_data, poller_cfg)
+          influx_is_up = _write_influxdb(avg_series_name, avg_series_data, poller_cfg) if influx_is_up
         end
       end
     end # End oids.each
@@ -348,10 +349,14 @@ module Poller
       :host => poller_cfg[:influx_ip],
       :username => poller_cfg[:influx_user],
       :password => poller_cfg[:influx_pass],
-      :retry => 1)
+      :retry => 0,
+      :read_timeout => 5,
+      :open_timeout => 1,
+    )
 
-    retry_limit = 5
+    retry_limit = 2
     retry_delay = 5
+    influx_is_up = true
     base_log = "POLLER: InfluxDB request to #{poller_cfg[:influx_ip]} failed."
 
     begin # Attempt the connection
@@ -365,12 +370,13 @@ module Poller
         retry_log = "Retry ##{retry_count} (limit: #{retry_limit}) in #{retry_delay} seconds."
         $LOG.error("#{base_log} #{retry_log}")
         sleep retry_delay
-        _write_influxdb(series_name, series_data, poller_cfg, retry_count)
+        influx_is_up = _write_influxdb(series_name, series_data, poller_cfg, retry_count)
       else
         $LOG.error("#{base_log}\n  Retry limit (#{retry_limit}) exceeded; Aborting.")
         return false
       end
     end
+    return influx_is_up
   end
 
 

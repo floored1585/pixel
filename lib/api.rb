@@ -5,7 +5,7 @@ module API
   @settings = Configfile.retrieve
 
   def self.get(dst_component, request, src_component, task)
-    uri = URI('http://' + @settings['components'][dst_component] + request)
+    uri = URI(@settings['components'][dst_component] + request)
     request = Net::HTTP::Get.new(uri)
     response = _execute_request(uri, request, 'GET', src_component, task)
     response ? JSON.parse(response.body) : false
@@ -13,7 +13,7 @@ module API
 
   def self.post(dst_component, request, rawdata, src_component, task)
     return false if rawdata.empty?
-    uri = URI('http://' + @settings['components'][dst_component] + request)
+    uri = URI(@settings['components'][dst_component] + request)
     request = Net::HTTP::Post.new(uri, {'Content-Type' => 'application/json'})
     request.body = JSON.generate(rawdata)
     _execute_request(uri, request, 'POST', src_component, task)
@@ -25,7 +25,7 @@ module API
     base_log = "#{src_component}: API request to #{req_type} #{task} failed: #{uri}."
 
     begin # Attempt the connection
-      Net::HTTP.start(uri.host, uri.port) { |http| http.request(request) }
+      Net::HTTP.start(uri.host, uri.port, { :use_ssl => true }) { |http| http.request(request) }
     rescue Timeout::Error, Errno::ETIMEDOUT, Errno::EINVAL, Errno::ECONNRESET,
       Errno::ECONNREFUSED, EOFError, Net::HTTPBadResponse,
       Net::HTTPHeaderSyntaxError, Net::ProtocolError

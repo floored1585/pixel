@@ -82,13 +82,12 @@ li.list-group-item-danger a:hover {
 }
 
 .panel-ltblue {
-  border-color: #2E618D;
+  border-color: #777;
 }
 
 .panel-ltblue .panel-heading {
-  color: #242E36;
-  border-color: #2E618D;
-  background-color: #B5D2EA;
+  border-color: #777;
+  background-color: #EEE;
 }
 
 /* universal */

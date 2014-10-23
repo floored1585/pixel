@@ -60,12 +60,12 @@ module Poller
       influx_is_up = true
 
       cpus.each do |index, data|
-        series_name = "#{device}.cpu.#{index}.util"
+        series_name = "#{device}.cpu.#{data[:description]}"
         series_data = { :value => data[:util], :time => Time.now.to_i }
         influx_is_up = _write_influxdb(series_name, series_data, poller_cfg) if influx_is_up
       end
       memory.each do |index, data|
-        series_name = "#{device}.memory.#{index}.util"
+        series_name = "#{device}.memory.#{data[:description]}"
         series_data = { :value => data[:util], :time => Time.now.to_i }
         influx_is_up = _write_influxdb(series_name, series_data, poller_cfg) if influx_is_up
       end
@@ -242,7 +242,7 @@ module Poller
             cpu_table[cpu_index][:index] = cpu_index
             cpu_table[cpu_index][:last_updated] = Time.now.to_i 
             cpu_table[cpu_index][:description] ||= 'CPU'
-            cpu_table[cpu_index][:util] = vb.value.to_s 
+            cpu_table[cpu_index][:util] = vb.value.to_i
           end
         end
       end

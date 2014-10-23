@@ -81,11 +81,11 @@ li.list-group-item-danger a:hover {
   margin-bottom: 10px;
 }
 
-.panel-ltblue {
+.panel-grey {
   border-color: #777;
 }
 
-.panel-ltblue .panel-heading {
+.panel-grey .panel-heading {
   border-color: #777;
   background-color: #EEE;
 }

@@ -294,7 +294,7 @@ module Poller
           end
         end
         mem_table.each do |index, data|
-          data[:util] = '%.2f' % (data[:used].to_f / (data[:used] + data[:free]) * 100)
+          data[:util] = (data[:used].to_f / (data[:used] + data[:free]) * 100).to_i
         end
       end
     end

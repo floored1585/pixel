@@ -93,6 +93,11 @@ module Helper
     end
   end
 
+  def device_link_graph(settings, device, text)
+    "<a href='#{settings['grafana_dev_dash']}?device=#{device}" +
+    "' target='_blank'>#{text}</a>"
+  end
+
   def interface_link(settings, oids)
     "<a href='#{settings['grafana_if_dash']}" +
       "?title=#{oids[:device]}%20::%20#{CGI::escape(oids[:if_name])}" +

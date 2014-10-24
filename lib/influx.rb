@@ -24,6 +24,7 @@ module Influx
 
   def self.query(query, attribute, db, format=nil)
     data = @influxdb.query(query)
+    pp attribute
     if format == :rickshaw
       # Format for rickshaw AJAX
       response = _transform_rickshaw(data, db, attribute)
@@ -45,9 +46,9 @@ module Influx
     response = []
     counter = 0
     original.each do |series,points|
-      index = /#{attribute}\.(.+)\.util/.match(series)[1]
+      description = /#{attribute}\.(.+)$/.match(series)[1]
       device = /(.+)\.#{attribute}/.match(series)[1]
-      name = db[attribute.to_sym].filter(:device => device, :index => index).first[:description]
+      name = db[attribute.to_sym].filter(:device => device, :description => description).first[:description]
       data = []
       points.each do |point|
         data.unshift({

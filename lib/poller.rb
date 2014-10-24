@@ -81,7 +81,7 @@ module Poller
         # Call _process_interface to do the heavy lifting
         interfaces[if_index] = _process_interface(device, if_index, oids, last_values, poller_cfg, influx_is_up)
         # Update totals
-        totals.keys.each { |key| totals[key] += interfaces[if_index][key] || 0 }
+        totals.keys.each { |key| totals[key] += interfaces[if_index][key] || 0 unless oids['if_alias'] =~ /^sub/  }
         # Find the parent interface if it exists, and transfer its type to child.
         # Otherwise (if we're not a child) look at our own type.
         # I hate this logic, but can't think of a better way to do it.

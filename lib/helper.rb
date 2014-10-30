@@ -88,6 +88,8 @@ module Helper
       neighbor = oids[:neighbor] ? "<a href='/device/#{oids[:neighbor]}'>#{oids[:neighbor]}</a>" : oids[:neighbor]
       port = oids[:if_alias][/__[0-9a-zA-Z\-.: \/]+$/] || ''
       port.empty? || opts[:device_only] ? neighbor : "#{neighbor} (#{port.gsub('__','')})"
+    elsif oids[:if_type] == 'unknown'
+      oids[:if_alias]
     else
       ''
     end

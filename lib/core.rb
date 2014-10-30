@@ -285,21 +285,23 @@ module Core
         end
 
         # Populate 'link_type' value (Backbone, Access, etc...)
-        oids[:if_alias].match(/^[a-z]+(__|\[)/) do |type|
-          type = type.to_s.gsub(/(_|\[)/,'')
-          oids[:link_type] = settings['link_types'][type]
-          if type == 'sub'
-            oids[:is_child] = true
-            # This will return po1 from sub[po1]__gar-k11u1-dist__g1/47
-            parent = oids[:if_alias][/\[[a-zA-Z0-9\/-]+\]/].gsub(/(\[|\])/, '')
-            if parent && parent_index = name_to_index[device][parent.downcase]
-              interfaces[parent_index][:is_parent] = true
-              interfaces[parent_index][:children] ||= []
-              interfaces[parent_index][:children] << index
-              oids[:my_parent] = parent_index
-            end
-            oids[:my_parent_name] = parent.gsub('po','Po')
+        if type = oids[:if_alias].match(/^([a-z]+)(__|\[)/)
+          type = type[1]
+        else
+          type = 'unknown'
+        end
+        oids[:link_type] = settings['link_types'][type]
+        if type == 'sub'
+          oids[:is_child] = true
+          # This will return po1 from sub[po1]__gar-k11u1-dist__g1/47
+          parent = oids[:if_alias][/\[[a-zA-Z0-9\/-]+\]/].gsub(/(\[|\])/, '')
+          if parent && parent_index = name_to_index[device][parent.downcase]
+            interfaces[parent_index][:is_parent] = true
+            interfaces[parent_index][:children] ||= []
+            interfaces[parent_index][:children] << index
+            oids[:my_parent] = parent_index
           end
+          oids[:my_parent_name] = parent.gsub('po','Po')
         end
 
         oids[:if_oper_status] == 1 ? oids[:link_up] = true : oids[:link_up] = false

@@ -24,7 +24,6 @@ module Influx
 
   def self.query(query, attribute, db, format=nil)
     data = @influxdb.query(query)
-    pp attribute
     if format == :rickshaw
       # Format for rickshaw AJAX
       response = _transform_rickshaw(data, db, attribute)

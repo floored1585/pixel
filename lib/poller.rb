@@ -53,7 +53,9 @@ module Poller
       end
 
       # Delete interfaces we're not interested in
-      if_table.delete_if { |index,oids| !(oids['if_alias'] =~ poller_cfg[:interesting_alias]) }
+      if_table.delete_if { |index,oids| !(
+        oids['if_alias'] =~ poller_cfg[:interesting_alias] || oids['if_name'] =~ poller_cfg[:interesting_names][vendor]
+      )}
       # Populate name_to_index hash
       name_to_index = {}
       if_table.each { |index,oids| name_to_index[oids['if_name'].downcase] = index }
@@ -95,7 +97,11 @@ module Poller
             oids[:if_type] = 'unknown'
           end
         else
-          oids[:if_type] = oids['if_alias'].match(/^([a-z]+)(__|\[)/)[1]
+          if match = oids['if_alias'].match(/^([a-z]+)(__|\[)/)
+            oids[:if_type] = match[1]
+          else
+            oids[:if_type] = 'unknown'
+          end
         end
       end
 
@@ -449,6 +455,11 @@ module Poller
       'if_hc_in_ucast_pkts' => 'pps_in',
       'if_hc_out_ucast_pkts'=> 'pps_out',
     ]
+
+    poller_cfg[:interesting_names] = {
+      'Cisco'       => /^(Te|Gi|Fa)/,
+      'Juniper'       => /^(xe|ge|fe)[^.]*$/,
+    }
 
     return poller_cfg
   end

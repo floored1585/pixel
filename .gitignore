@@ -23,6 +23,7 @@ doc/
 Capfile
 
 messages.*
+proc.lock
 
 config/settings.yaml
 config/settings.production.yaml

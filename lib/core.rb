@@ -93,7 +93,7 @@ module Core
   def get_devices_poller(settings, db, count, poller_name)
     db.disconnect
     currently_polling = db[:device].filter{Sequel.&(
-      {:currently_polling => 1, :worker => poller_name}, 
+      {:currently_polling => 1, :worker => poller_name},
       last_poll > Time.now.to_i - 1000,
     )}.count
     count = count - currently_polling
@@ -330,7 +330,7 @@ module Core
               end
               required_data = [:device, :index, :last_updated, :if_alias, :if_name, :if_mtu,
                                :if_hc_in_octets, :if_hc_out_octets, :if_hc_in_ucast_pkts,
-                               :if_hc_out_ucast_pkts, :if_high_speed, :if_admin_status, 
+                               :if_hc_out_ucast_pkts, :if_high_speed, :if_admin_status,
                                :if_admin_status_time, :if_oper_status, :if_oper_status_time,
                                :if_in_discards, :if_in_errors, :if_out_discards, :if_out_errors]
               unless (required_data - oids.keys).empty?
@@ -404,6 +404,23 @@ module Core
       devices = {}
     end
     return devices
+  end
+
+  def self.start_cron(settings)
+    $LOG.info("POLLER: Starting cron poke task")
+    pidfile = 'proc.lock'
+    begin
+      if File.exists?(pidfile)
+        pid = File.read(pidfile).to_i
+        $LOG.warn("POLLER: Killing process #{pid}")
+        Process.kill(15, pid)
+      end
+    rescue Errno::ESRCH
+    end
+
+    pid = spawn "./cron.sh"
+    Process.detach(pid)
+    File.open(pidfile, 'w') { |f| f.write(pid) }
   end
 
 end

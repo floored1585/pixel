@@ -334,7 +334,11 @@ module Core
                                :if_admin_status_time, :if_oper_status, :if_oper_status_time,
                                :if_in_discards, :if_in_errors, :if_out_discards, :if_out_errors]
               unless (required_data - oids.keys).empty?
-                $LOG.warn("Incomplete OIDs for #{device}: index #{index}. Missing: #{required_data - oids.keys}")
+                $LOG.warn("CORE: Incomplete OIDs for #{device}: index #{index}. Missing: #{required_data - oids.keys}")
+                data[:interfaces].delete(index)
+              end
+              unless (oids[:if_hc_in_octets] =~ /^[0-9]+$/)
+                $LOG.warn("CORE: Invalid octet value for interface #{oids[:if_name]} on device #{device}: index #{index}.")
                 data[:interfaces].delete(index)
               end
             end

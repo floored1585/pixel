@@ -27,10 +27,10 @@ module API
     base_log = "#{src_component}: API request to #{req_type} #{task} failed: #{uri}."
 
     begin # Attempt the connection
-      Net::HTTP.start(uri.host, uri.port, { use_ssl: uri =~ /^https/ } ) { |http| http.request(request) }
+      Net::HTTP.start(uri.host, uri.port, { use_ssl: uri.to_s =~ /^https/ } ) { |http| http.request(request) }
     rescue Timeout::Error, Errno::ETIMEDOUT, Errno::EINVAL, Errno::ECONNRESET,
       Errno::ECONNREFUSED, EOFError, Net::HTTPBadResponse,
-      Net::HTTPHeaderSyntaxError, Net::ProtocolError
+      Net::HTTPHeaderSyntaxError, Net::ProtocolError, SocketError
       # The request failed; Retry if allowed
       if retry_count < retry_limit
         retry_count += 1

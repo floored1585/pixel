@@ -14,7 +14,7 @@ module Poller
     concurrency = poller_cfg[:concurrency]
     request = "/v1/devices/fetch_poll?count=#{concurrency}&hostname=#{Socket.gethostname}"
 
-    if devices = API.get('core', request, 'POLLER', 'devices to poll')
+    if devices = API.get('core', request, 'POLLER', 'devices to poll', 0)
       devices.each { |device, attributes| _poll(poller_cfg, device, attributes['ip']) }
       return 200 # Doesn't do any error checking here
     else # HTTP request failed

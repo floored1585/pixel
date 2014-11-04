@@ -457,8 +457,8 @@ module Poller
     ]
 
     poller_cfg[:interesting_names] = {
-      'Cisco'       => /^(Te|Gi|Fa)/,
-      'Juniper'       => /^(xe|ge|fe)[^.]*$/,
+      'Cisco'       => /^(Te|Gi|Fa|Po)/,
+      'Juniper'       => /^(xe|ge|fe|ae)[^.]*$/,
     }
 
     return poller_cfg

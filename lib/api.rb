@@ -37,7 +37,7 @@ module API
         retry_log = "Retry ##{retry_count} (limit: #{retry_limit}) in #{retry_delay} seconds."
         $LOG.error "#{base_log}\n  #{retry_log}"
         sleep retry_delay
-        _execute_request(uri, request, req_type, src_component, task, retry_count)
+        _execute_request(uri, request, req_type, src_component, task, retry_limit, retry_count)
       else
         $LOG.error "#{base_log}\n  Retry limit (#{retry_limit}) exceeded; Aborting."
         return false

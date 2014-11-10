@@ -33,9 +33,9 @@ module Poller
 
       # get SNMP data from the device
       begin
-        vendor = _query_device_vendor(ip, poller_cfg)
-        cpus = _query_device_cpu(device, ip, poller_cfg, vendor)
-        memory = _query_device_mem(device, ip, poller_cfg, vendor)
+        dev_info = _query_device_info(ip, poller_cfg)
+        cpus = _query_device_cpu(device, ip, poller_cfg, dev_info[:vendor])
+        memory = _query_device_mem(device, ip, poller_cfg, dev_info[:vendor])
         if_table = _query_device_interfaces(ip, poller_cfg)
         #puts "#{device} Memory Data:"
         #pp memory
@@ -54,7 +54,7 @@ module Poller
 
       # Delete interfaces we're not interested in
       if_table.delete_if { |index,oids| !(
-        oids['if_alias'] =~ poller_cfg[:interesting_alias] || oids['if_name'] =~ poller_cfg[:interesting_names][vendor]
+        oids['if_alias'] =~ poller_cfg[:interesting_alias] || oids['if_name'] =~ poller_cfg[:interesting_names][dev_info[:vendor]]
       )}
       # Populate name_to_index hash
       name_to_index = {}
@@ -182,9 +182,9 @@ module Poller
   def self._query_device_interfaces(ip, poller_cfg)
     SNMP::Manager.open(:host => ip, :community => poller_cfg[:snmpv2_community]) do |session|
       if_table = {}
-      session.walk(poller_cfg[:oid_numbers][:general].keys) do |row|
+      session.walk(poller_cfg[:interface_oids][:general].keys) do |row|
         row.each do |vb|
-          oid_text = poller_cfg[:oid_numbers][:general][vb.name.to_str.gsub(/\.[0-9]+$/,'')]
+          oid_text = poller_cfg[:interface_oids][:general][vb.name.to_str.gsub(/\.[0-9]+$/,'')]
           if_index = vb.name.to_str[/[0-9]+$/]
           if_table[if_index] ||= {}
           if_table[if_index][oid_text] = vb.value.to_s
@@ -195,24 +195,30 @@ module Poller
   end
 
 
-  def self._query_device_vendor(ip, poller_cfg)
+  def self._query_device_info(ip, poller_cfg)
+    data = {}
     SNMP::Manager.open(:host => ip, :community => poller_cfg[:snmpv2_community]) do |session|
-      if_table = {}
       session.get("1.3.6.1.2.1.1.1.0").each_varbind do |vb|
         sys_descr = vb.value.to_s.gsub("\n",' ')
-        return 'Cisco' if sys_descr =~ /Cisco/
-        return 'Juniper' if sys_descr =~ /Juniper|SRX/
-        return 'Force10 S-Series' if sys_descr =~ /Force10.*Series: S/
-        # If we don't know what type of device this is:
-        $LOG.warn("POLLER: Unknown device at #{ip}: #{sys_descr}")
-        return 'Unknown'
+        if sys_descr =~ /Cisco/
+          data[:vendor] = 'Cisco'
+        elsif sys_descr =~ /Juniper|SRX/
+          data[:vendor] = 'Juniper'
+        elsif sys_descr =~ /Force10.*Series: S/
+          data[:vendor] = 'Force10 S-Series'
+        else
+          # If we don't know what type of device this is:
+          $LOG.warn("POLLER: Unknown device at #{ip}: #{sys_descr}")
+          data[:vendor] = 'Unknown'
+        end
       end
     end
+    return data
   end
 
 
   def self._query_device_cpu(device, ip, poller_cfg, vendor)
-    return {} unless vendor_cfg = poller_cfg[:oid_numbers][vendor]
+    return {} unless vendor_cfg = poller_cfg[:interface_oids][vendor]
     cpu_table = {}
     cpu_hw_ids = {}
 
@@ -259,7 +265,7 @@ module Poller
 
 
   def self._query_device_mem(device, ip, poller_cfg, vendor)
-    return {} unless vendor_cfg = poller_cfg[:oid_numbers][vendor]
+    return {} unless vendor_cfg = poller_cfg[:interface_oids][vendor]
     mem_table = {}
 
     SNMP::Manager.open(:host => ip, :community => poller_cfg[:snmpv2_community]) do |session|
@@ -394,8 +400,14 @@ module Poller
     # This determines which OID names will get turned into per-second averages.
     poller_cfg[:avg_oid_regex] = /octets|discards|errors|pkts/
 
+    poller_cfg[:device_oids] = {
+      :general => {
+        '1.3.6.1.2.1.1.3'         => 'uptime',
+      }
+    }
+
     # These are the OIDs that will get pulled/stored for our interfaces.
-    poller_cfg[:oid_numbers] = {
+    poller_cfg[:interface_oids] = {
       :general => {
         '1.3.6.1.2.1.31.1.1.1.1'  => 'if_name',
         '1.3.6.1.2.1.31.1.1.1.6'  => 'if_hc_in_octets',

@@ -142,19 +142,23 @@ table.tablesorter thead tr {
 }
 
 .pxl-linkUp-green td {
-  background-color: #bbffbb;
+  background-color: #BFB;
 }
 
 .pxl-linkUp-yellow td {
-  background-color: #ffffbb;
+  background-color: #FFB;
 }
 
 .pxl-linkUp-orange td {
-  background-color: #ff9900;
+  background-color: #F90;
 }
 
 .pxl-linkUp-red td {
-  background-color: #ffbbbb;
+  background-color: #FBB;
+}
+
+.pxl-linkUp-darkRed td {
+  background-color: #D55;
 }
 
 .pxl-linkUp-grey td {

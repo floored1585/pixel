@@ -115,6 +115,7 @@ module Helper
 
   def link_status_color(interfaces,oids)
     return 'grey' if oids[:stale]
+    return 'darkRed' if oids[:if_admin_status] == 2
     return 'red' unless oids[:link_up]
     return 'orange' if !oids[:discards_out].to_s.empty? && oids[:discards_out] != 0
     return 'orange' if !oids[:errors_in].to_s.empty? && oids[:errors_in] != 0
@@ -128,6 +129,7 @@ module Helper
   end
 
   def link_status_tooltip(interfaces,oids)
+    shutdown = oids[:if_admin_status] == 2 ? "Shutdown\n" : ''
     discards = oids[:discards_out] || 0
     errors = oids[:errors_in] || 0
     stale_warn = oids[:stale] ? "Last polled: #{humanize_time(oids[:stale])} ago\n" : ''
@@ -141,7 +143,7 @@ module Helper
     end
     state = oids[:link_up] ? 'Up' : 'Down'
     time = humanize_time(Time.now.to_i - oids[:if_oper_status_time])
-    return stale_warn + discard_warn + error_warn + child_warn + "#{state} for #{time}"
+    return shutdown + stale_warn + discard_warn + error_warn + child_warn + "#{state} for #{time}"
   end
 
   def number_to_human(raw, unit, si=true, format='%.2f')

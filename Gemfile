@@ -10,3 +10,6 @@ gem 'rack-coffee'
 gem 'influxdb'
 gem 'snmp'
 
+group :development do
+  gem 'capistrano'
+end

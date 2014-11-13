@@ -27,7 +27,15 @@ module API
     base_log = "#{src_component}: API request to #{req_type} #{task} failed: #{uri}."
 
     begin # Attempt the connection
-      Net::HTTP.start(uri.host, uri.port, { use_ssl: uri.to_s =~ /^https/ } ) { |http| http.request(request) }
+      Net::HTTP.start(uri.host, uri.port, { use_ssl: uri.to_s =~ /^https/ } ) do |http|
+        response = http.request(request)
+        if response.code.to_i >= 200 && response.code.to_i < 400
+          return response
+        else
+          $LOG.error("#{src_component}: Bad response (#{response.code.to_i}) from #{uri.host}")
+          raise Net::HTTPBadResponse
+        end
+      end
     rescue Timeout::Error, Errno::ETIMEDOUT, Errno::EINVAL, Errno::ECONNRESET,
       Errno::ECONNREFUSED, EOFError, Net::HTTPBadResponse,
       Net::HTTPHeaderSyntaxError, Net::ProtocolError, SocketError

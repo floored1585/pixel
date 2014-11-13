@@ -337,7 +337,11 @@ module Core
                                :if_admin_status_time, :if_oper_status, :if_oper_status_time,
                                :if_in_discards, :if_in_errors, :if_out_discards, :if_out_errors]
               unless (required_data - oids.keys).empty?
-                $LOG.warn("CORE: Incomplete OIDs for #{device}: index #{index}. Missing: #{required_data - oids.keys}")
+                $LOG.warn("CORE: Incomplete OIDs for #{device}: #{oids[:if_name]} (#{index}). Missing: #{required_data - oids.keys}")
+                data[:interfaces].delete(index)
+              end
+              required_data.each do |oid|
+                $LOG.warn("CORE: Missing #{oid} for #{device}: interface #{oids[:if_name]} (#{index})") if oids[oid].empty?
                 data[:interfaces].delete(index)
               end
               unless (oids[:if_hc_in_octets] =~ /^[0-9]+$/)

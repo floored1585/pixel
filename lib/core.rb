@@ -341,7 +341,7 @@ module Core
                 data[:interfaces].delete(index)
               end
               required_data.each do |oid|
-                $LOG.warn("CORE: Missing #{oid} for #{device}: interface #{oids[:if_name]} (#{index})") if oids[oid].empty?
+                $LOG.warn("CORE: Missing #{oid} for #{device}: interface #{oids[:if_name]} (#{index})") if oids[oid].to_s.empty?
                 data[:interfaces].delete(index)
               end
               unless (oids[:if_hc_in_octets] =~ /^[0-9]+$/)

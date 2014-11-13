@@ -20,7 +20,9 @@ class Pixel < Sinatra::Base
   include Core
   include Helper
 
-  Core.start_cron(@@settings) if @@settings['this_is_poller']
+  if @@settings['this_is_poller']
+    Core.start_cron(@@settings)
+  end
 
   # COFFEESCRIPT PLZ
   use Rack::Coffee, root: 'public', urls: '/javascripts'

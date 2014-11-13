@@ -37,8 +37,8 @@ module Poller
         cpus = _query_device_cpu(device, ip, poller_cfg, dev_info[:vendor])
         memory = _query_device_mem(device, ip, poller_cfg, dev_info[:vendor])
         if_table = _query_device_interfaces(ip, poller_cfg)
-        #puts "#{device} Memory Data:"
-        #pp memory
+        #puts "#{device} Device Data:"
+        #pp dev_info
         #puts "\n"
       rescue RuntimeError, ArgumentError => e
         $LOG.error("POLLER: Error encountered while polling #{device}: #{e}")
@@ -91,7 +91,11 @@ module Poller
         if parent_iface = parent_iface_match[1]
           if parent_index = name_to_index[parent_iface.downcase]
             parent_alias = if_table[parent_index]['if_alias']
-            oids[:if_type] = parent_alias.match(/^([a-z]+)(__|\[)/)[1]
+            if parent_alias_match = parent_alias.match(/^([a-z]+)(__|\[)/)
+              oids[:if_type] = parent_alias_match[2]
+            else
+              $LOG.error("POLLER: Can't determine parent if_type: #{oids['if_name']} on #{device}")
+            end
           else
             $LOG.error("POLLER: Can't find parent interface #{parent_iface} on device #{device} (child: #{oids['if_name']})")
             oids[:if_type] = 'unknown'
@@ -197,22 +201,60 @@ module Poller
 
   def self._query_device_info(ip, poller_cfg)
     data = {}
-    SNMP::Manager.open(:host => ip, :community => poller_cfg[:snmpv2_community]) do |session|
+    SNMP::Manager.open(
+      :host => ip,
+      :community => poller_cfg[:snmpv2_community],
+      :mib_dir => 'lib/mibs',
+      :mib_modules => [
+        'CISCO-PRODUCTS-MIB',
+        'JNX-CHAS-DEFINES-MIB',
+        'F10-PRODUCTS-MIB',
+      ]
+    ) do |session|
+
       session.get("1.3.6.1.2.1.1.1.0").each_varbind do |vb|
-        sys_descr = vb.value.to_s.gsub("\n",' ')
-        if sys_descr =~ /Cisco/
+        data[:sys_descr] = vb.value.to_s
+        if data[:sys_descr] =~ /Cisco/
           data[:vendor] = 'Cisco'
-        elsif sys_descr =~ /Juniper|SRX/
+        elsif data[:sys_descr] =~ /Juniper|SRX/
           data[:vendor] = 'Juniper'
-        elsif sys_descr =~ /Force10.*Series: S/
+        elsif data[:sys_descr] =~ /Force10.*Series: S/m
           data[:vendor] = 'Force10 S-Series'
         else
           # If we don't know what type of device this is:
-          $LOG.warn("POLLER: Unknown device at #{ip}: #{sys_descr}")
+          $LOG.warn("POLLER: Unknown device at #{ip}: #{data[:sys_descr]}")
           data[:vendor] = 'Unknown'
+        end
+        if sys_descr_regex = poller_cfg[:sys_descr_regex][data[:vendor]]
+          if match = data[:sys_descr].match(sys_descr_regex)
+            data[:sw_descr] = match[1].strip
+            data[:sw_version] = match[2].strip
+          end
+        end
+      end # /session.get
+
+      # Get HW info (model)
+      session.get('1.3.6.1.2.1.1.2.0').each_varbind do |vb|
+        data[:hw_model] = (vb.value.to_s.split('::')[1] || '').gsub('jnxProductName','')
+      end
+
+      # Run though the general and vendor-specific OIDs
+      poller_cfg[:device_oids][:general].each do |oid,text|
+        session.get(oid).each_varbind { |vb| data[text] = vb.value }
+      end
+      if vendor_oids = poller_cfg[:device_oids][data[:vendor]]
+        vendor_oids.each do |oid,text|
+          session.get(oid).each_varbind { |vb| data[text] = vb.value }
         end
       end
     end
+
+    # Manipulate data if needed for transmission via JSON
+    data.each do |text,value|
+      # SNMP::TimeTicks --> epoch integer
+      data[text] = value.to_i / 100 if value.is_a?(SNMP::TimeTicks)
+    end
+
     return data
   end
 
@@ -400,9 +442,17 @@ module Poller
     # This determines which OID names will get turned into per-second averages.
     poller_cfg[:avg_oid_regex] = /octets|discards|errors|pkts/
 
+    # 1st match = SW Platform
+    # 2nd match = SW Version
+    poller_cfg[:sys_descr_regex] = {
+      'Cisco' => /^[\w\s]+,[\w\s]+\(([\w\s-]+)\),(?: Version)?([\w\s\(\)\.]+),[\w\s\(\)]+$/,
+      'Juniper' => /^[\w\s,]+\.[\w\s]+,(?: kernel )?(\w+)\s+([\w\.-]+).+$/,
+      'Force10 S-Series' => /^Dell ([\w\s]+)$.+Version: ([\w\d\(\)\.]+)/m,
+    }
+
     poller_cfg[:device_oids] = {
       :general => {
-        '1.3.6.1.2.1.1.3'         => 'uptime',
+        '1.3.6.1.2.1.1.3.0'         => 'uptime',
       }
     }
 
@@ -475,5 +525,6 @@ module Poller
 
     return poller_cfg
   end
+
 
 end

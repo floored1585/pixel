@@ -331,7 +331,7 @@ module Core
                 $LOG.warn("Invalid or missing interface data for #{device}: index #{index}")
                 data[:interfaces].delete(index)
               end
-              required_data = [:device, :index, :last_updated, :if_alias, :if_name, :if_mtu,
+              required_data = [:device, :index, :last_updated, :if_name, :if_mtu,
                                :if_hc_in_octets, :if_hc_out_octets, :if_hc_in_ucast_pkts,
                                :if_hc_out_ucast_pkts, :if_high_speed, :if_admin_status,
                                :if_admin_status_time, :if_oper_status, :if_oper_status_time,
@@ -341,7 +341,7 @@ module Core
                 data[:interfaces].delete(index)
               end
               required_data.each do |oid|
-                $LOG.warn("CORE: Missing #{oid} for #{device}: interface #{oids[:if_name]} (#{index})") if oids[oid].to_s.empty?
+                $LOG.warn("CORE: Missing #{oid} for #{device}: #{oids[:if_name]} (#{index})") if oids[oid].to_s.empty?
                 data[:interfaces].delete(index)
               end
               unless (oids[:if_hc_in_octets] =~ /^[0-9]+$/)

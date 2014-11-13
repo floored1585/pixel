@@ -92,7 +92,7 @@ module Poller
           if parent_index = name_to_index[parent_iface.downcase]
             parent_alias = if_table[parent_index]['if_alias']
             if parent_alias_match = parent_alias.match(/^([a-z]+)(__|\[)/)
-              oids[:if_type] = parent_alias_match[2]
+              oids[:if_type] = parent_alias_match[1]
             else
               $LOG.error("POLLER: Can't determine parent if_type: #{oids['if_name']} on #{device}")
             end

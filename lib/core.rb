@@ -341,8 +341,10 @@ module Core
                 data[:interfaces].delete(index)
               end
               required_data.each do |oid|
-                $LOG.warn("CORE: Missing #{oid} for #{device}: #{oids[:if_name]} (#{index})") if oids[oid].to_s.empty?
-                data[:interfaces].delete(index)
+                if oids[oid].to_s.empty?
+                  $LOG.warn("CORE: Missing #{oid} for #{device}: #{oids[:if_name]} (#{index})")
+                  data[:interfaces].delete(index)
+                end
               end
               unless (oids[:if_hc_in_octets] =~ /^[0-9]+$/)
                 $LOG.warn("CORE: Invalid octet value for interface #{oids[:if_name]} on device #{device}: index #{index}.")

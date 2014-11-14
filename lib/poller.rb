@@ -129,7 +129,7 @@ module Poller
         :interfaces => interfaces,
         :cpus => cpus,
         :memory => memory,
-        :device => dev_info,
+        :devicedata => dev_info,
       } }
 
       _post_data(post_devices)

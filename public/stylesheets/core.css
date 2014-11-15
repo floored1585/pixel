@@ -90,6 +90,28 @@ li.list-group-item-danger a:hover {
   background-color: #EEE;
 }
 
+.pxl-minibar {
+  width: 100%;
+  height: 2.5em;
+  line-height: 2.4em;
+  margin-top: -9px;
+  padding-left: 20px;
+  padding-right: 20px;
+  border-left: 1px solid #777;
+  border-right: 1px solid #777;
+  border-bottom: 1px solid #777;
+  border-bottom-left-radius: 20px 1.5em;
+  border-bottom-right-radius: 20px 1.5em;
+  background-color: #EEE;
+  text-align: center;
+}
+.pxl-minibar span {
+  vertical-align: middle;
+  color: #555;
+  padding-right: 0.65em;
+  padding-left: 0.65em;
+}
+
 /* universal */
 
 .huge {
@@ -190,6 +212,9 @@ table.tablesorter thead tr {
 h1, h2, h3, h4, h5, h6 {
   text-align: center;
   letter-spacing: -1px;
+}
+.pxl-h1-device {
+  margin-top: 30px;
 }
 
 .pxl-bottom-margin {

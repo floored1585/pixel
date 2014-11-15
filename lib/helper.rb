@@ -1,7 +1,7 @@
 module Helper
 
   def humanize_time secs
-    [[60, :seconds], [60, :minutes], [24, :hours], [1000, :days]].map{ |count, name|
+    [[60, :seconds], [60, :minutes], [24, :hours], [10000, :days]].map{ |count, name|
       if secs > 0
         secs, n = secs.divmod(count)
         if n.to_i > 1
@@ -145,6 +145,30 @@ module Helper
     time = humanize_time(Time.now.to_i - oids[:if_oper_status_time])
     return shutdown + stale_warn + discard_warn + error_warn + child_warn + "#{state} for #{time}"
   end
+
+
+  def device_minibar(data)
+    output = ''
+    # IP Info:
+    output << "<span>IP: <b>#{data[:ip]}</b></span>" if data[:ip]
+    # HW/SW Info:
+    output << "<span class='hidden-xs hidden-sm hidden-md'>Details: "
+    output << "<b>#{data[:vendor]} " if data[:vendor]
+    output << data[:hw_model]
+    output << "</b> " if data[:vendor]
+    output << "running " if data[:vendor] && data[:sw_descr] && data[:sw_version]
+    output << "<b>#{data[:sw_descr]} #{data[:sw_version]}</b>"
+    output << "</span>"
+    # Uptime:
+    output << "<span>Uptime: <b>" << humanize_time(data[:uptime]) << "</b></span>"
+    # PPS/BPS Summary:
+    output << "<span>Currently pushing <b>"
+    output << number_to_human(data[:bps_out], :bps)
+    output << " (" << number_to_human(data[:pps_out], :pps) << ")"
+    output << "</b></span>"
+    
+  end
+
 
   def number_to_human(raw, unit, si=true, format='%.2f')
     i = 0

@@ -12,7 +12,7 @@ module Core
     interfaces = db[:interface].filter(Sequel.like(:if_alias, 'sub%') | Sequel.like(:if_alias, 'bb%'))
     interfaces = interfaces.exclude(:if_oper_status => 1).exclude(:if_type => 'acc')
 
-    (devices, name_to_index) = _device_map(interfaces, {}, {})
+    (devices, name_to_index) = _device_map({}, interfaces, {}, {})
     _fill_metadata!(devices, settings, name_to_index)
 
     # Delete the interface from the hash if its parent is present, to reduce clutter
@@ -25,7 +25,7 @@ module Core
   def get_ints_saturated(settings, db)
     interfaces = db[:interface].filter{ (bps_in_util > 90) | (bps_out_util > 90) }
 
-    (devices, name_to_index) = _device_map(interfaces, {}, {})
+    (devices, name_to_index) = _device_map({}, interfaces, {}, {})
     _fill_metadata!(devices, settings, name_to_index)
     return devices
   end
@@ -42,13 +42,14 @@ module Core
     )}
     interfaces = interfaces.order(:discards_out).reverse
 
-    (devices, name_to_index) = _device_map(interfaces, {}, {})
+    (devices, name_to_index) = _device_map({}, interfaces, {}, {})
     _fill_metadata!(devices, settings, name_to_index)
     return devices
   end
 
   def get_device(settings, db, device, component=nil)
     interfaces = db[:interface]
+    devicedata = db[:device]
     memory = db[:memory]
     cpus = db[:cpu]
     # Filter if a device was specified, otherwise return all
@@ -56,6 +57,7 @@ module Core
       # Return an empty hash if the device doesn't exist
       return {} if db[:device].filter(:device => device).empty?
       interfaces = interfaces.filter(:device => device)
+      devicedata = devicedata.filter(:device => device)
       memory = memory.filter(:device => device)
       cpus = cpus.filter(:device => device)
     end
@@ -63,7 +65,7 @@ module Core
     # Return just an empty device if there are no CPUs or interfaces for the device
     return { device => {} } if cpus.empty? && interfaces.empty? && device
 
-    (devices, name_to_index) = _device_map(interfaces, cpus, memory)
+    (devices, name_to_index) = _device_map(devicedata, interfaces, cpus, memory)
     _fill_metadata!(devices, settings, name_to_index)
 
     # If we only want certain components, delete the others
@@ -79,14 +81,14 @@ module Core
   def get_cpus_high(settings, db)
     cpus = db[:cpu].filter{ util > 85 }
 
-    (devices, name_to_index) = _device_map({}, cpus, {})
+    (devices, name_to_index) = _device_map({}, {}, cpus, {})
     return devices
   end
 
   def get_memory_high(settings, db)
     memory = db[:memory].filter{ util > 90 }
 
-    (devices, name_to_index) = _device_map({}, {}, memory)
+    (devices, name_to_index) = _device_map({}, {}, {}, memory)
     return devices
   end
 
@@ -128,8 +130,7 @@ module Core
 
     devices.each do |device, data|
 
-      metadata = data[:metadata]
-      interfaces = data[:interfaces]
+      device_update = data[:metadata].merge(data[:devicedata])
 
       $LOG.info("CORE: Received data for #{device} from #{data[:metadata][:worker]}")
 
@@ -158,8 +159,8 @@ module Core
         end
       end
       existing = db[:device].where(:device => device)
-      if existing.update(metadata) != 1
-        $LOG.error("Problem updating metadata for #{device}")
+      if existing.update(device_update) != 1
+        $LOG.error("Problem updating device table for #{device}")
       end
 
       # Update the rest of the device attributes
@@ -234,15 +235,19 @@ module Core
     return true
   end
 
-  def _device_map(interfaces, cpus, memory)
+  def _device_map(devicedata, interfaces, cpus, memory)
     devices = {}
     name_to_index = {}
 
+    devicedata.each do |row|
+      devices[row[:device]] = { :devicedata => row }
+    end
     interfaces.each do |row|
       index = row[:index]
       device = row[:device]
 
-      devices[device] ||= { :interfaces => {} }
+      devices[device] ||= {}
+      devices[device][:interfaces] ||= {}
       name_to_index[device] ||= {}
 
       devices[device][:interfaces][index] = row

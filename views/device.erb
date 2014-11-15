@@ -1,7 +1,12 @@
 <% locals[:title] = device %>
 <% interfaces = data ? data[:interfaces] : nil %>
-
-<h1><%= device %></h1>
+<% devicedata = data ? data[:devicedata] : nil %>
+<% if devicedata %>
+  <div class='pxl-minibar'>
+    <%= device_minibar(devicedata) %>
+  </div>
+<% end %>
+<h1 class='pxl-h1-device'><%= device %></h1>
 <h5 class='pxl-bottom-margin'><%= device_link_graph(settings, device, '[ graphs ]') %></h5>
 <div class='row'>
   <div class='col-md-6'>

@@ -48,6 +48,7 @@ module Poller
           :interfaces => {},
           :cpus => {},
           :memory => {},
+          :devicedata => {},
         } }
         _post_data(post_devices)
       end
@@ -128,6 +129,7 @@ module Poller
         :interfaces => interfaces,
         :cpus => cpus,
         :memory => memory,
+        :devicedata => dev_info,
       } }
 
       _post_data(post_devices)

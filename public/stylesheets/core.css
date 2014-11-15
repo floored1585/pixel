@@ -90,11 +90,18 @@ li.list-group-item-danger a:hover {
   background-color: #EEE;
 }
 
-.pxl-minibar {
+.pxl-minibar-wrapper {
+  position: fixed;
   width: 100%;
+  left: 50%;
+  margin: 0 0 0 -50%;
+  text-align: center;
+  z-index: 999;
+}
+.pxl-minibar {
+  display: inline-block;
   height: 2.5em;
   line-height: 2.4em;
-  margin-top: -9px;
   padding-left: 20px;
   padding-right: 20px;
   border-left: 1px solid #777;
@@ -124,7 +131,7 @@ html {
 }
 
 body {
-  padding-top: 60px;
+  padding-top: 50px;
 }
 
 section {
@@ -214,7 +221,10 @@ h1, h2, h3, h4, h5, h6 {
   letter-spacing: -1px;
 }
 .pxl-h1-device {
-  margin-top: 30px;
+  margin-top: 1.5em;
+}
+.pxl-h1-dash {
+  margin-top: 1em;
 }
 
 .pxl-bottom-margin {

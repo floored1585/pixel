@@ -3,6 +3,7 @@ charts = []
 ready = ->
   sort_table()
   color_table()
+  set_onscrolls()
   tooltips()
   parent_child()
   set_onclicks()
@@ -12,6 +13,22 @@ ready = ->
   typeahead()
   set_focus()
   $(window).resize(check_charts)
+
+set_onscrolls = ->
+  $(window).scroll( ->
+    if $(this).scrollTop() > 0
+      if $('.pxl-fadescroll').css('margin-top') == '0px'
+        $('.pxl-fadescroll').stop().animate({marginTop: '-2em'})
+      #$('.pxl-fadescroll').fadeOut()
+    else
+      $('.pxl-fadescroll').stop().animate({marginTop: '0px'})
+      #$('.pxl-fadescroll').fadeIn()
+  )
+  $('.pxl-fadescroll').hover \
+    (-> $(this).filter(':not(:animated)').animate({marginTop: '0px' })), \
+    (->
+      if $(window).scrollTop() > 0 # prevent hiding when @ top of page
+        $(this).filter(':not(:animated)').animate({marginTop: '-2em' }))
 
 draw_charts = ->
   $('.pxl-rickshaw').each ->

@@ -2,8 +2,10 @@
 <% interfaces = data ? data[:interfaces] : nil %>
 <% devicedata = data ? data[:devicedata] : nil %>
 <% if devicedata %>
-  <div class='pxl-minibar'>
-    <%= device_minibar(devicedata) %>
+  <div class='pxl-minibar-wrapper pxl-fadescroll'>
+    <div class='pxl-minibar'>
+      <%= device_minibar(devicedata) %>
+    </div>
   </div>
 <% end %>
 <h1 class='pxl-h1-device'><%= device %></h1>

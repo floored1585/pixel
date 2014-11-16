@@ -147,26 +147,12 @@ module Helper
   end
 
 
-  def device_minibar(data)
-    output = ''
-    # IP Info:
-    output << "<span>IP: <b>#{data[:ip]}</b></span>" if data[:ip]
-    # HW/SW Info:
-    output << "<span class='hidden-xs hidden-sm hidden-md'>Details: "
-    output << "<b>#{data[:vendor]} " if data[:vendor]
-    output << data[:hw_model]
-    output << "</b> " if data[:vendor]
-    output << "running " if data[:vendor] && data[:sw_descr] && data[:sw_version]
-    output << "<b>#{data[:sw_descr]} #{data[:sw_version]}</b>"
-    output << "</span>"
-    # Uptime:
-    output << "<span>Uptime: <b>" << humanize_time(data[:uptime]) << "</b></span>"
-    # PPS/BPS Summary:
-    output << "<span>Currently pushing <b>"
-    output << number_to_human(data[:bps_out], :bps)
-    output << " (" << number_to_human(data[:pps_out], :pps) << ")"
-    output << "</b></span>"
-    
+  def sw_tooltip(data)
+    if data[:vendor] && data[:sw_descr] && data[:sw_version]
+      "running #{data[:sw_descr]} #{data[:sw_version]}"
+    else
+      "No software data found"
+    end
   end
 
 

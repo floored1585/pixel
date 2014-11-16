@@ -32,6 +32,9 @@ li.list-group-item-danger a:hover {
   max-width: none;
   text-align: left;
 }
+.tooltip-lighter + .tooltip > .tooltip-inner {
+  opacity: .8;
+}
 
 .btn-xs {
   padding-top: none;
@@ -112,13 +115,17 @@ li.list-group-item-danger a:hover {
   background-color: #EEE;
   text-align: center;
 }
-.pxl-minibar span {
+.pxl-minibar > span {
   vertical-align: middle;
   color: #555;
   padding-right: 0.65em;
   padding-left: 0.65em;
 }
-
+.pxl-minibar u {
+  /* for tooltip underline */
+  border-bottom: 1px dotted #000;
+  text-decoration: none;
+}
 /* universal */
 
 .huge {

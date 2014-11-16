@@ -21,7 +21,7 @@ set_onscrolls = ->
         $('.pxl-fadescroll').stop().animate({marginTop: '-2em'})
       #$('.pxl-fadescroll').fadeOut()
     else
-      $('.pxl-fadescroll').stop().animate({marginTop: '0px'})
+      $('.pxl-fadescroll').stop().animate({marginTop: '0px'}, 'fast')
       #$('.pxl-fadescroll').fadeIn()
   )
   $('.pxl-fadescroll').hover \

@@ -4,7 +4,20 @@
 <% if devicedata %>
   <div class='pxl-minibar-wrapper pxl-fadescroll'>
     <div class='pxl-minibar'>
-      <%= device_minibar(devicedata) %>
+      <span class='pxl-minibar-span'>IP: <b><%= devicedata[:ip] %></b></span>
+      <span>Hardware:
+        <span data-toggle='tooltip' data-rel='tooltip-bottom'
+          title='<%= sw_tooltip(devicedata) %>' class='tooltip-lighter'>
+          <u><b><%= devicedata[:vendor] << ' ' << devicedata[:hw_model] %></b></u>
+        </span>
+      </span>
+      <span>Uptime: <b><%= humanize_time(devicedata[:uptime])%></b></span>
+      <span>Pushing:
+        <span data-toggle='tooltip' data-rel='tooltip-bottom' class='tooltip-lighter'
+          title='<%= number_to_human(devicedata[:pps_out], :pps) %>'>
+          <u><b><%= number_to_human(devicedata[:bps_out], :bps) %></b></u>
+        </span>
+      </span>
     </div>
   </div>
 <% end %>

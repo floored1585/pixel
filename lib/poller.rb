@@ -448,7 +448,7 @@ module Poller
     # 2nd match = SW Version
     poller_cfg[:sys_descr_regex] = {
       'Cisco' => /^[\w\s]+,[\w\s]+\(([\w\s-]+)\),(?: Version)?([\w\s\(\)\.]+),[\w\s\(\)]+$/,
-      'Juniper' => /^[\w\s,]+\.[\w\s]+,(?: kernel )?(\w+)\s+([\w\.-]+).+$/,
+      'Juniper' => /^[\w\s,]+\.[\w\s\-]+,(?: kernel )?(\w+)\s+([\w\.-]+).+$/,
       'Force10 S-Series' => /^Dell ([\w\s]+)$.+Version: ([\w\d\(\)\.]+)/m,
     }
 

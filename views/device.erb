@@ -139,7 +139,7 @@
           <% devicedata.each do |oid,value| %>
             <tr>
               <td><%= oid %></td>
-              <td><%= devicedata_to_human(oid, value, { :add => true }) %></td>
+              <td class='pxl-break-word'><%= devicedata_to_human(oid, value, { :add => true }) %></td>
             </tr>
           <% end %>
         </table>

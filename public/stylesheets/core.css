@@ -80,6 +80,19 @@ li.list-group-item-danger a:hover {
   text-align: center;
 }
 
+.pxl-break-word {
+  -ms-word-break: break-all;
+  word-break: break-all;
+
+  /* Non standard for webkit */
+  word-break: break-word;
+
+  -webkit-hyphens: auto;
+  -moz-hyphens: auto;
+  -ms-hyphens: auto;
+  hyphens: auto;
+}
+
 .canvas-container {
   margin-bottom: 10px;
 }

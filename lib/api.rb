@@ -31,7 +31,7 @@ module API
       if response.code.to_i >= 200 && response.code.to_i < 400
         return response
       else
-        $LOG.error("#{src_component}: Bad response (#{response.code.to_i}) from #{url.host}")
+        $LOG.error("#{src_component}: Bad response (#{response.code.to_i}) from #{url}")
         raise Net::HTTPBadResponse
       end
     rescue Timeout::Error, Errno::ETIMEDOUT, Errno::EINVAL, Errno::ECONNRESET,

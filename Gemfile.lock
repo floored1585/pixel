@@ -12,6 +12,9 @@ GEM
     coffee-script-source (1.7.1)
     colorize (0.7.3)
     execjs (2.2.1)
+    http (0.6.3)
+      http_parser.rb (~> 0.6.0)
+    http_parser.rb (0.6.0)
     i18n (0.6.11)
     influxdb (0.1.8)
       json
@@ -55,6 +58,7 @@ PLATFORMS
 
 DEPENDENCIES
   capistrano
+  http
   influxdb
   mysql
   pg

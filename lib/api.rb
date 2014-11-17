@@ -1,6 +1,5 @@
 require_relative 'configfile'
-require 'net/http'
-require 'uri'
+require 'http'
 require 'json'
 
 module API
@@ -8,33 +7,32 @@ module API
   @settings = Configfile.retrieve
 
   def self.get(dst_component, request, src_component, task, retry_limit=5)
-    uri = URI(@settings[dst_component] + request)
-    request = Net::HTTP::Get.new(uri)
-    response = _execute_request(uri, request, 'GET', src_component, task, retry_limit)
+    url = @settings[dst_component] + request
+    response = _execute_request(url, 'GET', src_component, nil, task, retry_limit)
     response ? JSON.parse(response.body) : false
   end
 
   def self.post(dst_component, request, rawdata, src_component, task, retry_limit=5)
+    url = @settings[dst_component] + request
     return false if rawdata.empty?
-    uri = URI(@settings[dst_component] + request)
-    request = Net::HTTP::Post.new(uri, {'Content-Type' => 'application/json'})
-    request.body = JSON.generate(rawdata)
-    _execute_request(uri, request, 'POST', src_component, task, retry_limit)
+    _execute_request(url, 'POST', src_component, rawdata, task, retry_limit)
   end
 
-  def self._execute_request(uri, request, req_type, src_component, task, retry_limit, retry_count=0)
+  def self._execute_request(url, req_type, src_component, rawdata, task, retry_limit, retry_count=0)
     retry_delay = @settings["api_retry_delay_#{req_type}"] || 5
-    base_log = "#{src_component}: API request to #{req_type} #{task} failed: #{uri}."
+    base_log = "#{src_component}: API request to #{req_type} #{task} failed: #{url}"
 
     begin # Attempt the connection
-      Net::HTTP.start(uri.host, uri.port, { use_ssl: uri.to_s =~ /^https/ } ) do |http|
-        response = http.request(request)
-        if response.code.to_i >= 200 && response.code.to_i < 400
-          return response
-        else
-          $LOG.error("#{src_component}: Bad response (#{response.code.to_i}) from #{uri.host}")
-          raise Net::HTTPBadResponse
-        end
+      if req_type == 'POST'
+        response = HTTP.post(url, :body => JSON.generate(rawdata))
+      elsif req_type == 'GET'
+        response = HTTP.get(url)
+      end
+      if response.code.to_i >= 200 && response.code.to_i < 400
+        return response
+      else
+        $LOG.error("#{src_component}: Bad response (#{response.code.to_i}) from #{uri.host}")
+        raise Net::HTTPBadResponse
       end
     rescue Timeout::Error, Errno::ETIMEDOUT, Errno::EINVAL, Errno::ECONNRESET,
       Errno::ECONNREFUSED, EOFError, Net::HTTPBadResponse,
@@ -45,7 +43,7 @@ module API
         retry_log = "Retry ##{retry_count} (limit: #{retry_limit}) in #{retry_delay} seconds."
         $LOG.error "#{base_log}\n  #{retry_log}"
         sleep retry_delay
-        _execute_request(uri, request, req_type, src_component, task, retry_limit, retry_count)
+        _execute_request(url, req_type, src_component, rawdata, task, retry_limit, retry_count)
       else
         $LOG.error "#{base_log}\n  Retry limit (#{retry_limit}) exceeded; Aborting."
         return false

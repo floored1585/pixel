@@ -172,4 +172,29 @@ module Helper
     return (sprintf format % raw).to_s + ' ' + units[unit][i]
   end
 
+
+  def epoch_to_date(value, format='%-d %B %Y, %H:%M:%S UTC')
+    DateTime.strptime(value.to_s, '%s').strftime(format)
+  end
+
+
+  def devicedata_to_human(oid, value, opts={})
+    oids_to_modify = [ :bps_out, :pps_out, :discards_out, :uptime, :last_poll_duration, :last_poll, :next_poll, :currently_polling, :last_poll_result]
+    # abort on empty or non-existant values
+    return value unless value && !value.to_s.empty?
+    return value unless oids_to_modify.include?(oid)
+
+    output = "#{value} (" if opts[:add]
+
+    output << number_to_human(value, :bps) if oid == :bps_out
+    output << number_to_human(value, :pps) if [ :pps_out, :discards_out ].include?(oid)
+    output << humanize_time(value) if [ :uptime, :last_poll_duration ].include?(oid)
+    output << epoch_to_date(value) if [ :last_poll, :next_poll ].include?(oid)
+    output << (value == 1 ? 'Yes' : 'No') if oid == :currently_polling
+    output << (value == 1 ? 'Failure' : 'Success') if oid == :last_poll_result
+
+    output << ")" if opts[:add]
+    return output
+  end
+
 end

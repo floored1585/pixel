@@ -8,7 +8,7 @@
       <span>Hardware:
         <span data-toggle='tooltip' data-rel='tooltip-bottom'
           title='<%= sw_tooltip(devicedata) %>' class='tooltip-lighter'>
-          <u><b><%= devicedata[:vendor] << ' ' << devicedata[:hw_model] %></b></u>
+          <u><b><%= devicedata[:vendor] + ' ' << devicedata[:hw_model] %></b></u>
         </span>
       </span>
       <span>Uptime: <b><%= humanize_time(devicedata[:uptime])%></b></span>
@@ -22,7 +22,10 @@
   </div>
 <% end %>
 <h1 class='pxl-h1-device'><%= device %></h1>
-<h5 class='pxl-bottom-margin'><%= device_link_graph(settings, device, '[ graphs ]') %></h5>
+<h5 class='pxl-h5-device'>
+  <%= device_link_graph(settings, device, '[ graphs ]') %>&nbsp;
+  <a href='#' data-toggle="modal" data-target="#deviceDetails">[ details ]</a>
+</h5>
 <div class='row'>
   <div class='col-md-6'>
     <div class="panel panel-grey">
@@ -116,3 +119,35 @@
     </div>
   <% end %>
 </div>
+
+<!-- MODAL -->
+<div class="modal fade" id="deviceDetails" tabindex="-1" role="dialog" aria-labelledby="myModalLabel" aria-hidden="true">
+  <div class="modal-dialog">
+    <div class="modal-content">
+      <div class="modal-header">
+        <button type="button" class="close" data-dismiss="modal"><span aria-hidden="true">&times;</span><span class="sr-only">Close</span></button>
+        <h4 class="modal-title" id="myModalLabel"><%= device %> raw details</h4>
+      </div>
+      <div class="modal-body">
+        <table class='table table-condensed table-hover'>
+          <thead>
+            <tr>
+              <th>Attribute</th>
+              <th>Value</th>
+            </tr>
+          </thead>
+          <% devicedata.each do |oid,value| %>
+            <tr>
+              <td><%= oid %></td>
+              <td><%= devicedata_to_human(oid, value, { :add => true }) %></td>
+            </tr>
+          <% end %>
+        </table>
+      </div>
+      <div class="modal-footer">
+        <button type="button" class="btn btn-default" data-dismiss="modal">Close</button>
+      </div>
+    </div>
+  </div>
+</div>
+<!-- END MODAL -->

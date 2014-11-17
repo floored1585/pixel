@@ -227,15 +227,14 @@ h1, h2, h3, h4, h5, h6 {
   text-align: center;
   letter-spacing: -1px;
 }
+.pxl-h5-device {
+  margin-bottom: 30px;
+}
 .pxl-h1-device {
   margin-top: 1.5em;
 }
 .pxl-h1-dash {
   margin-top: 1em;
-}
-
-.pxl-bottom-margin {
-  margin-bottom: 30px;
 }
 
 p {

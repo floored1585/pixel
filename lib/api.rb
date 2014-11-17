@@ -35,7 +35,7 @@ module API
         raise Net::HTTPBadResponse
       end
     rescue Timeout::Error, Errno::ETIMEDOUT, Errno::EINVAL, Errno::ECONNRESET,
-      Errno::ECONNREFUSED, EOFError, Net::HTTPBadResponse,
+      Errno::ECONNREFUSED, EOFError, Net::HTTPBadResponse, IOError,
       Net::HTTPHeaderSyntaxError, Net::ProtocolError, SocketError
       # The request failed; Retry if allowed
       if retry_count < retry_limit

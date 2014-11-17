@@ -13,4 +13,5 @@ gem 'snmp'
 
 group :development do
   gem 'capistrano'
+  gem 'capistrano-bundler'
 end

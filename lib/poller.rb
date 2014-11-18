@@ -54,12 +54,14 @@ module Poller
       if dev_info[:vendor] == 'Force10 S-Series'
         substitutions = {
           'Port-channel ' => 'Po',
+          'fortyGigE ' => 'Fo',
           'TenGigabitEthernet ' => 'Te',
           'GigabitEthernet ' => 'Gi',
           'FastEthernet ' => 'Fa',
+          'ManagementEthernet ' => 'Ma',
         }
         if_table.each do |index,oids|
-          if_table[index]['if_name'] = oids['if_name'].gsub(/Port-channel |TenGigabitEthernet |GigabitEthernet |FastEthernet /, substitutions)
+          if_table[index]['if_name'] = oids['if_name'].gsub(Regexp.new(substitutions.keys.join('|')), substitutions)
         end
       end
 

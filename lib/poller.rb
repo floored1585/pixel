@@ -26,9 +26,6 @@ module Poller
   def self._poll(poller_cfg, device, ip)
     pid = fork do
       start_time = Time.now
-      if_table = {}
-      cpus = {}
-      memory = {}
       metadata = { :worker => Socket.gethostname }
 
       # get SNMP data from the device
@@ -53,6 +50,19 @@ module Poller
         _post_data(post_devices)
       end
 
+      # Force10 S-Series interface name tweaks
+      if dev_info[:vendor] == 'Force10 S-Series'
+        substitutions = {
+          'Port-channel ' => 'Po',
+          'TenGigabitEthernet ' => 'Te',
+          'GigabitEthernet ' => 'Gi',
+          'FastEthernet ' => 'Fa',
+        }
+        if_table.each do |index,oids|
+          if_table[index]['if_name'] = oids['if_name'].gsub(/Port-channel |TenGigabitEthernet |GigabitEthernet |FastEthernet /, substitutions)
+        end
+      end
+
       # Delete interfaces we're not interested in
       if_table.delete_if { |index,oids| !(
         oids['if_alias'] =~ poller_cfg[:interesting_alias] || oids['if_name'] =~ poller_cfg[:interesting_names][dev_info[:vendor]]
@@ -60,6 +70,7 @@ module Poller
       # Populate name_to_index hash
       name_to_index = {}
       if_table.each { |index,oids| name_to_index[oids['if_name'].downcase] = index }
+
       influx_is_up = true
 
       cpus.each do |index, data|
@@ -522,7 +533,8 @@ module Poller
 
     poller_cfg[:interesting_names] = {
       'Cisco'       => /^(Te|Gi|Fa|Po)/,
-      'Juniper'       => /^(xe|ge|fe|ae)[^.]*$/,
+      'Juniper'     => /^(xe|ge|fe|ae)[^.]*$/,
+      'Force10 S-Series' => /^(Te|Gi|Fa|Po)/,
     }
 
     return poller_cfg

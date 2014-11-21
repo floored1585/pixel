@@ -29,13 +29,35 @@ module Poller
       metadata = { :worker => Socket.gethostname }
 
       # get SNMP data from the device
+      start = Time.now
+      start_total = Time.now
+
       begin
         dev_info = _query_device_info(ip, poller_cfg)
+        dev_info_time = Time.now - start; start = Time.now
+
         cpus = _query_device_cpu(device, ip, poller_cfg, dev_info[:vendor])
+        cpus_time = Time.now - start; start = Time.now
+
         memory = _query_device_mem(device, ip, poller_cfg, dev_info[:vendor])
+        memory_time = Time.now - start; start = Time.now
+
+        temperature = _query_device_temp(device, ip, poller_cfg, dev_info[:vendor])
+        temperature_time = Time.now - start; start = Time.now
+
+        psu = _query_device_psu(device, ip, poller_cfg, dev_info[:vendor])
+        psu_time = Time.now - start; start = Time.now
+
+        fan = _query_device_fan(device, ip, poller_cfg, dev_info[:vendor])
+        fan_time = Time.now - start; start = Time.now
+
         if_table = _query_device_interfaces(ip, poller_cfg)
-        #puts "#{device} Device Data:"
-        #pp dev_info
+        if_table_time = Time.now - start; start = Time.now
+
+        total_time = Time.now - start_total
+
+        #puts "#{device} Fan Data:"
+        #pp fan
         #puts "\n"
       rescue RuntimeError, ArgumentError => e
         $LOG.error("POLLER: Error encountered while polling #{device}: #{e}")
@@ -45,10 +67,25 @@ module Poller
           :interfaces => {},
           :cpus => {},
           :memory => {},
+          :temperature => {},
+          :psu => {},
+          :fan => {},
           :devicedata => {},
         } }
         _post_data(post_devices)
       end
+      #$LOG.info(
+      #  "POLLER: SNMP poll successful:\n" +
+      #  "Dev: #{device}\n" +
+      #  "dev_info_time: #{'%.2f' % dev_info_time}\n" +
+      #  "cpus_time: #{'%.2f' % cpus_time}\n" +
+      #  "memory_time: #{'%.2f' % memory_time}\n" +
+      #  "temperature_time: #{'%.2f' % temperature_time}\n" +
+      #  "psu_time: #{'%.2f' % psu_time}\n" +
+      #  "fan_time: #{'%.2f' % fan_time}\n" +
+      #  "if_table_time: #{'%.2f' % if_table_time}\n" +
+      #  "Total Time: #{'%.2f' % total_time}"
+      #)
 
       # Force10 S-Series interface name tweaks
       if dev_info[:vendor] == 'Force10 S-Series'
@@ -130,7 +167,7 @@ module Poller
         series_data = { :value => totals[key], :time => Time.now.to_i }
         influx_is_up = _write_influxdb(series_name, series_data, poller_cfg) if influx_is_up
       end
-      $LOG.info("POLLER: SNMP poll successful for #{device}: " + 
+      $LOG.info("POLLER: SNMP poll successful for #{device}: " +
                 "#{if_table.size} interfaces polled, #{interfaces.size} processed")
 
       # Update the application
@@ -142,6 +179,9 @@ module Poller
         :interfaces => interfaces,
         :cpus => cpus,
         :memory => memory,
+        :temperature => memory,
+        :psu => memory,
+        :fan => memory,
         :devicedata => dev_info,
       } }
 
@@ -201,9 +241,9 @@ module Poller
   def self._query_device_interfaces(ip, poller_cfg)
     SNMP::Manager.open(:host => ip, :community => poller_cfg[:snmpv2_community]) do |session|
       if_table = {}
-      session.walk(poller_cfg[:interface_oids][:general].keys) do |row|
+      session.walk(poller_cfg[:oids][:general].keys) do |row|
         row.each do |vb|
-          oid_text = poller_cfg[:interface_oids][:general][vb.name.to_str.gsub(/\.[0-9]+$/,'')]
+          oid_text = poller_cfg[:oids][:general][vb.name.to_str.gsub(/\.[0-9]+$/,'')]
           if_index = vb.name.to_str[/[0-9]+$/]
           if_table[if_index] ||= {}
           if_table[if_index][oid_text] = vb.value.to_s
@@ -274,8 +314,129 @@ module Poller
   end
 
 
+  def self._query_device_fan(device, ip, poller_cfg, vendor)
+    return {} unless vendor_cfg = poller_cfg[:oids][vendor]
+    return {} unless vendor_cfg['fan_status']
+    fan_table = {}
+
+    SNMP::Manager.open(:host => ip, :community => poller_cfg[:snmpv2_community]) do |session|
+      if vendor_cfg['fan_description']
+        session.walk(vendor_cfg['fan_description']) do |row|
+          row.each do |vb|
+            fan_index = vendor_cfg['fan_index_regex'].match( vb.name.to_str )[0]
+            fan_table[fan_index] ||= {}
+            fan_table[fan_index][:description] = vb.value.to_s
+          end
+        end
+      end
+      session.walk(vendor_cfg['fan_status']) do |row|
+        row.each do |vb|
+          fan_index = vendor_cfg['fan_index_regex'].match( vb.name.to_str )[0]
+
+          fan_table[fan_index] ||= {}
+          fan_table[fan_index][:index] = fan_index
+          fan_table[fan_index][:device] = device
+          fan_table[fan_index][:description] ||= "PSU #{fan_index}"
+          fan_table[fan_index][:last_updated] = Time.now.to_i
+          fan_table[fan_index][:status] = vb.value.to_i
+        end
+      end
+    end
+
+    return fan_table
+  end
+
+
+  def self._query_device_psu(device, ip, poller_cfg, vendor)
+    return {} unless vendor_cfg = poller_cfg[:oids][vendor]
+    return {} unless vendor_cfg['psu_status']
+    psu_table = {}
+
+    SNMP::Manager.open(:host => ip, :community => poller_cfg[:snmpv2_community]) do |session|
+      if vendor_cfg['psu_description']
+        session.walk(vendor_cfg['psu_description']) do |row|
+          row.each do |vb|
+            psu_index = vendor_cfg['psu_index_regex'].match( vb.name.to_str )[0]
+            psu_table[psu_index] ||= {}
+            psu_table[psu_index][:description] = vb.value.to_s
+          end
+        end
+      end
+      session.walk(vendor_cfg['psu_status']) do |row|
+        row.each do |vb|
+          psu_index = vendor_cfg['psu_index_regex'].match( vb.name.to_str )[0]
+
+          psu_table[psu_index] ||= {}
+          psu_table[psu_index][:index] = psu_index
+          psu_table[psu_index][:device] = device
+          psu_table[psu_index][:description] ||= "Fan #{psu_index}"
+          psu_table[psu_index][:last_updated] = Time.now.to_i
+          psu_table[psu_index][:status] = vb.value.to_i
+        end
+      end
+    end
+
+    return psu_table
+  end
+
+
+  def self._query_device_temp(device, ip, poller_cfg, vendor)
+    return {} unless vendor_cfg = poller_cfg[:oids][vendor]
+    return {} unless vendor_cfg['temp_value']
+    temp_table = {}
+
+    SNMP::Manager.open(:host => ip, :community => poller_cfg[:snmpv2_community]) do |session|
+      if vendor_cfg['temp_description']
+        session.walk(vendor_cfg['temp_description']) do |row|
+          row.each do |vb|
+            next if vendor_cfg['temp_list_regex'] && !(vendor_cfg['temp_list_regex'] =~ vb.name.to_str)
+            temp_index = vendor_cfg['temp_index_regex'].match( vb.name.to_str )[0]
+            temp_table[temp_index] ||= {}
+            temp_table[temp_index][:description] = vb.value.to_s
+          end
+        end
+      end
+      if vendor_cfg['temp_threshold']
+        session.walk(vendor_cfg['temp_threshold']) do |row|
+          row.each do |vb|
+            next if vendor_cfg['temp_list_regex'] && !(vendor_cfg['temp_list_regex'] =~ vb.name.to_str)
+            temp_index = vendor_cfg['temp_index_regex'].match( vb.name.to_str )[0]
+            temp_table[temp_index] ||= {}
+            temp_table[temp_index][:threshold] = vb.value.to_s
+          end
+        end
+      end
+      if vendor_cfg['temp_status']
+        session.walk(vendor_cfg['temp_status']) do |row|
+          row.each do |vb|
+            next if vendor_cfg['temp_list_regex'] && !(vendor_cfg['temp_list_regex'] =~ vb.name.to_str)
+            temp_index = vendor_cfg['temp_index_regex'].match( vb.name.to_str )[0]
+            temp_table[temp_index] ||= {}
+            temp_table[temp_index][:status] = vb.value.to_s
+          end
+        end
+      end
+      session.walk(vendor_cfg['temp_value']) do |row|
+        row.each do |vb|
+          next if vendor_cfg['temp_list_regex'] && !(vendor_cfg['temp_list_regex'] =~ vb.name.to_str)
+          temp_index = vendor_cfg['temp_index_regex'].match( vb.name.to_str )[0]
+
+          temp_table[temp_index] ||= {}
+          temp_table[temp_index][:index] = temp_index
+          temp_table[temp_index][:device] = device
+          temp_table[temp_index][:description] ||= "TEMP #{temp_index}"
+          temp_table[temp_index][:last_updated] = Time.now.to_i
+          temp_table[temp_index][:temperature] = vb.value.to_i
+        end
+      end
+    end
+
+    return temp_table
+  end
+
+
   def self._query_device_cpu(device, ip, poller_cfg, vendor)
-    return {} unless vendor_cfg = poller_cfg[:interface_oids][vendor]
+    return {} unless vendor_cfg = poller_cfg[:oids][vendor]
     cpu_table = {}
     cpu_hw_ids = {}
 
@@ -289,7 +450,7 @@ module Poller
           end
         end
       end
-      session.walk(vendor_cfg['hw_description']) do |row|
+      session.walk(vendor_cfg['cpu_description']) do |row|
         row.each do |vb|
           hw_index = vendor_cfg['cpu_index_regex'].match( vb.name.to_str )[0]
           # Continue only if one of the following occur:
@@ -309,8 +470,8 @@ module Poller
             cpu_table[cpu_index] ||= {}
             cpu_table[cpu_index][:device] = device
             cpu_table[cpu_index][:index] = cpu_index
-            cpu_table[cpu_index][:last_updated] = Time.now.to_i 
-            cpu_table[cpu_index][:description] ||= 'CPU'
+            cpu_table[cpu_index][:last_updated] = Time.now.to_i
+            cpu_table[cpu_index][:description] ||= "CPU #{cpu_index}"
             cpu_table[cpu_index][:util] = vb.value.to_i
           end
         end
@@ -322,7 +483,7 @@ module Poller
 
 
   def self._query_device_mem(device, ip, poller_cfg, vendor)
-    return {} unless vendor_cfg = poller_cfg[:interface_oids][vendor]
+    return {} unless vendor_cfg = poller_cfg[:oids][vendor]
     mem_table = {}
 
     SNMP::Manager.open(:host => ip, :community => poller_cfg[:snmpv2_community]) do |session|
@@ -335,7 +496,7 @@ module Poller
           mem_table[mem_index][:index] = mem_index
           mem_table[mem_index][:device] = device
           mem_table[mem_index][:description] = vb.value.to_s
-          mem_table[mem_index][:last_updated] = Time.now.to_i 
+          mem_table[mem_index][:last_updated] = Time.now.to_i
         end
       end
       if vendor_cfg['mem_util'] # We can get util directly
@@ -472,7 +633,7 @@ module Poller
     }
 
     # These are the OIDs that will get pulled/stored for our interfaces.
-    poller_cfg[:interface_oids] = {
+    poller_cfg[:oids] = {
       :general => {
         '1.3.6.1.2.1.31.1.1.1.1'  => 'if_name',
         '1.3.6.1.2.1.31.1.1.1.6'  => 'if_hc_in_octets',
@@ -490,33 +651,62 @@ module Poller
         '1.3.6.1.2.1.2.2.1.20'    => 'if_out_errors',
       },
       'Juniper' => {
-        'hw_description'  => '1.3.6.1.4.1.2636.3.1.13.1.5',
         'cpu_index_regex' => /([0-9]+\.?){4}$/,
+        'cpu_description' => '1.3.6.1.4.1.2636.3.1.13.1.5',
         'cpu_util'        => '1.3.6.1.4.1.2636.3.1.13.1.8',
-        'cpu_list_regex'  => /2636\.3\.1\.13\.1\.\d\.[97]/,
+        'cpu_list_regex'  => /2636\.3\.1\.13\.1\.\d\.[97]\./,
         'mem_index_regex' => /([0-9]+\.?){4}$/,
         'mem_description' => '1.3.6.1.4.1.2636.3.1.13.1.5',
         'mem_util'        => '1.3.6.1.4.1.2636.3.1.13.1.11',
-        'mem_list_regex'  => /2636\.3\.1\.13\.1\.[0-9]+\.[97]/,
+        'mem_list_regex'  => /2636\.3\.1\.13\.1\.[0-9]+\.[97]\./,
+        'temp_index_regex'=> /([0-9]+\.?){4}$/,
+        'temp_list_regex' => /2636\.3\.1\.13\.1\.[0-9]+\.(2|4|7|9|12)\./,
+        'temp_description'=> '1.3.6.1.4.1.2636.3.1.13.1.5',
+        'temp_value'      => '1.3.6.1.4.1.2636.3.1.13.1.7',
+        'psu_index_regex' => /([0-9]+\.?){4}$/,
+        'psu_description' => '1.3.6.1.4.1.2636.3.1.13.1.5.2',
+        'psu_status'      => '1.3.6.1.4.1.2636.3.1.13.1.6.2',
+        'fan_index_regex' => /([0-9]+\.?){4}$/,
+        'fan_description' => '1.3.6.1.4.1.2636.3.1.13.1.5.4',
+        'fan_status'      => '1.3.6.1.4.1.2636.3.1.13.1.6.4',
       },
       'Cisco' => {
-        'hw_description'  => '1.3.6.1.2.1.47.1.1.1.1.7',
         'cpu_index_regex' => /[0-9]+$/,
+        'cpu_description' => '1.3.6.1.2.1.47.1.1.1.1.7',
         'cpu_util'        => '1.3.6.1.4.1.9.9.109.1.1.1.1.7', # 1 minute average
         'cpu_list'        => '1.3.6.1.4.1.9.9.109.1.1.1.1.2',
         'mem_index_regex' => /[0-9]+$/,
         'mem_description' => '1.3.6.1.4.1.9.9.48.1.1.1.2',
         'mem_used'        => '1.3.6.1.4.1.9.9.48.1.1.1.5',
         'mem_free'        => '1.3.6.1.4.1.9.9.48.1.1.1.6',
+        'temp_index_regex'=> /[0-9]+$/,
+        'temp_description'=> '1.3.6.1.4.1.9.9.13.1.3.1.2',
+        'temp_value'      => '1.3.6.1.4.1.9.9.13.1.3.1.3',
+        'temp_threshold'  => '1.3.6.1.4.1.9.9.13.1.3.1.4',
+        'temp_status'     => '1.3.6.1.4.1.9.9.13.1.3.1.6',
+        'psu_index_regex' => /[0-9]+$/,
+        'psu_description' => '1.3.6.1.4.1.9.9.13.1.5.1.2',
+        'psu_status'      => '1.3.6.1.4.1.9.9.13.1.5.1.3',
+        'fan_index_regex' => /[0-9]+$/,
+        'fan_description' => '1.3.6.1.4.1.9.9.13.1.4.1.2',
+        'fan_status'      => '1.3.6.1.4.1.9.9.13.1.4.1.3',
+
       },
       'Force10 S-Series'  => {
         'cpu_index_regex' => /[0-9]+$/,
-        'hw_description'  => '1.3.6.1.4.1.6027.3.10.1.2.2.1.9',
+        'cpu_description' => '1.3.6.1.4.1.6027.3.10.1.2.2.1.9',
         'cpu_util'        => '1.3.6.1.4.1.6027.3.10.1.2.9.1.3', # 1 minute average
         'cpu_list_regex'  => /.*/, # No need to filter
         'mem_index_regex' => /[0-9]+$/,
         'mem_description' => '1.3.6.1.4.1.6027.3.10.1.2.2.1.9',
         'mem_util'        => '1.3.6.1.4.1.6027.3.10.1.2.9.1.5',
+        'temp_index_regex'=> /[0-9]+$/,
+        'temp_description'=> '1.3.6.1.4.1.6027.3.10.1.2.2.1.9',
+        'temp_value'      => '1.3.6.1.4.1.6027.3.10.1.2.2.1.14',
+        'psu_index_regex' => /([0-9]+\.?){2}$/,
+        'psu_status'      => '1.3.6.1.4.1.6027.3.10.1.2.3.1.2',
+        'fan_index_regex' => /([0-9]+\.?){2}$/,
+        'fan_status'      => '1.3.6.1.4.1.6027.3.10.1.2.4.1.2',
       },
 
     }

@@ -8,7 +8,10 @@
       <span>Hardware:
         <span data-toggle='tooltip' data-rel='tooltip-bottom'
           title='<%= sw_tooltip(devicedata) %>' class='tooltip-lighter'>
-          <u><b><%= devicedata[:vendor] + ' ' << devicedata[:hw_model] %></b></u>
+          <u><b><%=
+          devicedata[:vendor].gsub(/Force10 [\w\-]+/,'Force10') +
+            ' ' << devicedata[:hw_model]
+            %></b></u>
         </span>
       </span>
       <span>Uptime: <b><%= humanize_time(devicedata[:uptime])%></b></span>

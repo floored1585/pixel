@@ -47,7 +47,9 @@ module Influx
     original.each do |series,points|
       description = /#{attribute}\.(.+)$/.match(series)[1]
       device = /(.+)\.#{attribute}/.match(series)[1]
-      name = db[attribute.to_sym].filter(:device => device, :description => description).first[:description]
+      name = db[attribute.to_sym].filter(:device => device, :description => description).first
+      next unless name
+      name = name[:description]
       data = []
       points.each do |point|
         data.unshift({

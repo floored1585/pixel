@@ -130,8 +130,6 @@ module Core
 
     devices.each do |device, data|
 
-      device_update = data[:metadata].merge(data[:devicedata])
-
       $LOG.info("CORE: Received data for #{device} from #{data[:metadata][:worker]}")
 
       data[:interfaces].each do |index, data|
@@ -158,6 +156,31 @@ module Core
           db[:memory].insert(data)
         end
       end
+      data[:temperature].each do |index, data|
+        #$LOG.warn("Device: #{device} Temperature: #{index}\n  Data: #{data}")
+        # Try updating, and if we don't affect a row, insert instead
+        existing = db[:temperature].where(:device => data[:device], :index => index)
+        if existing.update(data) != 1
+          db[:temperature].insert(data)
+        end
+      end
+      data[:psu].each do |index, data|
+        #$LOG.warn("Device: #{device} PSU: #{index}\n  Data: #{data}")
+        # Try updating, and if we don't affect a row, insert instead
+        existing = db[:psu].where(:device => data[:device], :index => index)
+        if existing.update(data) != 1
+          db[:psu].insert(data)
+        end
+      end
+      data[:fan].each do |index, data|
+        #$LOG.warn("Device: #{device} Fan: #{index}\n  Data: #{data}")
+        # Try updating, and if we don't affect a row, insert instead
+        existing = db[:fan].where(:device => data[:device], :index => index)
+        if existing.update(data) != 1
+          db[:fan].insert(data)
+        end
+      end
+      device_update = data[:metadata].merge(data[:devicedata])
       existing = db[:device].where(:device => device)
       if existing.update(device_update) != 1
         $LOG.error("Problem updating device table for #{device}")
@@ -411,6 +434,74 @@ module Core
           else
             $LOG.warn("Invalid or missing Memory data received for #{device}")
             data[:memory] = {}
+          end
+          # Validate Temperature
+          if data[:temperature].class == Hash
+            # Validate Temperature data
+            data[:temperature].each do |index, temp_data|
+              if temp_data.class == Hash
+                temp_data.symbolize!
+              else
+                $LOG.warn("Invalid Temperature data for #{device}: index #{index}")
+                data[:temperature].delete(index)
+              end
+              # Convert utilization to numeric
+              temp_data[:temperature] = temp_data[:temperature].to_i_if_numeric if temp_data[:temperature]
+              required_data = [:device, :index, :temperature, :description, :last_updated]
+              unless (required_data - temp_data.keys).empty?
+                $LOG.warn("Invalid Temperature data for #{device}: index #{index}. Missing: #{required_data - temp_data.keys}")
+                data[:temperature].delete(index)
+              end
+              unless temp_data[:temperature] && temp_data[:temperature].is_a?(Numeric)
+                $LOG.warn("Invalid or missing Temperature for #{device}: index #{index}")
+                data[:temperature].delete(index)
+              end
+            end
+          else
+            $LOG.warn("Invalid or missing Temperature data received for #{device}")
+            data[:temperature] = {}
+          end
+          # Validate PSUs
+          if data[:psu].class == Hash
+            # Validate PSU data
+            data[:psu].each do |index, psu_data|
+              if psu_data.class == Hash
+                psu_data.symbolize!
+              else
+                $LOG.warn("Invalid PSU data for #{device}: index #{index}")
+                data[:psu].delete(index)
+              end
+              # Convert utilization to numeric
+              required_data = [:device, :index, :description, :last_updated]
+              unless (required_data - psu_data.keys).empty?
+                $LOG.warn("Invalid PSUs data for #{device}: index #{index}. Missing: #{required_data - psu_data.keys}")
+                data[:psu].delete(index)
+              end
+            end
+          else
+            $LOG.warn("Invalid or missing PSUs data received for #{device}")
+            data[:psu] = {}
+          end
+          # Validate Fans
+          if data[:fan].class == Hash
+            # Validate Fan data
+            data[:fan].each do |index, fan_data|
+              if fan_data.class == Hash
+                fan_data.symbolize!
+              else
+                $LOG.warn("Invalid Fans data for #{device}: index #{index}")
+                data[:fan].delete(index)
+              end
+              # Convert utilization to numeric
+              required_data = [:device, :index, :description, :last_updated]
+              unless (required_data - fan_data.keys).empty?
+                $LOG.warn("Invalid Fan data for #{device}: index #{index}. Missing: #{required_data - fan_data.keys}")
+                data[:fan].delete(index)
+              end
+            end
+          else
+            $LOG.warn("Invalid or missing Fans data received for #{device}")
+            data[:fan] = {}
           end
         else
           $LOG.error("Invalid or missing data received for #{device}")

@@ -179,9 +179,9 @@ module Poller
         :interfaces => interfaces,
         :cpus => cpus,
         :memory => memory,
-        :temperature => memory,
-        :psu => memory,
-        :fan => memory,
+        :temperature => temperature,
+        :psu => psu,
+        :fan => fan,
         :devicedata => dev_info,
       } }
 
@@ -338,7 +338,8 @@ module Poller
           fan_table[fan_index][:device] = device
           fan_table[fan_index][:description] ||= "PSU #{fan_index}"
           fan_table[fan_index][:last_updated] = Time.now.to_i
-          fan_table[fan_index][:status] = vb.value.to_i
+          fan_table[fan_index][:status] = _normalize_status(vendor, vb.value.to_i, poller_cfg[:status_table])
+          fan_table[fan_index][:vendor_status] = vb.value.to_i
         end
       end
     end
@@ -371,7 +372,8 @@ module Poller
           psu_table[psu_index][:device] = device
           psu_table[psu_index][:description] ||= "Fan #{psu_index}"
           psu_table[psu_index][:last_updated] = Time.now.to_i
-          psu_table[psu_index][:status] = vb.value.to_i
+          psu_table[psu_index][:status] = _normalize_status(vendor, vb.value.to_i, poller_cfg[:status_table])
+          psu_table[psu_index][:vendor_status] = vb.value.to_i
         end
       end
     end
@@ -412,7 +414,8 @@ module Poller
             next if vendor_cfg['temp_list_regex'] && !(vendor_cfg['temp_list_regex'] =~ vb.name.to_str)
             temp_index = vendor_cfg['temp_index_regex'].match( vb.name.to_str )[0]
             temp_table[temp_index] ||= {}
-            temp_table[temp_index][:status] = vb.value.to_s
+            temp_table[temp_index][:status] = _normalize_status(vendor, vb.value.to_i, poller_cfg[:status_table])
+            temp_table[temp_index][:vendor_status] = vb.value.to_i
           end
         end
       end
@@ -427,6 +430,8 @@ module Poller
           temp_table[temp_index][:description] ||= "TEMP #{temp_index}"
           temp_table[temp_index][:last_updated] = Time.now.to_i
           temp_table[temp_index][:temperature] = vb.value.to_i
+          # Don't save 0 values for temperature!
+          temp_table.delete(temp_index) if vb.value.to_i == 0
         end
       end
     end
@@ -610,6 +615,12 @@ module Poller
   end
 
 
+  def self._normalize_status(vendor, vendor_status, table)
+    return table[vendor][vendor_status] if table[vendor]
+    return 0
+  end
+
+
   def self._poller_cfg(settings)
     # Convert poller settings into hash with symbols as keys
     poller_cfg = settings['poller'].dup || {}
@@ -727,6 +738,34 @@ module Poller
       'Cisco'       => /^(Po|Te|Gi|Fa)/,
       'Juniper'     => /^(ae|xe|ge|fe)[^.]*$/,
       'Force10 S-Series' => /^(Po|Fo|Te|Gi|Fa|Ma)/,
+    }
+
+    poller_cfg[:status_table] = {
+      'Cisco' => {
+        1 => 1, # normal
+        2 => 2, # warning
+        3 => 2, # critical
+        4 => 2, # shutdown
+        5 => 2, # notPresent
+        6 => 2, # notFunctioning
+      },
+      'Juniper' => {
+        1 => 2, # Unknown
+        2 => 1, # Up and running
+        3 => 2, # Ready to run, not running yet
+        4 => 2, # Held in reset, not ready yet
+        5 => 1, # Running at Full Speed (valid for fans only)
+        6 => 2, # Down or off (for power supply)
+        7 => 1, # Running as a standby (Backup)
+      },
+      'Force10 S-Series' => {
+        1 => 1, # normal(1), (on for fans)
+        2 => 2, # warning(2), (off for fans)
+        3 => 2, # critical(3),
+        4 => 2, # shutdown(4),
+        5 => 2, # notPresent(5),
+        6 => 2, # notFunctioning(6),
+      },
     }
 
     return poller_cfg

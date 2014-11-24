@@ -144,59 +144,59 @@ module Core
   def post_devices(settings, db, devices)
     _validate_devices_post!(devices)
 
-    devices.each do |device, data|
+    devices.each do |device, components|
 
-      $LOG.info("CORE: Received data for #{device} from #{data[:metadata][:worker]}")
+      $LOG.info("CORE: Received data for #{device} from #{components[:metadata][:worker]}")
 
-      data[:interfaces].each do |index, data|
+      components[:interfaces].each do |index, data|
         #$LOG.warn("Device: #{device}  Interface: #{index}\n  OIDs: #{oids}")
         # Try updating, and if we don't affect a row, insert instead
-        existing = db[:interface].where(:device => data[:device], :index => index)
+        existing = db[:interface].where(:device => device, :index => index)
         if existing.update(data) != 1
           db[:interface].insert(data)
         end
       end
-      data[:cpus].each do |index, data|
+      components[:cpus].each do |index, data|
         #$LOG.warn("Device: #{device}  CPU: #{index}\n  Data: #{data}")
         # Try updating, and if we don't affect a row, insert instead
-        existing = db[:cpu].where(:device => data[:device], :index => index)
+        existing = db[:cpu].where(:device => device, :index => index)
         if existing.update(data) != 1
           db[:cpu].insert(data)
         end
       end
-      data[:memory].each do |index, data|
+      components[:memory].each do |index, data|
         #$LOG.warn("Device: #{device} Memory: #{index}\n  Data: #{data}")
         # Try updating, and if we don't affect a row, insert instead
-        existing = db[:memory].where(:device => data[:device], :index => index)
+        existing = db[:memory].where(:device => device, :index => index)
         if existing.update(data) != 1
           db[:memory].insert(data)
         end
       end
-      data[:temperature].each do |index, data|
+      components[:temperature].each do |index, data|
         #$LOG.warn("Device: #{device} Temperature: #{index}\n  Data: #{data}")
         # Try updating, and if we don't affect a row, insert instead
-        existing = db[:temperature].where(:device => data[:device], :index => index)
+        existing = db[:temperature].where(:device => device, :index => index)
         if existing.update(data) != 1
           db[:temperature].insert(data)
         end
       end
-      data[:psu].each do |index, data|
+      components[:psu].each do |index, data|
         #$LOG.warn("Device: #{device} PSU: #{index}\n  Data: #{data}")
         # Try updating, and if we don't affect a row, insert instead
-        existing = db[:psu].where(:device => data[:device], :index => index)
+        existing = db[:psu].where(:device => device, :index => index)
         if existing.update(data) != 1
           db[:psu].insert(data)
         end
       end
-      data[:fan].each do |index, data|
+      components[:fan].each do |index, data|
         #$LOG.warn("Device: #{device} Fan: #{index}\n  Data: #{data}")
         # Try updating, and if we don't affect a row, insert instead
-        existing = db[:fan].where(:device => data[:device], :index => index)
+        existing = db[:fan].where(:device => device, :index => index)
         if existing.update(data) != 1
           db[:fan].insert(data)
         end
       end
-      device_update = data[:metadata].merge(data[:devicedata])
+      device_update = components[:metadata].merge(components[:devicedata])
       existing = db[:device].where(:device => device)
       if existing.update(device_update) != 1
         $LOG.error("Problem updating device table for #{device}")

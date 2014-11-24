@@ -3,6 +3,10 @@
 .rickshaw_graph .detail .x_label { display: none }
 
 /* boostrap mixin */
+
+.pxl-container {
+  width: 1280px;
+}
 li.list-group-item-danger a {
   color: inherit;
   text-decoration: none;

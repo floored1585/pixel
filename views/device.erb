@@ -27,7 +27,9 @@
 <h1 class='pxl-h1-device'><%= device %></h1>
 <h5 class='pxl-h5-device'>
   <%= device_link_graph(settings, device, '[ graphs ]') %>&nbsp;
-  <a href='#' data-toggle="modal" data-target="#deviceDetails">[ details ]</a>
+  <% if devicedata %>
+    <a href='#' data-toggle="modal" data-target="#deviceDetails">[ details ]</a>
+<% end %>
 </h5>
 <div class='row'>
   <div class='col-md-6'>
@@ -124,6 +126,7 @@
 </div>
 
 <!-- MODAL -->
+<% if devicedata %>
 <div class="modal fade" id="deviceDetails" tabindex="-1" role="dialog" aria-labelledby="myModalLabel" aria-hidden="true">
   <div class="modal-dialog">
     <div class="modal-content">
@@ -139,12 +142,12 @@
               <th>Value</th>
             </tr>
           </thead>
-          <% devicedata.each do |oid,value| %>
+            <% devicedata.each do |oid,value| %>
             <tr>
-              <td><%= oid %></td>
-              <td class='pxl-break-word'><%= devicedata_to_human(oid, value, { :add => true }) %></td>
-            </tr>
-          <% end %>
+            <td><%= oid %></td>
+            <td class='pxl-break-word'><%= devicedata_to_human(oid, value, { :add => true }) %></td>
+          </tr>
+        <% end %>
         </table>
       </div>
       <div class="modal-footer">
@@ -153,4 +156,5 @@
     </div>
   </div>
 </div>
+<% end %>
 <!-- END MODAL -->

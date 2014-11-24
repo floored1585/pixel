@@ -159,7 +159,7 @@
           <thead>
             <tr>
               <th>Device</th>
-              <th>Component</th>
+              <th>Sensor</th>
               <th>Description</th>
               <th>Status</th>
             </tr>
@@ -170,10 +170,10 @@
               <% components[key].each do |index,data| %>
               <tr>
               <td><%= device_link(data) %></td>
-              <td><%= key.to_s.gsub(/s$/,'') %></td>
+              <td><%= key.to_s.gsub(/s$/,'').gsub('temperature','temp') %></td>
               <td><%= data[:description] %></td>
               <td>
-                <span class='text-danger'><b>PROBLEM<%= "(#{data[:temperature]})" if data[:temperature] %></b></span>
+                <span class='text-danger'><b>PROBLEM<%= " (#{data[:temperature]}&deg;)" if data[:temperature] %></b></span>
               </td>
             </tr>
           <% end %>

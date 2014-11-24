@@ -98,8 +98,8 @@ module Core
 
   def get_hw_problems(settings, db)
     temperatures = db[:temperature].filter(:status => 2)
-    psus = db[:psu].filter.filter(:status => 2)
-    fans = db[:fan].filter.filter(:status => 2)
+    psus = db[:psu].filter.filter(:status => [2,3])
+    fans = db[:fan].filter.filter(:status => [2,3])
 
     (devices, name_to_index) = _device_map(:temperatures => temperatures,
                                            :psus => psus,

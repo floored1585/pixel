@@ -156,6 +156,23 @@ module Helper
   end
 
 
+  def count_children(devices, type=[:all])
+
+    count = 0
+
+    devices.each do |dev,data|
+      count += (data[:cpus] || {}).count if type.include?(:cpus) || type.include?(:all)
+      count += (data[:fans] || {}).count if type.include?(:fans) || type.include?(:all)
+      count += (data[:psus] || {}).count if type.include?(:psus) || type.include?(:all)
+      count += (data[:memory] || {}).count if type.include?(:memory) || type.include?(:all)
+      count += (data[:interfaces] || {}).count if type.include?(:interfaces) || type.include?(:all)
+      count += (data[:temperatures] || {}).count if type.include?(:temperatures) || type.include?(:all)
+    end
+
+    return count
+  end
+
+
   def number_to_human(raw, unit, si=true, format='%.2f')
     i = 0
     units = {

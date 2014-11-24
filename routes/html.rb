@@ -9,6 +9,7 @@ class Pixel < Sinatra::Base
     ints_down = get_ints_down(@@settings, @@db)
     cpus_high = get_cpus_high(@@settings, @@db)
     memory_high = get_memory_high(@@settings, @@db)
+    hw_problems = get_hw_problems(@@settings, @@db)
 
     db_elapsed = '%.2f' % (Time.now - beginning)
 
@@ -20,6 +21,7 @@ class Pixel < Sinatra::Base
       :ints_down => ints_down,
       :cpus_high => cpus_high,
       :memory_high => memory_high,
+      :hw_problems => hw_problems,
       :db_elapsed => db_elapsed,
     }
   end

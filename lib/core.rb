@@ -12,7 +12,7 @@ module Core
     interfaces = db[:interface].filter(Sequel.like(:if_alias, 'sub%') | Sequel.like(:if_alias, 'bb%'))
     interfaces = interfaces.exclude(:if_oper_status => 1).exclude(:if_type => 'acc')
 
-    (devices, name_to_index) = _device_map({}, interfaces, {}, {})
+    (devices, name_to_index) = _device_map(:interfaces => interfaces)
     _fill_metadata!(devices, settings, name_to_index)
 
     # Delete the interface from the hash if its parent is present, to reduce clutter
@@ -25,7 +25,7 @@ module Core
   def get_ints_saturated(settings, db)
     interfaces = db[:interface].filter{ (bps_in_util > 90) | (bps_out_util > 90) }
 
-    (devices, name_to_index) = _device_map({}, interfaces, {}, {})
+    (devices, name_to_index) = _device_map(:interfaces => interfaces)
     _fill_metadata!(devices, settings, name_to_index)
     return devices
   end
@@ -42,7 +42,7 @@ module Core
     )}
     interfaces = interfaces.order(:discards_out).reverse
 
-    (devices, name_to_index) = _device_map({}, interfaces, {}, {})
+    (devices, name_to_index) = _device_map(:interfaces => interfaces)
     _fill_metadata!(devices, settings, name_to_index)
     return devices
   end
@@ -65,7 +65,11 @@ module Core
     # Return just an empty device if there are no CPUs or interfaces for the device
     return { device => {} } if cpus.empty? && interfaces.empty? && device
 
-    (devices, name_to_index) = _device_map(devicedata, interfaces, cpus, memory)
+    (devices, name_to_index) = _device_map(:devicedata => devicedata,
+                                           :interfaces => interfaces,
+                                           :cpus => cpus,
+                                           :memory => memory,
+                                          )
     _fill_metadata!(devices, settings, name_to_index)
 
     # If we only want certain components, delete the others
@@ -81,14 +85,26 @@ module Core
   def get_cpus_high(settings, db)
     cpus = db[:cpu].filter{ util > 85 }
 
-    (devices, name_to_index) = _device_map({}, {}, cpus, {})
+    (devices, name_to_index) = _device_map(:cpus => cpus)
     return devices
   end
 
   def get_memory_high(settings, db)
     memory = db[:memory].filter{ util > 90 }
 
-    (devices, name_to_index) = _device_map({}, {}, {}, memory)
+    (devices, name_to_index) = _device_map(:memory => memory)
+    return devices
+  end
+
+  def get_hw_problems(settings, db)
+    temperatures = db[:temperature].filter(:status => 2)
+    psus = db[:psu].filter.filter(:status => 2)
+    fans = db[:fan].filter.filter(:status => 2)
+
+    (devices, name_to_index) = _device_map(:temperatures => temperatures,
+                                           :psus => psus,
+                                           :fans => fans,
+                                          )
     return devices
   end
 
@@ -258,14 +274,22 @@ module Core
     return true
   end
 
-  def _device_map(devicedata, interfaces, cpus, memory)
+  def _device_map(data={})
+    data[:cpus] ||= {}
+    data[:fans] ||= {}
+    data[:psus] ||= {}
+    data[:memory] ||= {}
+    data[:devicedata] ||= {}
+    data[:interfaces] ||= {}
+    data[:temperatures] ||= {}
+
     devices = {}
     name_to_index = {}
 
-    devicedata.each do |row|
+    data[:devicedata].each do |row|
       devices[row[:device]] = { :devicedata => row }
     end
-    interfaces.each do |row|
+    data[:interfaces].each do |row|
       index = row[:index]
       device = row[:device]
 
@@ -276,7 +300,7 @@ module Core
       devices[device][:interfaces][index] = row
       name_to_index[device][row[:if_name].downcase] = index
     end
-    cpus.each do |row|
+    data[:cpus].each do |row|
       index = row[:index]
       device = row[:device]
 
@@ -284,13 +308,37 @@ module Core
       devices[device][:cpus] ||= {}
       devices[device][:cpus][index] = row
     end
-    memory.each do |row|
+    data[:memory].each do |row|
       index = row[:index]
       device = row[:device]
 
       devices[device] ||= {}
       devices[device][:memory] ||= {}
       devices[device][:memory][index] = row
+    end
+    data[:temperatures].each do |row|
+      index = row[:index]
+      device = row[:device]
+
+      devices[device] ||= {}
+      devices[device][:temperatures] ||= {}
+      devices[device][:temperatures][index] = row
+    end
+    data[:psus].each do |row|
+      index = row[:index]
+      device = row[:device]
+
+      devices[device] ||= {}
+      devices[device][:psus] ||= {}
+      devices[device][:psus][index] = row
+    end
+    data[:fans].each do |row|
+      index = row[:index]
+      device = row[:device]
+
+      devices[device] ||= {}
+      devices[device][:fans] ||= {}
+      devices[device][:fans][index] = row
     end
 
     return devices, name_to_index

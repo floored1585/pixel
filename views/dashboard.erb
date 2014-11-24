@@ -40,8 +40,8 @@
             <i class="fa fa-clock-o fa-2x"></i>
           </div>
           <div class="col-xs-9 text-right">
-            <span class="huge"><%= i=0; cpus_high.each { |dev,data| i += data[:cpus].count }; i %></span>
-            <span>&nbsp;Device<%= 's' if cpus_high.count != 1 %> with high CPU utilization</span>
+            <span class="huge"><%= count = count_children(cpus_high) %></span>
+            <span>&nbsp;Device<%= 's' if count != 1 %> with high CPU utilization</span>
           </div>
         </div>
       </div>
@@ -83,8 +83,8 @@
             <i class="fa fa-trash-o fa-2x"></i>
           </div>
           <div class="col-xs-9 text-right">
-            <span class="huge"><%= i=0; ints_discarding.each { |dev,data| i += data[:interfaces].count }; i %></span>
-            <span>&nbsp;Interface<%= 's' if ints_discarding.count != 1 %> discarding over thresholds</span>
+            <span class="huge"><%= count = count_children(ints_discarding) %></span>
+            <span>&nbsp;Interface<%= 's' if count != 1 %> discarding over thresholds</span>
           </div>
         </div>
       </div>
@@ -140,6 +140,53 @@
 
   <div class='col-md-6'>
 
+    <!-- HW PROBLEMS -->
+    <% if !hw_problems.empty? %>
+      <div class="panel panel-grey">
+      <div class="panel-heading">
+        <div class="row">
+          <div class="col-xs-3">
+            &nbsp;<i class="fa fa-bolt fa-2x"></i>
+          </div>
+          <div class="col-xs-9 text-right">
+            <span class="huge"><%= count = count_children(hw_problems) %></span>
+            <span>&nbsp;Hardware Problem<%= 's' if count != 1 %></span>
+          </div>
+        </div>
+      </div>
+      <div class="panel-footer">
+        <table id='hwProblemTable' class='table table-hover table-condensed tablesorter'>
+          <thead>
+            <tr>
+              <th>Device</th>
+              <th>Component</th>
+              <th>Description</th>
+              <th>Status</th>
+            </tr>
+          </thead>
+          <tbody>
+          <% hw_problems.each do |device,components| %>
+            <% components.keys.each do |key| %>
+              <% components[key].each do |index,data| %>
+              <tr>
+              <td><%= device_link(data) %></td>
+              <td><%= key.to_s.gsub(/s$/,'') %></td>
+              <td><%= data[:description] %></td>
+              <td>
+                <span class='text-danger'><b>PROBLEM<%= "(#{data[:temperature]})" if data[:temperature] %></b></span>
+              </td>
+            </tr>
+          <% end %>
+        <% end %>
+        <% end %>
+          </tbody>
+        </table>
+        <div class="clearfix"></div>
+      </div>
+    </div>
+  <br />
+  <% end %>
+
     <!-- HIGH MEMORY USAGE -->
     <% if !memory_high.empty? %>
       <div class="panel panel-grey">
@@ -149,8 +196,8 @@
             <i class="fa fa-tasks fa-2x"></i>
           </div>
           <div class="col-xs-9 text-right">
-            <span class="huge"><%= i=0; memory_high.each { |dev,data| i += data[:memory].count }; i %></span>
-            <span>&nbsp;Device<%= 's' if memory_high.count != 1 %> with high memory utilization</span>
+            <span class="huge"><%= count = count_children(memory_high) %></span>
+            <span>&nbsp;Device<%= 's' if count != 1 %> with high memory utilization</span>
           </div>
         </div>
       </div>
@@ -192,8 +239,8 @@
             <i class="fa fa-exchange fa-2x"></i>
           </div>
           <div class="col-xs-9 text-right">
-            <span class="huge"><%= i=0; ints_saturated.each { |dev,data| i += data[:interfaces].count }; i %></span>
-            <span>&nbsp;Saturated interface<%= 's' if ints_saturated.count != 1 %></span>
+            <span class="huge"><%= count = count_children(ints_saturated) %></span>
+            <span>&nbsp;Saturated interface<%= 's' if count != 1 %></span>
           </div>
         </div>
       </div>

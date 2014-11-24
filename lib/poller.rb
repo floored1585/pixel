@@ -332,13 +332,15 @@ module Poller
       session.walk(vendor_cfg['fan_status']) do |row|
         row.each do |vb|
           fan_index = vendor_cfg['fan_index_regex'].match( vb.name.to_str )[0]
+          status, status_text = _normalize_status(vendor, vb.value.to_i, poller_cfg[:status_table])
 
           fan_table[fan_index] ||= {}
           fan_table[fan_index][:index] = fan_index
           fan_table[fan_index][:device] = device
+          fan_table[fan_index][:status] = status
+          fan_table[fan_index][:status_text] = status_text
           fan_table[fan_index][:description] ||= "PSU #{fan_index}"
           fan_table[fan_index][:last_updated] = Time.now.to_i
-          fan_table[fan_index][:status] = _normalize_status(vendor, vb.value.to_i, poller_cfg[:status_table])
           fan_table[fan_index][:vendor_status] = vb.value.to_i
         end
       end
@@ -366,13 +368,15 @@ module Poller
       session.walk(vendor_cfg['psu_status']) do |row|
         row.each do |vb|
           psu_index = vendor_cfg['psu_index_regex'].match( vb.name.to_str )[0]
+          status, status_text = _normalize_status(vendor, vb.value.to_i, poller_cfg[:status_table])
 
           psu_table[psu_index] ||= {}
           psu_table[psu_index][:index] = psu_index
           psu_table[psu_index][:device] = device
+          psu_table[psu_index][:status] = status
+          psu_table[psu_index][:status_text] = status_text
           psu_table[psu_index][:description] ||= "Fan #{psu_index}"
           psu_table[psu_index][:last_updated] = Time.now.to_i
-          psu_table[psu_index][:status] = _normalize_status(vendor, vb.value.to_i, poller_cfg[:status_table])
           psu_table[psu_index][:vendor_status] = vb.value.to_i
         end
       end
@@ -413,8 +417,11 @@ module Poller
           row.each do |vb|
             next if vendor_cfg['temp_list_regex'] && !(vendor_cfg['temp_list_regex'] =~ vb.name.to_str)
             temp_index = vendor_cfg['temp_index_regex'].match( vb.name.to_str )[0]
+            status, status_text = _normalize_status(vendor, vb.value.to_i, poller_cfg[:status_table])
+
             temp_table[temp_index] ||= {}
-            temp_table[temp_index][:status] = _normalize_status(vendor, vb.value.to_i, poller_cfg[:status_table])
+            temp_table[temp_index][:status] = status
+            temp_table[temp_index][:status_text] = status_text
             temp_table[temp_index][:vendor_status] = vb.value.to_i
           end
         end
@@ -427,6 +434,8 @@ module Poller
           temp_table[temp_index] ||= {}
           temp_table[temp_index][:index] = temp_index
           temp_table[temp_index][:device] = device
+          temp_table[temp_index][:status] ||= 0
+          temp_table[temp_index][:status_text] ||= poller_cfg[:status_table]['Pixel'][0]
           temp_table[temp_index][:description] ||= "TEMP #{temp_index}"
           temp_table[temp_index][:last_updated] = Time.now.to_i
           temp_table[temp_index][:temperature] = vb.value.to_i
@@ -616,8 +625,9 @@ module Poller
 
 
   def self._normalize_status(vendor, vendor_status, table)
-    return table[vendor][vendor_status] if table[vendor]
-    return 0
+    status = table[vendor] ? table[vendor][vendor_status] : 0
+    status_text = table['Pixel'][status]
+    return status, status_text
   end
 
 
@@ -740,24 +750,19 @@ module Poller
       'Force10 S-Series' => /^(Po|Fo|Te|Gi|Fa|Ma)/,
     }
 
-
-    ######################################
-    #
-    #   HW NORMALIZED TABLE:
-    #
-    #     0: UNKNOWN
-    #     1: OK
-    #     2: PROBLEM
-    #
-    ######################################
-
     poller_cfg[:status_table] = {
+      'Pixel' => {
+        0 => 'Unknown',
+        1 => 'OK',
+        2 => 'Problem',
+        3 => 'Missing',
+      },
       'Cisco' => {
         1 => 1, # normal
         2 => 2, # warning
         3 => 2, # critical
         4 => 2, # shutdown
-        5 => 2, # notPresent
+        5 => 3, # notPresent
         6 => 2, # notFunctioning
       },
       'Juniper' => {
@@ -774,7 +779,7 @@ module Poller
         2 => 2, # warning(2), (off for fans)
         3 => 2, # critical(3),
         4 => 2, # shutdown(4),
-        5 => 2, # notPresent(5),
+        5 => 3, # notPresent(5),
         6 => 2, # notFunctioning(6),
       },
     }

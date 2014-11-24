@@ -740,6 +740,17 @@ module Poller
       'Force10 S-Series' => /^(Po|Fo|Te|Gi|Fa|Ma)/,
     }
 
+
+    ######################################
+    #
+    #   HW NORMALIZED TABLE:
+    #
+    #     0: UNKNOWN
+    #     1: OK
+    #     2: PROBLEM
+    #
+    ######################################
+
     poller_cfg[:status_table] = {
       'Cisco' => {
         1 => 1, # normal

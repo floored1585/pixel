@@ -495,7 +495,7 @@ module Core
               end
               # Convert utilization to numeric
               temp_data[:temperature] = temp_data[:temperature].to_i_if_numeric if temp_data[:temperature]
-              required_data = [:device, :index, :temperature, :description, :last_updated]
+              required_data = [:device, :index, :temperature, :description, :last_updated, :status, :status_text]
               unless (required_data - temp_data.keys).empty?
                 $LOG.warn("Invalid Temperature data for #{device}: index #{index}. Missing: #{required_data - temp_data.keys}")
                 data[:temperature].delete(index)
@@ -520,7 +520,7 @@ module Core
                 data[:psu].delete(index)
               end
               # Convert utilization to numeric
-              required_data = [:device, :index, :description, :last_updated]
+              required_data = [:device, :index, :description, :last_updated, :status, :status_text]
               unless (required_data - psu_data.keys).empty?
                 $LOG.warn("Invalid PSUs data for #{device}: index #{index}. Missing: #{required_data - psu_data.keys}")
                 data[:psu].delete(index)
@@ -541,7 +541,7 @@ module Core
                 data[:fan].delete(index)
               end
               # Convert utilization to numeric
-              required_data = [:device, :index, :description, :last_updated]
+              required_data = [:device, :index, :description, :last_updated, :status, :status_text]
               unless (required_data - fan_data.keys).empty?
                 $LOG.warn("Invalid Fan data for #{device}: index #{index}. Missing: #{required_data - fan_data.keys}")
                 data[:fan].delete(index)

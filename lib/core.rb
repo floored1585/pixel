@@ -39,7 +39,7 @@ module Core
         pps_out > 0, # Prevent div by zero
         discards_out > 20,
         ~Sequel.like(:if_alias, 'sub%'), # Don't look at sub-interfaces
-        discards_out / pps_out.cast(:float) >= 0.01 # Filter out anything discarding <= 1%
+        discards_out / (discards_out + pps_out).cast(:float) >= 0.01 # Filter out anything discarding <= 1%
       ),
       discards_out > 500 # Also include anything discarding over 500pps
     )}
@@ -378,7 +378,7 @@ module Core
         oids[:stale] = time_since_poll if time_since_poll > settings['stale_timeout']
 
         if oids[:pps_out] && oids[:pps_out] != 0
-          oids[:discards_out_pct] = '%.2f' % (oids[:discards_out].to_f / oids[:pps_out] * 100)
+          oids[:discards_out_pct] = '%.2f' % (oids[:discards_out].to_f / (oids[:pps_out] + oids[:discards_out]) * 100)
         end
 
         # Populate 'link_type' value (Backbone, Access, etc...)

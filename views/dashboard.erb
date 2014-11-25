@@ -252,7 +252,7 @@
       <% ints_saturated.each do |device,data| %>
         <% data[:interfaces].each do |index,oids| %>
           <tr <%= tr_attributes(oids) %>>
-            <td class='pxl-hidden'><%= oids[:discards_out] %></td>
+            <td class='pxl-hidden'><%= oids[:bps_out] + oids[:bps_in] %></td>
             <td><%= device_link(oids) %></td>
             <td><%= interface_link(settings, oids) %></td>
             <td><%= oids[:link_type] %>

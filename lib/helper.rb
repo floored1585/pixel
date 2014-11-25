@@ -161,6 +161,7 @@ module Helper
     count = 0
 
     devices.each do |dev,data|
+      count += 1 if ( type.include?(:devicedata) || type.include?(:all) ) && data[:devicedata]
       count += (data[:cpus] || {}).count if type.include?(:cpus) || type.include?(:all)
       count += (data[:fans] || {}).count if type.include?(:fans) || type.include?(:all)
       count += (data[:psus] || {}).count if type.include?(:psus) || type.include?(:all)

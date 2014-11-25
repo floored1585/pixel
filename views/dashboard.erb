@@ -136,6 +136,44 @@
       </div>
     </div>
   <% end %>
+
+    <!-- POLLER FAILURES -->
+    <% if !poller_failures.empty? %>
+      <div class="panel panel-grey">
+      <div class="panel-heading">
+        <div class="row">
+          <div class="col-xs-3">
+            <i class="fa fa-warning fa-2x"></i>
+          </div>
+          <div class="col-xs-9 text-right">
+            <span class="huge"><%= count = count_children(poller_failures) %></span>
+            <span>&nbsp;Poller Failure<%= 's' if count != 1 %></span>
+          </div>
+        </div>
+      </div>
+      <div class="panel-footer">
+      <table id='pollerFailureTable' class='table table-hover table-condensed tablesorter'>
+      <thead>
+        <tr>
+          <th>Device</th>
+          <th>IP Address</th>
+          <th>Last Poller</th>
+        </tr>
+      </thead>
+      <tbody>
+      <% poller_failures.each do |device,data| %>
+        <tr>
+          <td><%= device_link(data[:devicedata]) %></td>
+          <td><%= data[:devicedata][:ip] %></td>
+          <td><%= data[:devicedata][:worker] %></td>
+        </tr>
+      <% end %>
+      </tbody>
+      </table>
+        <div class="clearfix"></div>
+      </div>
+    </div>
+  <% end %>
 </div>
 
   <div class='col-md-6'>

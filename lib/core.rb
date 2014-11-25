@@ -8,6 +8,7 @@ module Core
     return devices
   end
 
+
   def get_ints_down(settings, db)
     interfaces = db[:interface].filter(Sequel.like(:if_alias, 'sub%') | Sequel.like(:if_alias, 'bb%'))
     interfaces = interfaces.exclude(:if_oper_status => 1).exclude(:if_type => 'acc')
@@ -22,6 +23,7 @@ module Core
     return devices
   end
 
+
   def get_ints_saturated(settings, db)
     interfaces = db[:interface].filter{ (bps_in_util > 90) | (bps_out_util > 90) }
 
@@ -29,6 +31,7 @@ module Core
     _fill_metadata!(devices, settings, name_to_index)
     return devices
   end
+
 
   def get_ints_discarding(settings, db)
     interfaces = db[:interface].filter{Sequel.|(
@@ -46,6 +49,7 @@ module Core
     _fill_metadata!(devices, settings, name_to_index)
     return devices
   end
+
 
   def get_device(settings, db, device, component=nil)
     interfaces = db[:interface]
@@ -82,6 +86,7 @@ module Core
     return devices
   end
 
+
   def get_cpus_high(settings, db)
     cpus = db[:cpu].filter{ util > 85 }
 
@@ -89,12 +94,14 @@ module Core
     return devices
   end
 
+
   def get_memory_high(settings, db)
     memory = db[:memory].filter{ util > 90 }
 
     (devices, name_to_index) = _device_map(:memory => memory)
     return devices
   end
+
 
   def get_hw_problems(settings, db)
     temperatures = db[:temperature].filter(:status => 2)
@@ -107,6 +114,15 @@ module Core
                                           )
     return devices
   end
+
+
+  def get_poller_failures(settings, db)
+    failures = db[:device].filter(:last_poll_result => 1)
+
+    (devices, name_to_index) = _device_map(:devicedata => failures)
+    return devices
+  end
+
 
   def get_devices_poller(settings, db, count, poller_name)
     db.disconnect
@@ -140,6 +156,7 @@ module Core
     end
     return devices
   end
+
 
   def post_devices(settings, db, devices)
     _validate_devices_post!(devices)
@@ -205,12 +222,12 @@ module Core
       # Update the rest of the device attributes
       db[:device].where(:device => device).update(
         :currently_polling => 0,
-        :worker => nil,
         :next_poll => Time.now.to_i + 100,
       )
     end
     return true
   end
+
 
   def populate_device_table(settings, db)
     db.disconnect
@@ -229,6 +246,7 @@ module Core
 
     API.post('core', '/v1/devices/replace', devices, 'CORE', 'new devices')
   end
+
 
   def add_devices(settings, db, devices, replace)
     db.disconnect
@@ -252,6 +270,7 @@ module Core
     return true
   end
 
+
   def delete_devices(settings, db, devices, partial)
     db.disconnect
     # If partial is true, we're going to delete individual things
@@ -273,6 +292,7 @@ module Core
     end
     return true
   end
+
 
   def _device_map(data={})
     data[:cpus] ||= {}
@@ -344,6 +364,7 @@ module Core
     return devices, name_to_index
   end
 
+
   def _fill_metadata!(devices, settings, name_to_index)
     devices.each do |device,data|
       interfaces = data[:interfaces] || {}
@@ -384,6 +405,7 @@ module Core
       end
     end
   end
+
 
   def _validate_devices_post!(devices)
     if devices.class == Hash
@@ -563,6 +585,7 @@ module Core
     return devices
   end
 
+
   def self.start_cron(settings)
     $LOG.info("POLLER: Starting cron poke task")
     pidfile = 'proc.lock'
@@ -579,5 +602,6 @@ module Core
     Process.detach(pid)
     File.open(pidfile, 'w') { |f| f.write(pid) }
   end
+
 
 end

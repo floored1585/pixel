@@ -4,6 +4,7 @@ class Pixel < Sinatra::Base
     # Start timer
     beginning = Time.now
 
+    poller_failures = get_poller_failures(@@settings, @@db)
     ints_saturated = get_ints_saturated(@@settings, @@db)
     ints_discarding = get_ints_discarding(@@settings, @@db)
     ints_down = get_ints_down(@@settings, @@db)
@@ -16,6 +17,7 @@ class Pixel < Sinatra::Base
     erb :dashboard, :locals => {
       :title => 'Dashboard!',
       :settings => @@settings,
+      :poller_failures => poller_failures,
       :ints_discarding => ints_discarding,
       :ints_saturated => ints_saturated,
       :ints_down => ints_down,

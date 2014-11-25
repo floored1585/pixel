@@ -26,11 +26,12 @@
 <% end %>
 <h1 class='pxl-h1-device'><%= device %></h1>
 <h5 class='pxl-h5-device'>
-  <%= device_link_graph(settings, device, '[ graphs ]') %>&nbsp;
   <% if devicedata %>
+  <%= device_link_graph(settings, device, '[ graphs ]') %>&nbsp;
     <a href='#' data-toggle="modal" data-target="#deviceDetails">[ details ]</a>
 <% end %>
 </h5>
+<% if devicedata %>
 <div class='row'>
   <div class='col-md-6'>
     <div class="panel panel-grey">
@@ -69,6 +70,7 @@
     </div>
   </div>
 </div>
+<% end %>
 <div class='row'>
   <% if interfaces %>
     <table id='ifTable' class='table table-hover table-condensed tablesorter'>

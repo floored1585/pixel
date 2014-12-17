@@ -105,7 +105,7 @@
         <% data[:interfaces].each do |index,oids| %>
           <tr <%= tr_attributes(oids) %>>
             <td class='pxl-hidden'><%= oids[:discards_out] %></td>
-            <td>
+            <td class='pxl-meta' data-pxl-meta='<%= oids[:discards_out] %>'>
               <span class='text-danger'><b><%= oids[:discards_out] %></b></span>
               <%= "(#{oids[:discards_out_pct]}%)" %>
             </td>

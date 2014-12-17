@@ -377,7 +377,7 @@ module Core
         time_since_poll = Time.now.to_i - oids[:last_updated]
         oids[:stale] = time_since_poll if time_since_poll > settings['stale_timeout']
 
-        if oids[:pps_out] && oids[:pps_out] != 0
+        if oids[:pps_out] && oids[:discards_out]
           oids[:discards_out_pct] = '%.2f' % (oids[:discards_out].to_f / (oids[:pps_out] + oids[:discards_out]) * 100)
         end
 

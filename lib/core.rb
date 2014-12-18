@@ -17,8 +17,9 @@ module Core
     _fill_metadata!(devices, settings, name_to_index)
 
     # Delete the interface from the hash if its parent is present, to reduce clutter
-    devices.each do |device,int|
-      int.delete_if { |index,oids| oids[:my_parent] && int[oids[:my_parent]] }
+    devices.each do |device,components|
+      ints = components[:interfaces]
+      ints.delete_if { |index,oids| oids[:my_parent] && ints[oids[:my_parent]] }
     end
     return devices
   end

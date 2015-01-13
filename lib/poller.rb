@@ -132,9 +132,9 @@ module Poller
       totals = { 'pps_out' => 0, 'bps_out' => 0, 'discards_out' => 0 }
       if_table.each do |if_index, oids|
         # Call _process_interface to do the heavy lifting
-        interfaces[if_index] = _process_interface(device, if_index, oids, last_values, poller_cfg, influx_is_up)
+        interfaces[if_index] = _process_interface(device, if_table.dup, if_index, oids, last_values, poller_cfg, influx_is_up)
         # Update totals
-        totals.keys.each { |key| totals[key] += interfaces[if_index][key] || 0 unless oids['if_name'].downcase =~ /ae|po/  }
+        totals.keys.each { |key| totals[key] += interfaces[if_index][key] || 0 unless oids['if_name'].downcase =~ /ae|po|bond/  }
         # Find the parent interface if it exists, and transfer its type to child.
         # Otherwise (if we're not a child) look at our own type.
         # I hate this logic, but can't think of a better way to do it.
@@ -193,7 +193,7 @@ module Poller
   end
 
 
-  def self._process_interface(device, if_index, oids, last_values, poller_cfg, influx_is_up)
+  def self._process_interface(device, if_table, if_index, oids, last_values, poller_cfg, influx_is_up)
     oids['index'] = if_index
     oids['device'] = device
     oids['last_updated'] = Time.now.to_i
@@ -209,6 +209,24 @@ module Poller
       end
     end
 
+    # If an interface is up w/ a speed of 0, try to get speed from children
+    if oids['if_oper_status'].to_i == 1 && oids['if_high_speed'].to_i == 0
+      child_count = 0
+      child_speed = 0
+
+      if_table.each do |index, tmp_oids|
+        next if tmp_oids['if_name'] == oids['if_name'] # This will cause the interface to skip itself
+        if tmp_oids['if_alias'].include?("[#{oids['if_name']}]") && tmp_oids['if_oper_status'].to_i == 1
+          child_count += 1
+          child_speed = tmp_oids['if_high_speed'].to_i
+        end
+      end
+
+      speed = child_count * child_speed
+      $LOG.warn("POLLER: Bad if_high_speed for #{oids['if_name']} (#{if_index}) on #{device}. Calculated value from children: #{speed}")
+      oids['if_high_speed'] = speed
+    end
+
     oids.dup.each do |oid_text, value|
       series_name = device + '.' + if_index + '.' + oid_text
       series_data = { :value => value.to_s, :time => Time.now.to_i }
@@ -222,9 +240,14 @@ module Poller
         average = average * 8 if series_name =~ /octets/
         avg_series_data = { :value => average, :time => Time.now.to_i }
         # Calculate utilization if we're a bps OID
-        if avg_series_name =~ /bps/ && oids['if_high_speed'].to_i != 0
-          util = '%.2f' % (average.to_f / (oids['if_high_speed'].to_i * 1000000) * 100)
-          util = 100 if util.to_f > 100
+        if avg_series_name =~ /bps/
+          # Fix for interfaces that don't report a valid speed -- set util to 0
+          if oids['if_high_speed'].to_i == 0
+            util = 0
+          else
+            util = '%.2f' % (average.to_f / (oids['if_high_speed'].to_i * 1000000) * 100)
+            util = 100 if util.to_f > 100
+          end
           oids[poller_cfg[:avg_names][oid_text] + '_util'] = util
         end
         # write the average
@@ -247,6 +270,8 @@ module Poller
           if_index = vb.name.to_str[/[0-9]+$/]
           if_table[if_index] ||= {}
           if_table[if_index][oid_text] = vb.value.to_s
+          # The following line removes ' characters from the beginning and end of aliases (Linux does this)
+          if_table[if_index][oid_text].gsub!(/^'|'$/,'') if oid_text == 'if_alias'
         end
       end
       return if_table
@@ -275,6 +300,8 @@ module Poller
           data[:vendor] = 'Juniper'
         elsif data[:sys_descr] =~ /Force10.*Series: S/m
           data[:vendor] = 'Force10 S-Series'
+        elsif data[:sys_descr] =~ /Linux/
+          data[:vendor] = 'Linux'
         else
           # If we don't know what type of device this is:
           $LOG.warn("POLLER: Unknown device at #{ip}: #{data[:sys_descr]}")
@@ -451,6 +478,7 @@ module Poller
 
   def self._query_device_cpu(device, ip, poller_cfg, vendor)
     return {} unless vendor_cfg = poller_cfg[:oids][vendor]
+    return {} unless vendor_cfg['cpu_util']
     cpu_table = {}
     cpu_hw_ids = {}
 
@@ -464,23 +492,25 @@ module Poller
           end
         end
       end
-      session.walk(vendor_cfg['cpu_description']) do |row|
-        row.each do |vb|
-          hw_index = vendor_cfg['cpu_index_regex'].match( vb.name.to_str )[0]
-          # Continue only if one of the following occur:
-          #   (1) The hw_index was found in the cpu_list oid (Cisco style)
-          #   (2) The oid of our hw_index matches our cpu_list regex (Juniper style)
-          next unless cpu_hw_ids[hw_index] || vendor_cfg['cpu_list_regex'] =~ vb.name.to_str
-          cpu_index = cpu_hw_ids[hw_index] || hw_index
-          cpu_table[cpu_index] = {}
-          cpu_table[cpu_index][:description] = vb.value.to_s
+      if vendor_cfg['cpu_description']
+        session.walk(vendor_cfg['cpu_description']) do |row|
+          row.each do |vb|
+            hw_index = vendor_cfg['cpu_index_regex'].match( vb.name.to_str )[0]
+            # Continue only if one of the following occur:
+            #   (1) The hw_index was found in the cpu_list oid (Cisco style)
+            #   (2) The oid of our hw_index matches our cpu_list regex (Juniper style)
+            next unless cpu_hw_ids[hw_index] || vendor_cfg['cpu_list_regex'] =~ vb.name.to_str
+            cpu_index = cpu_hw_ids[hw_index] || hw_index
+            cpu_table[cpu_index] = {}
+            cpu_table[cpu_index][:description] = vb.value.to_s
+          end
         end
       end
       session.walk(vendor_cfg['cpu_util']) do |row|
         row.each do |vb|
           cpu_index = vendor_cfg['cpu_index_regex'].match( vb.name.to_str )[0]
 
-          if cpu_table[cpu_index] || vendor_cfg['cpu_list']
+          if cpu_table[cpu_index] || vendor_cfg['cpu_list'] || %w{ Linux }.include?(vendor)
             cpu_table[cpu_index] ||= {}
             cpu_table[cpu_index][:device] = device
             cpu_table[cpu_index][:index] = cpu_index
@@ -498,22 +528,25 @@ module Poller
 
   def self._query_device_mem(device, ip, poller_cfg, vendor)
     return {} unless vendor_cfg = poller_cfg[:oids][vendor]
+    return {} unless vendor_cfg['mem_util'] || vendor_cfg['mem_free']
     mem_table = {}
 
     SNMP::Manager.open(:host => ip, :community => poller_cfg[:snmpv2_community]) do |session|
-      session.walk(vendor_cfg['mem_description']) do |row|
-        row.each do |vb|
-          # Skip this mem value if a regex is defined and doesn't match
-          next if vendor_cfg['mem_list_regex'] && !(vendor_cfg['mem_list_regex'] =~ vb.name.to_str)
-          mem_index = vendor_cfg['mem_index_regex'].match( vb.name.to_str )[0]
-          mem_table[mem_index] = {}
-          mem_table[mem_index][:index] = mem_index
-          mem_table[mem_index][:device] = device
-          mem_table[mem_index][:description] = vb.value.to_s
-          mem_table[mem_index][:last_updated] = Time.now.to_i
+
+      if vendor_cfg['mem_description']
+        session.walk(vendor_cfg['mem_description']) do |row|
+          row.each do |vb|
+            # Skip this mem value if a regex is defined and doesn't match
+            next if vendor_cfg['mem_list_regex'] && !(vendor_cfg['mem_list_regex'] =~ vb.name.to_str)
+            mem_index = vendor_cfg['mem_index_regex'].match( vb.name.to_str )[0]
+            mem_table[mem_index] = {}
+            mem_table[mem_index][:description] = vb.value.to_s
+          end
         end
       end
-      if vendor_cfg['mem_util'] # We can get util directly
+
+      if vendor_cfg['mem_util']
+        # We can get the utilization directly
         session.walk(vendor_cfg['mem_util']) do |row|
           row.each do |vb|
             # Skip this mem value if a regex is defined and doesn't match
@@ -522,7 +555,9 @@ module Poller
             mem_table[mem_index][:util] = vb.value.to_i if mem_table[mem_index]
           end
         end
-      else # We're going to need to calculate utilization
+
+      elsif vendor_cfg['mem_used']
+        # We're going to need to calculate utilization, Cisco style (used / used + free)
         session.walk(vendor_cfg['mem_used']) do |row|
           row.each do |vb|
             mem_index = vendor_cfg['mem_index_regex'].match( vb.name.to_str )[0]
@@ -540,7 +575,39 @@ module Poller
         mem_table.each do |index, data|
           data[:util] = (data[:used].to_f / (data[:used] + data[:free]) * 100).to_i
         end
+
+      elsif vendor_cfg['mem_total']
+        # We're going to need to calculate utilization, Linux style ( (total - free) / total )
+        session.walk(vendor_cfg['mem_total']) do |row|
+          row.each do |vb|
+            mem_index = vendor_cfg['mem_index_regex'].match( vb.name.to_str )[0]
+            mem_table[mem_index] ||= {}
+            mem_table[mem_index][:total] = vb.value.to_i
+          end
+        end
+        session.walk(vendor_cfg['mem_free']) do |row|
+          row.each do |vb|
+            mem_index = vendor_cfg['mem_index_regex'].match( vb.name.to_str )[0]
+            mem_table[mem_index][:free] = vb.value.to_i
+          end
+        end
+        mem_table.each do |index, data|
+          data[:util] = ( ( (data[:total].to_f - data[:free]) / data[:total] ) * 100).to_i
+        end
       end
+
+    end
+
+    # Clean up data structure -- add metadata & delete temporary calculation values
+    mem_table.each do |index, data|
+      # Add metadata
+      data[:index] = index
+      data[:device] = device
+      data[:description] ||= "System Memory"
+      data[:last_updated] = Time.now.to_i
+
+      # Delete temp calculation values
+      data.delete_if {|k,v| [:total,:free,:used].include?(k)}
     end
 
     return mem_table
@@ -650,7 +717,10 @@ module Poller
     poller_cfg[:device_oids] = {
       :general => {
         '1.3.6.1.2.1.1.3.0'         => 'uptime',
-      }
+      },
+      :'Linux' => {
+        '1.3.6.1.2.1.1.3.0'         => 'uptime',
+      },
     }
 
     # These are the OIDs that will get pulled/stored for our interfaces.
@@ -729,7 +799,16 @@ module Poller
         'fan_index_regex' => /([0-9]+\.?){2}$/,
         'fan_status'      => '1.3.6.1.4.1.6027.3.10.1.2.4.1.2',
       },
-
+      'Linux' => {
+        'cpu_index_regex' => /[0-9]+$/,
+        'cpu_util'        => '1.3.6.1.2.1.25.3.3.1.2',
+        'mem_index_regex' => /[0-9]+$/,
+        'mem_total'       => '1.3.6.1.4.1.2021.4.5',
+        'mem_free'        => '1.3.6.1.4.1.2021.4.6',
+        'temp_index_regex'=> /[0-9]+$/,
+        'temp_description'=> '1.3.6.1.4.1.2021.13.16.2.1.2.41',
+        'temp_value'      => '1.3.6.1.4.1.2021.13.16.2.1.3.2',
+      },
     }
 
     # This is where we define what the averages will be named
@@ -748,6 +827,7 @@ module Poller
       'Cisco'       => /^(Po|Te|Gi|Fa)/,
       'Juniper'     => /^(ae|xe|ge|fe)[^.]*$/,
       'Force10 S-Series' => /^(Po|Fo|Te|Gi|Fa|Ma)/,
+      'Linux' => /^(swp|eth|bond)[^.]*$/,
     }
 
     poller_cfg[:status_table] = {

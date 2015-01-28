@@ -542,7 +542,6 @@ module Core
                 $LOG.warn("Invalid PSU data for #{device}: index #{index}")
                 data[:psu].delete(index)
               end
-              # Convert utilization to numeric
               required_data = [:device, :index, :description, :last_updated, :status, :status_text]
               unless (required_data - psu_data.keys).empty?
                 $LOG.warn("Invalid PSUs data for #{device}: index #{index}. Missing: #{required_data - psu_data.keys}")
@@ -560,10 +559,9 @@ module Core
               if fan_data.class == Hash
                 fan_data.symbolize!
               else
-                $LOG.warn("Invalid Fans data for #{device}: index #{index}")
+                $LOG.warn("Invalid Fan data for #{device}: index #{index}")
                 data[:fan].delete(index)
               end
-              # Convert utilization to numeric
               required_data = [:device, :index, :description, :last_updated, :status, :status_text]
               unless (required_data - fan_data.keys).empty?
                 $LOG.warn("Invalid Fan data for #{device}: index #{index}. Missing: #{required_data - fan_data.keys}")

@@ -712,15 +712,18 @@ module Poller
       'Cisco' => /^[\w\s]+,[\w\s]+\(([\w\s-]+)\),(?: Version)?([\w\s\(\)\.]+),[\w\s\(\)]+$/,
       'Juniper' => /^[\w\s,]+\.[\w\s\-]+,(?: kernel )?(\w+)\s+([\w\.-]+).+$/,
       'Force10 S-Series' => /^Dell ([\w\s]+)$.+Version: ([\w\d\(\)\.]+)/m,
+      'Linux' => /Linux [\w\-_]+ ([\w\.\-]+).([\w\.]+)/,
     }
 
+    # These are polled and stored in the device table
     poller_cfg[:device_oids] = {
       :general => {
         '1.3.6.1.2.1.1.3.0'         => 'uptime',
       },
-      :'Linux' => {
-        '1.3.6.1.2.1.1.3.0'         => 'uptime',
-      },
+      'Juniper' => {
+        '1.3.6.1.4.1.2636.3.4.2.2.1.0' => 'yellow_alarm',
+        '1.3.6.1.4.1.2636.3.4.2.3.1.0' => 'red_alarm',
+      }
     }
 
     # These are the OIDs that will get pulled/stored for our interfaces.
@@ -827,7 +830,7 @@ module Poller
       'Cisco'       => /^(Po|Te|Gi|Fa)/,
       'Juniper'     => /^(ae|xe|ge|fe)[^.]*$/,
       'Force10 S-Series' => /^(Po|Fo|Te|Gi|Fa|Ma)/,
-      'Linux' => /^(swp|eth|bond)[^.]*$/,
+      'Linux'       => /^(swp|eth|bond)[^.]*$/,
     }
 
     poller_cfg[:status_table] = {

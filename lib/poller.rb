@@ -382,6 +382,8 @@ module Poller
             dot1q_port_id = vb.value.to_i
 
             vlan_id = dot1q_to_vlan[dot1q_vlan_id]
+            next unless vlan_id
+
             if_index = dot1q_to_if_index[dot1q_port_id]
             mac_addr = _mac_dec_to_hex( vendor_cfg['mac_address_regex'].match( vb.name.to_str )[1] )
 

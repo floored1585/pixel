@@ -118,7 +118,10 @@ module Core
 
 
   def get_alarms(settings, db)
-    devicedata = db[:device].exclude(:yellow_alarm => [2, nil]).or(:red_alarm => [2, nil])
+    devicedata = db[:device].exclude(
+      (Sequel.expr(:yellow_alarm => 2) | Sequel.expr(:yellow_alarm => nil)) &
+      (Sequel.expr(:red_alarm => 2) | Sequel.expr(:red_alarm => nil))
+    )
 
     (devices, name_to_index) = _device_map(:devicedata => devicedata)
     return devices
@@ -227,9 +230,15 @@ module Core
         components[:mac].each do |data|
           #$LOG.warn("Device: #{device} MAC: #{index}\n  Data: #{data}")
           # Try updating, and if we don't affect a row, insert instead
-          existing = db[:mac].where(:device => device, :mac => data[:mac])
-          if existing.update(data) != 1
-            db[:mac].insert(data)
+          begin
+            existing = db[:mac].where(:device => device, :mac => data[:mac], :vlan_id => data[:vlan_id])
+            if existing.update(data) != 1
+              db[:mac].insert(data)
+            end
+          rescue Sequel::NotNullConstraintViolation,
+            Sequel::ForeignKeyConstraintViolation,
+            Sequel::UniqueConstraintViolation => e
+            $LOG.warn("CORE: SQL Error! \n#{e}")
           end
         end
         # Timeout for MAC entries in DB
@@ -244,7 +253,7 @@ module Core
           $LOG.error("Problem updating device table for #{device}")
         end
 
-      rescue Sequel::NotNullConstraintViolation => e
+      rescue Sequel::PoolTimeout => e
         $LOG.error("CORE: SQL error! \n#{e}")
       end
 

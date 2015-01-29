@@ -31,8 +31,10 @@
 <div class='row'>
   <div class='col-md-6'>
 
-    <!-- HIGH CPU USAGE -->
-    <% if !cpus_high.empty? %>
+    <!-- LEFT COLUMN !!! -->
+
+    <!-- ALARMS -->
+    <% if !alarms.empty? %>
       <div class="panel panel-grey">
       <div class="panel-heading">
         <div class="row">
@@ -40,31 +42,25 @@
             <i class="fa fa-clock-o fa-2x"></i>
           </div>
           <div class="col-xs-9 text-right">
-            <span class="huge"><%= count = count_children(cpus_high) %></span>
-            <span>&nbsp;Device<%= 's' if count != 1 %> with high CPU utilization</span>
+            <span class="huge"><%= count = count_children(alarms) %></span>
+            <span>&nbsp;Device<%= 's' if count != 1 %> with alarms</span>
           </div>
         </div>
       </div>
       <div class="panel-footer">
-        <table id='highCpuTable' class='table table-hover table-condensed tablesorter'>
+        <table id='alarmTable' class='table table-hover table-condensed tablesorter'>
           <thead>
             <tr>
               <th>Device</th>
-              <th>Component</th>
-              <th>CPU Utilization</th>
+              <th>Alarm</th>
             </tr>
           </thead>
           <tbody>
-          <% cpus_high.each do |device,data| %>
-            <% data[:cpus].each do |index,data| %>
+          <% alarms.each do |device,data| %>
             <tr>
-            <td><%= device_link(data) %></td>
-            <td><%= data[:description] %></td>
-            <td>
-              <span class='text-danger'><b><%= data[:util] %>%</b></span>
-            </td>
+            <td><%= device_link(data[:devicedata]) %></td>
+            <td><b><%= alarm_type_text(data[:devicedata]) %></b></td>
           </tr>
-        <% end %>
         <% end %>
           </tbody>
         </table>
@@ -176,7 +172,54 @@
   <% end %>
 </div>
 
+    <!-- END LEFT COLUMN !!! -->
+
+    <!-- RIGHT COLUMN !!! -->
+
   <div class='col-md-6'>
+
+    <!-- HIGH CPU USAGE -->
+    <% if !cpus_high.empty? %>
+      <div class="panel panel-grey">
+      <div class="panel-heading">
+        <div class="row">
+          <div class="col-xs-3">
+            <i class="fa fa-clock-o fa-2x"></i>
+          </div>
+          <div class="col-xs-9 text-right">
+            <span class="huge"><%= count = count_children(cpus_high) %></span>
+            <span>&nbsp;Device<%= 's' if count != 1 %> with high CPU utilization</span>
+          </div>
+        </div>
+      </div>
+      <div class="panel-footer">
+        <table id='highCpuTable' class='table table-hover table-condensed tablesorter'>
+          <thead>
+            <tr>
+              <th>Device</th>
+              <th>Component</th>
+              <th>CPU Utilization</th>
+            </tr>
+          </thead>
+          <tbody>
+          <% cpus_high.each do |device,data| %>
+            <% data[:cpus].each do |index,data| %>
+            <tr>
+            <td><%= device_link(data) %></td>
+            <td><%= data[:description] %></td>
+            <td>
+              <span class='text-danger'><b><%= data[:util] %>%</b></span>
+            </td>
+          </tr>
+        <% end %>
+        <% end %>
+          </tbody>
+        </table>
+        <div class="clearfix"></div>
+      </div>
+    </div>
+  <br />
+  <% end %>
 
     <!-- HIGH MEMORY USAGE -->
     <% if !memory_high.empty? %>

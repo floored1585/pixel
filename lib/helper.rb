@@ -109,6 +109,13 @@ module Helper
                    "' target='_blank'>" + oids[:if_name] + '</a>'
   end
 
+  def alarm_type_text(data)
+    text = ''
+    text << "<span class='text-danger'>RED</span> " if data[:red_alarm] && data[:red_alarm] != 2
+    text << "and " if data[:red_alarm] && data[:red_alarm] != 2 && data[:yellow_alarm] && data[:yellow_alarm] != 2
+    text << "<span class='text-warning'>YELLOW</span> " if data[:yellow_alarm] && data[:yellow_alarm] != 2
+  end
+
   def device_link(data)
     "<a href='/device/#{data[:device]}'>#{data[:device]}</a>"
   end

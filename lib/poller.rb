@@ -51,6 +51,9 @@ module Poller
         fan = _query_device_fan(device, ip, poller_cfg, dev_info[:vendor])
         fan_time = Time.now - start; start = Time.now
 
+        mac = _query_device_mac(device, ip, poller_cfg, dev_info[:vendor])
+        mac_time = Time.now - start; start = Time.now
+
         if_table = _query_device_interfaces(ip, poller_cfg)
         if_table_time = Time.now - start; start = Time.now
 
@@ -70,6 +73,7 @@ module Poller
           :temperature => {},
           :psu => {},
           :fan => {},
+          :mac => [],
           :devicedata => {},
         } }
         _post_data(post_devices)
@@ -83,6 +87,7 @@ module Poller
       #  "temperature_time: #{'%.2f' % temperature_time}\n" +
       #  "psu_time: #{'%.2f' % psu_time}\n" +
       #  "fan_time: #{'%.2f' % fan_time}\n" +
+      #  "mac_time: #{'%.2f' % mac_time}\n" +
       #  "if_table_time: #{'%.2f' % if_table_time}\n" +
       #  "Total Time: #{'%.2f' % total_time}"
       #)
@@ -182,6 +187,7 @@ module Poller
         :temperature => temperature,
         :psu => psu,
         :fan => fan,
+        :mac => mac,
         :devicedata => dev_info,
       } }
 
@@ -338,6 +344,104 @@ module Poller
     end
 
     return data
+  end
+
+
+  def self._query_device_mac(device, ip, poller_cfg, vendor)
+    return [] unless vendor_cfg = poller_cfg[:oids][vendor]
+    return [] unless vendor_cfg['mac_address_table'] && vendor_cfg['mac_poll_style']
+    mac_table = []
+
+    if vendor_cfg['mac_poll_style'] == 'Juniper'
+      # For juniper style polling
+
+      SNMP::Manager.open(:host => ip, :community => poller_cfg[:snmpv2_community]) do |session|
+        # Get the conversion hash between dot1q VLAN id and VLAN tag
+        dot1q_to_vlan = {}
+        session.walk(vendor_cfg['dot1q_to_vlan_tag']) do |row|
+          row.each do |vb|
+            dot1q_id = vendor_cfg['dot1q_id_regex_vlan'].match( vb.name.to_str )[1].to_i
+            dot1q_to_vlan[dot1q_id] = vb.value.to_i
+          end
+        end
+        # Get the conversion hash between dot1q interface id and ifIndex
+        dot1q_to_if_index = {}
+        session.walk(vendor_cfg['dot1q_to_if_index']) do |row|
+          row.each do |vb|
+            dot1q_id = vendor_cfg['dot1q_id_regex_if'].match( vb.name.to_str )[1].to_i
+            dot1q_to_if_index[dot1q_id] = vb.value.to_i
+          end
+        end
+
+        # Get the mac addresses!
+        session.walk(vendor_cfg['mac_address_table']) do |row|
+          row.each do |vb|
+            mac = {}
+
+            dot1q_vlan_id = vendor_cfg['dot1q_id_regex_mac'].match( vb.name.to_str )[1].to_i
+            dot1q_port_id = vb.value.to_i
+
+            vlan_id = dot1q_to_vlan[dot1q_vlan_id]
+            if_index = dot1q_to_if_index[dot1q_port_id]
+            mac_addr = _mac_dec_to_hex( vendor_cfg['mac_address_regex'].match( vb.name.to_str )[1] )
+
+            mac[:mac] = mac_addr if mac_addr
+            mac[:vlan_id] = vlan_id if vlan_id
+            mac[:if_index] = if_index if if_index
+            mac[:device] = device
+            mac[:last_updated] = Time.now.to_i
+
+            mac_table.push(mac)
+          end
+        end
+      end
+    elsif vendor_cfg['mac_poll_style'] == 'Cisco'
+      # For Cisco style polling
+      vlans = []
+
+      SNMP::Manager.open(:host => ip, :community => poller_cfg[:snmpv2_community]) do |session|
+        # Get the list of VLANs on the device
+        session.walk(vendor_cfg['vlan_status']) do |row|
+          row.each { |vb| vlans.push( vendor_cfg['vlan_id_regex_status'].match( vb.name.to_str )[1].to_i ) }
+        end
+      end
+
+      vlans.each do |vlan|
+        # Cycle through each VLAN, using it in the SNMP community string to get data from each VLAN
+        vlan_community = "#{poller_cfg[:snmpv2_community]}@#{vlan}"
+
+        SNMP::Manager.open(:host => ip, :community => vlan_community) do |session|
+          # Get the conversion hash between dot1q interface id and ifIndex
+          dot1q_to_if_index = {}
+          session.walk(vendor_cfg['dot1q_to_if_index']) do |row|
+            row.each do |vb|
+              dot1q_id = vendor_cfg['dot1q_id_regex_if'].match( vb.name.to_str )[1].to_i
+              dot1q_to_if_index[dot1q_id] = vb.value.to_i
+            end
+          end
+
+          # Get the mac addresses!
+          session.walk(vendor_cfg['mac_address_table']) do |row|
+            row.each do |vb|
+              mac = {}
+
+              dot1q_port_id = vb.value.to_i
+
+              mac[:mac] = _mac_dec_to_hex( vendor_cfg['mac_address_regex'].match( vb.name.to_str )[1] )
+              mac[:vlan_id] = vlan
+              mac[:if_index] = dot1q_to_if_index[dot1q_port_id]
+              mac[:device] = device
+              mac[:last_updated] = Time.now.to_i
+
+              mac_table.push(mac)
+            end
+          end
+        end
+      end
+
+    end
+
+    return mac_table
   end
 
 
@@ -698,6 +802,11 @@ module Poller
   end
 
 
+  def self._mac_dec_to_hex(mac_dec)
+    mac_dec.split('.').map { |octet| octet.to_i.to_s(16).rjust(2,'0') }.join(':')
+  end
+
+
   def self._poller_cfg(settings)
     # Convert poller settings into hash with symbols as keys
     poller_cfg = settings['poller'].dup || {}
@@ -763,6 +872,14 @@ module Poller
         'fan_index_regex' => /([0-9]+\.?){4}$/,
         'fan_description' => '1.3.6.1.4.1.2636.3.1.13.1.5.4',
         'fan_status'      => '1.3.6.1.4.1.2636.3.1.13.1.6.4',
+        'mac_poll_style'      => 'Juniper',
+        'dot1q_to_vlan_tag'   => '1.3.6.1.4.1.2636.3.40.1.5.1.5.1.5',
+        'dot1q_to_if_index'   => '1.3.6.1.2.1.17.1.4.1.2',
+        'dot1q_id_regex_vlan' => /([0-9]+\.?)$/,
+        'dot1q_id_regex_if'   => /([0-9]+\.?)$/,
+        'dot1q_id_regex_mac'  => /(\d+)\.(?:[0-9]+\.?){6}$/,
+        'mac_address_table'   => '1.3.6.1.2.1.17.7.1.2.2.1.2',
+        'mac_address_regex'   => /((?:[0-9]+\.?){6})$/,
       },
       'Cisco' => {
         'cpu_index_regex' => /[0-9]+$/,
@@ -784,7 +901,13 @@ module Poller
         'fan_index_regex' => /[0-9]+$/,
         'fan_description' => '1.3.6.1.4.1.9.9.13.1.4.1.2',
         'fan_status'      => '1.3.6.1.4.1.9.9.13.1.4.1.3',
-
+        'mac_poll_style'      => 'Cisco',
+        'vlan_status'         => '1.3.6.1.4.1.9.9.46.1.3.1.1.2.1',
+        'dot1q_to_if_index'   => '1.3.6.1.2.1.17.1.4.1.2',
+        'vlan_id_regex_status'=> /([0-9]+\.?)$/,
+        'dot1q_id_regex_if'   => /([0-9]+\.?)$/,
+        'mac_address_table'   => '1.3.6.1.2.1.17.4.3.1.2',
+        'mac_address_regex'   => /((?:[0-9]+\.?){6})$/,
       },
       'Force10 S-Series'  => {
         'cpu_index_regex' => /[0-9]+$/,

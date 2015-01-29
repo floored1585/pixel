@@ -106,13 +106,21 @@ module Core
 
   def get_hw_problems(settings, db)
     temperatures = db[:temperature].filter(:status => 2)
-    psus = db[:psu].filter.filter(:status => [2,3])
-    fans = db[:fan].filter.filter(:status => [2,3])
+    psus = db[:psu].filter(:status => [2,3])
+    fans = db[:fan].filter(:status => [2,3])
 
     (devices, name_to_index) = _device_map(:temperatures => temperatures,
                                            :psus => psus,
                                            :fans => fans,
                                           )
+    return devices
+  end
+
+
+  def get_alarms(settings, db)
+    devicedata = db[:device].exclude(:yellow_alarm => [2, nil]).or(:red_alarm => [2, nil])
+
+    (devices, name_to_index) = _device_map(:devicedata => devicedata)
     return devices
   end
 
@@ -166,58 +174,78 @@ module Core
 
       $LOG.info("CORE: Received data for #{device} from #{components[:metadata][:worker]}")
 
-      components[:interfaces].each do |index, data|
-        #$LOG.warn("Device: #{device}  Interface: #{index}\n  OIDs: #{oids}")
-        # Try updating, and if we don't affect a row, insert instead
-        existing = db[:interface].where(:device => device, :index => index)
-        if existing.update(data) != 1
-          db[:interface].insert(data)
+      begin # To catch SQL exceptions
+
+        components[:interfaces].each do |index, data|
+          #$LOG.warn("Device: #{device}  Interface: #{index}\n  OIDs: #{oids}")
+          # Try updating, and if we don't affect a row, insert instead
+          existing = db[:interface].where(:device => device, :index => index)
+          if existing.update(data) != 1
+            db[:interface].insert(data)
+          end
         end
-      end
-      components[:cpus].each do |index, data|
-        #$LOG.warn("Device: #{device}  CPU: #{index}\n  Data: #{data}")
-        # Try updating, and if we don't affect a row, insert instead
-        existing = db[:cpu].where(:device => device, :index => index)
-        if existing.update(data) != 1
-          db[:cpu].insert(data)
+        components[:cpus].each do |index, data|
+          #$LOG.warn("Device: #{device}  CPU: #{index}\n  Data: #{data}")
+          # Try updating, and if we don't affect a row, insert instead
+          existing = db[:cpu].where(:device => device, :index => index)
+          if existing.update(data) != 1
+            db[:cpu].insert(data)
+          end
         end
-      end
-      components[:memory].each do |index, data|
-        #$LOG.warn("Device: #{device} Memory: #{index}\n  Data: #{data}")
-        # Try updating, and if we don't affect a row, insert instead
-        existing = db[:memory].where(:device => device, :index => index)
-        if existing.update(data) != 1
-          db[:memory].insert(data)
+        components[:memory].each do |index, data|
+          #$LOG.warn("Device: #{device} Memory: #{index}\n  Data: #{data}")
+          # Try updating, and if we don't affect a row, insert instead
+          existing = db[:memory].where(:device => device, :index => index)
+          if existing.update(data) != 1
+            db[:memory].insert(data)
+          end
         end
-      end
-      components[:temperature].each do |index, data|
-        #$LOG.warn("Device: #{device} Temperature: #{index}\n  Data: #{data}")
-        # Try updating, and if we don't affect a row, insert instead
-        existing = db[:temperature].where(:device => device, :index => index)
-        if existing.update(data) != 1
-          db[:temperature].insert(data)
+        components[:temperature].each do |index, data|
+          #$LOG.warn("Device: #{device} Temperature: #{index}\n  Data: #{data}")
+          # Try updating, and if we don't affect a row, insert instead
+          existing = db[:temperature].where(:device => device, :index => index)
+          if existing.update(data) != 1
+            db[:temperature].insert(data)
+          end
         end
-      end
-      components[:psu].each do |index, data|
-        #$LOG.warn("Device: #{device} PSU: #{index}\n  Data: #{data}")
-        # Try updating, and if we don't affect a row, insert instead
-        existing = db[:psu].where(:device => device, :index => index)
-        if existing.update(data) != 1
-          db[:psu].insert(data)
+        components[:psu].each do |index, data|
+          #$LOG.warn("Device: #{device} PSU: #{index}\n  Data: #{data}")
+          # Try updating, and if we don't affect a row, insert instead
+          existing = db[:psu].where(:device => device, :index => index)
+          if existing.update(data) != 1
+            db[:psu].insert(data)
+          end
         end
-      end
-      components[:fan].each do |index, data|
-        #$LOG.warn("Device: #{device} Fan: #{index}\n  Data: #{data}")
-        # Try updating, and if we don't affect a row, insert instead
-        existing = db[:fan].where(:device => device, :index => index)
-        if existing.update(data) != 1
-          db[:fan].insert(data)
+        components[:fan].each do |index, data|
+          #$LOG.warn("Device: #{device} Fan: #{index}\n  Data: #{data}")
+          # Try updating, and if we don't affect a row, insert instead
+          existing = db[:fan].where(:device => device, :index => index)
+          if existing.update(data) != 1
+            db[:fan].insert(data)
+          end
         end
-      end
-      device_update = components[:metadata].merge(components[:devicedata])
-      existing = db[:device].where(:device => device)
-      if existing.update(device_update) != 1
-        $LOG.error("Problem updating device table for #{device}")
+        components[:mac].each do |data|
+          #$LOG.warn("Device: #{device} MAC: #{index}\n  Data: #{data}")
+          # Try updating, and if we don't affect a row, insert instead
+          existing = db[:mac].where(:device => device, :mac => data[:mac])
+          if existing.update(data) != 1
+            db[:mac].insert(data)
+          end
+        end
+        # Timeout for MAC entries in DB
+        purge_count = db[:mac].where(:device => device).where{last_updated < Time.now.to_i - 600}.count
+        if purge_count > 0
+          $LOG.info("CORE: #{purge_count} MAC addresses purged from #{device} due to timeout.")
+        end
+
+        device_update = components[:metadata].merge(components[:devicedata])
+        existing = db[:device].where(:device => device)
+        if existing.update(device_update) != 1
+          $LOG.error("Problem updating device table for #{device}")
+        end
+
+      rescue Sequel::NotNullConstraintViolation => e
+        $LOG.error("CORE: SQL error! \n#{e}")
       end
 
       # Update the rest of the device attributes
@@ -571,6 +599,30 @@ module Core
           else
             $LOG.warn("Invalid or missing Fans data received for #{device}")
             data[:fan] = {}
+          end
+          # Validate MACs
+          if data[:mac].class == Array
+            # Validate MAC data
+            data[:mac].each_with_index do |mac_data, i|
+              if mac_data.class == Hash
+                mac_data.symbolize!
+              else
+                $LOG.warn("Invalid MAC data for #{device}: index #{i}")
+                data[:mac].delete_at(i)
+              end
+              required_data = [:device, :mac, :if_index, :last_updated]
+              unless (required_data - mac_data.keys).empty?
+                $LOG.warn("Invalid MAC data for #{device}: index #{i}. Missing: #{required_data - mac_data.keys}")
+                data[:mac].delete_at(i)
+              end
+              if mac_data[:mac] == '00:00:00:00:00:00' || !mac_data[:if_index]
+                $LOG.warn("Invalid MAC address or empty if_index for #{device}: index #{i}")
+                data[:mac].delete_at(i)
+              end
+            end
+          else
+            $LOG.warn("Invalid or missing MACs data received for #{device}")
+            data[:mac] = []
           end
         else
           $LOG.error("Invalid or missing data received for #{device}")

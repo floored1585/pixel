@@ -221,6 +221,53 @@
   <br />
   <% end %>
 
+    <!-- HW PROBLEMS -->
+    <% if !hw_problems.empty? %>
+      <div class="panel panel-grey">
+      <div class="panel-heading">
+        <div class="row">
+          <div class="col-xs-3">
+            &nbsp;<i class="fa fa-bolt fa-2x"></i>
+          </div>
+          <div class="col-xs-9 text-right">
+            <span class="huge"><%= count = count_children(hw_problems) %></span>
+            <span>&nbsp;Hardware Problem<%= 's' if count != 1 %></span>
+          </div>
+        </div>
+      </div>
+      <div class="panel-footer">
+        <table id='hwProblemTable' class='table table-hover table-condensed tablesorter'>
+          <thead>
+            <tr>
+              <th>Device</th>
+              <th>Sensor</th>
+              <th>Description</th>
+              <th>Status</th>
+            </tr>
+          </thead>
+          <tbody>
+          <% hw_problems.each do |device,components| %>
+            <% components.keys.each do |key| %>
+              <% components[key].each do |index,data| %>
+              <tr>
+              <td><%= device_link(data) %></td>
+              <td><%= key.to_s.gsub(/s$/,'').gsub('temperature','temp') %></td>
+              <td><%= data[:description] %></td>
+              <td>
+                <span class='text-danger'><b><%= data[:status_text].upcase %><%= " (#{data[:temperature]}&deg;)" if data[:temperature] %></b></span>
+              </td>
+            </tr>
+          <% end %>
+        <% end %>
+        <% end %>
+          </tbody>
+        </table>
+        <div class="clearfix"></div>
+      </div>
+    </div>
+  <br />
+  <% end %>
+
   <!-- SATURATED PORTS -->
     <% if !ints_saturated.empty? %>
       <div class="panel panel-grey">
@@ -285,53 +332,6 @@
         <div class="clearfix"></div>
       </div>
     </div>
-  <% end %>
-
-    <!-- HW PROBLEMS -->
-    <% if !hw_problems.empty? %>
-      <div class="panel panel-grey">
-      <div class="panel-heading">
-        <div class="row">
-          <div class="col-xs-3">
-            &nbsp;<i class="fa fa-bolt fa-2x"></i>
-          </div>
-          <div class="col-xs-9 text-right">
-            <span class="huge"><%= count = count_children(hw_problems) %></span>
-            <span>&nbsp;Hardware Problem<%= 's' if count != 1 %></span>
-          </div>
-        </div>
-      </div>
-      <div class="panel-footer">
-        <table id='hwProblemTable' class='table table-hover table-condensed tablesorter'>
-          <thead>
-            <tr>
-              <th>Device</th>
-              <th>Sensor</th>
-              <th>Description</th>
-              <th>Status</th>
-            </tr>
-          </thead>
-          <tbody>
-          <% hw_problems.each do |device,components| %>
-            <% components.keys.each do |key| %>
-              <% components[key].each do |index,data| %>
-              <tr>
-              <td><%= device_link(data) %></td>
-              <td><%= key.to_s.gsub(/s$/,'').gsub('temperature','temp') %></td>
-              <td><%= data[:description] %></td>
-              <td>
-                <span class='text-danger'><b><%= data[:status_text].upcase %><%= " (#{data[:temperature]}&deg;)" if data[:temperature] %></b></span>
-              </td>
-            </tr>
-          <% end %>
-        <% end %>
-        <% end %>
-          </tbody>
-        </table>
-        <div class="clearfix"></div>
-      </div>
-    </div>
-  <br />
   <% end %>
 </div>
 

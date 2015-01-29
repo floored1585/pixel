@@ -360,7 +360,7 @@ module Poller
         dot1q_to_vlan = {}
         session.walk(vendor_cfg['dot1q_to_vlan_tag']) do |row|
           row.each do |vb|
-            next if [ 1002 1003 1004 1005 ].include?(vb.value.to_i) && vendor == 'Cisco'
+            next if [ 1002, 1003, 1004, 1005 ].include?(vb.value.to_i) && vendor == 'Cisco'
             dot1q_id = vendor_cfg['dot1q_id_regex_vlan'].match( vb.name.to_str )[1].to_i
             dot1q_to_vlan[dot1q_id] = vb.value.to_i
           end

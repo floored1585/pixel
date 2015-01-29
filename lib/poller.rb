@@ -360,7 +360,6 @@ module Poller
         dot1q_to_vlan = {}
         session.walk(vendor_cfg['dot1q_to_vlan_tag']) do |row|
           row.each do |vb|
-            next if [ 1002, 1003, 1004, 1005 ].include?(vb.value.to_i) && vendor == 'Cisco'
             dot1q_id = vendor_cfg['dot1q_id_regex_vlan'].match( vb.name.to_str )[1].to_i
             dot1q_to_vlan[dot1q_id] = vb.value.to_i
           end
@@ -405,7 +404,11 @@ module Poller
       SNMP::Manager.open(:host => ip, :community => poller_cfg[:snmpv2_community]) do |session|
         # Get the list of VLANs on the device
         session.walk(vendor_cfg['vlan_status']) do |row|
-          row.each { |vb| vlans.push( vendor_cfg['vlan_id_regex_status'].match( vb.name.to_str )[1].to_i ) }
+          row.each do |vb|
+            vlan = vendor_cfg['vlan_id_regex_status'].match( vb.name.to_str )[1].to_i
+            next if [ 1002, 1003, 1004, 1005 ].include?(vlan) && vendor == 'Cisco'
+            vlans.push(vlan)
+          end
         end
       end
 

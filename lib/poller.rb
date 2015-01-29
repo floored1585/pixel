@@ -406,7 +406,7 @@ module Poller
         session.walk(vendor_cfg['vlan_status']) do |row|
           row.each do |vb|
             vlan = vendor_cfg['vlan_id_regex_status'].match( vb.name.to_str )[1].to_i
-            next if [ 1002, 1003, 1004, 1005 ].include?(vlan) && vendor == 'Cisco'
+            next if (1002..1005).include?(vlan) && vendor == 'Cisco'
             vlans.push(vlan)
           end
         end

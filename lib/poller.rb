@@ -107,6 +107,8 @@ module Poller
         end
       end
 
+      total_polled = if_table.size
+
       # Delete interfaces we're not interested in
       if_table.delete_if { |index,oids| !(
         oids['if_alias'] =~ poller_cfg[:interesting_alias] || oids['if_name'] =~ poller_cfg[:interesting_names][dev_info[:vendor]]
@@ -172,8 +174,9 @@ module Poller
         series_data = { :value => totals[key], :time => Time.now.to_i }
         influx_is_up = _write_influxdb(series_name, series_data, poller_cfg) if influx_is_up
       end
+      elapsed = Time.now.to_i - start.to_i
       $LOG.info("POLLER: SNMP poll successful for #{device}: " +
-                "#{if_table.size} interfaces polled, #{interfaces.size} processed")
+                "#{total_polled} interfaces polled, #{if_table.size} processed (#{elapsed} seconds)")
 
       # Update the application
       metadata[:last_poll_duration] = Time.now.to_i - start_time.to_i
@@ -743,10 +746,12 @@ module Poller
 
 
   def self._post_data(devices)
+    start = Time.now.to_i
     if API.post('core', '/v1/devices', devices, 'POLLER', 'poll results')
-      $LOG.info("POLLER: POST successful for #{devices.keys[0]}")
+      elapsed = Time.now.to_i - start
+      $LOG.info("POLLER: POST successful for #{devices.keys[0]} (#{elapsed} seconds)")
     else
-      $LOG.error("POLLER: POST failed for #{devices.keys[0]}; Aborting")
+      $LOG.error("POLLER: POST failed for #{devices.keys[0]} (#{elapsed} seconds); Aborting")
     end
     abort
   end

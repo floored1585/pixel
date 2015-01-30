@@ -204,7 +204,9 @@ module Helper
 
 
   def devicedata_to_human(oid, value, opts={})
-    oids_to_modify = [ :bps_out, :pps_out, :discards_out, :uptime, :last_poll_duration, :last_poll, :next_poll, :currently_polling, :last_poll_result]
+    oids_to_modify = [ :bps_out, :pps_out, :discards_out, :uptime, :last_poll_duration, 
+                       :last_poll, :next_poll, :currently_polling, :last_poll_result,
+                       :yellow_alarm, :red_alarm ]
     # abort on empty or non-existant values
     return value unless value && !value.to_s.empty?
     return value unless oids_to_modify.include?(oid)
@@ -217,6 +219,7 @@ module Helper
     output << epoch_to_date(value) if [ :last_poll, :next_poll ].include?(oid)
     output << (value == 1 ? 'Yes' : 'No') if oid == :currently_polling
     output << (value == 1 ? 'Failure' : 'Success') if oid == :last_poll_result
+    output << (value == 2 ? 'Inactive' : 'Active') if [ :yellow_alarm, :red_alarm ].include?(oid)
 
     output << ")" if opts[:add]
     return output

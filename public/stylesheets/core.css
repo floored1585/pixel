@@ -143,6 +143,17 @@ li.list-group-item-danger a:hover {
   border-bottom: 1px dotted #000;
   text-decoration: none;
 }
+
+.pxl-margin-left-right {
+  margin-left: 3em;
+  margin-right: 3em;
+}
+
+#pxl-hw-table td {
+  border-top: none;
+  border-bottom: none;
+}
+
 /* universal */
 
 .huge {
@@ -243,6 +254,9 @@ table.tablesorter thead tr {
 h1, h2, h3, h4, h5, h6 {
   text-align: center;
   letter-spacing: -1px;
+}
+.pxl-h4-hw {
+  margin-bottom: 5px;
 }
 .pxl-h5-device {
   margin-bottom: 30px;

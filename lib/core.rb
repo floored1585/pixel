@@ -53,26 +53,35 @@ module Core
 
 
   def get_device(settings, db, device, component=nil)
+    temperatures = db[:temperature]
     interfaces = db[:interface]
     devicedata = db[:device]
     memory = db[:memory]
     cpus = db[:cpu]
+    psus = db[:psu]
+    fans = db[:fan]
     # Filter if a device was specified, otherwise return all
     if device
       # Return an empty hash if the device doesn't exist
       return {} if db[:device].filter(:device => device).empty?
+      temperatures = temperatures.filter(:device => device)
       interfaces = interfaces.filter(:device => device)
       devicedata = devicedata.filter(:device => device)
       memory = memory.filter(:device => device)
       cpus = cpus.filter(:device => device)
+      fans = fans.filter(:device => device)
+      psus = psus.filter(:device => device)
     end
 
-    # Return just an empty device if there are no CPUs or interfaces for the device
-    return { device => {} } if cpus.empty? && interfaces.empty? && device
+    # Return just an empty device if there are no CPUs, memory, interfaces or hardware for the device
+    return { device => {} } if cpus.empty? && interfaces.empty? && temperatures.empty? && memory.empty? && fans.empty? && psus.empty? && device
 
     (devices, name_to_index) = _device_map(:devicedata => devicedata,
+                                           :temperatures => temperatures,
                                            :interfaces => interfaces,
                                            :cpus => cpus,
+                                           :psus => psus,
+                                           :fans => fans,
                                            :memory => memory,
                                           )
     _fill_metadata!(devices, settings, name_to_index)

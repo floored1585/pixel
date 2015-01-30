@@ -1,6 +1,9 @@
 <% locals[:title] = device %>
 <% interfaces = data ? data[:interfaces] : nil %>
 <% devicedata = data ? data[:devicedata] : nil %>
+<% temperatures = data ? data[:temperatures] : nil %>
+<% fans = data ? data[:fans] : nil %>
+<% psus = data ? data[:psus] : nil %>
 <% if devicedata %>
   <div class='pxl-minibar-wrapper pxl-fadescroll'>
     <div class='pxl-minibar'>
@@ -28,7 +31,8 @@
 <h5 class='pxl-h5-device'>
   <% if devicedata %>
   <%= device_link_graph(settings, device, '[ graphs ]') %>&nbsp;
-    <a href='#' data-toggle="modal" data-target="#deviceDetails">[ details ]</a>
+    <a href='#' data-toggle="modal" data-target="#deviceDetails">[ details ]</a>&nbsp;
+    <a href='#' data-toggle="modal" data-target="#deviceHardware">[ hardware ]</a>
 <% end %>
 </h5>
 <% if devicedata %>
@@ -127,7 +131,9 @@
   <% end %>
 </div>
 
-<!-- MODAL -->
+<!--88888888888888888-->
+<!--  DETAILS MODAL  -->
+<!--88888888888888888-->
 <% if devicedata %>
 <div class="modal fade" id="deviceDetails" tabindex="-1" role="dialog" aria-labelledby="myModalLabel" aria-hidden="true">
   <div class="modal-dialog">
@@ -159,4 +165,91 @@
   </div>
 </div>
 <% end %>
-<!-- END MODAL -->
+<!--888888888888888888888-->
+<!--  END DETAILS MODAL  -->
+<!--888888888888888888888-->
+
+<!--88888888888888888-->
+<!--  HARDWARE MODAL  -->
+<!--88888888888888888-->
+<% if devicedata %>
+<div class="modal fade" id="deviceHardware" tabindex="-1" role="dialog" aria-labelledby="myModalLabel" aria-hidden="true">
+  <div class="modal-dialog">
+    <div class="modal-content">
+      <div class="modal-header">
+        <button type="button" class="close" data-dismiss="modal"><span aria-hidden="true">&times;</span><span class="sr-only">Close</span></button>
+        <h4 class="modal-title" id="myModalLabel"><%= device %> hardware details</h4>
+      </div>
+      <div class="modal-body">
+        <div class='pxl-margin-left-right'>
+        <!-- Fans -->
+        <% if fans %>
+        <table class='table table-condensed table-hover' id='pxl-hw-table'>
+          <caption><h4 class='pxl-h4-hw'>Fans</h4></caption>
+          <thead>
+            <tr>
+              <th>Description</th>
+              <th>Status</th>
+            </tr>
+          </thead>
+          <% fans.each do |index,fan_data| %>
+            <tr>
+              <td><%= fan_data[:description] %></td>
+              <td><%= fan_data[:status_text] %></td>
+            </tr>
+          <% end %>
+        </table>
+        <% end %>
+        <!-- End Fans -->
+        <!-- PSUs -->
+        <% if psus %>
+        <table class='table table-condensed table-hover' id='pxl-hw-table'>
+          <caption><h4 class='pxl-h4-hw'>PSUs</h4></caption>
+          <thead>
+            <tr>
+              <th>Description</th>
+              <th>Status</th>
+            </tr>
+          </thead>
+          <% psus.each do |index,psu_data| %>
+            <tr>
+              <td><%= psu_data[:description] %></td>
+              <td><%= psu_data[:status_text] %></td>
+            </tr>
+          <% end %>
+        </table>
+        <% end %>
+        <!-- End PSUs -->
+        <!-- Temperatures -->
+        <% if temperatures %>
+        <table class='table table-condensed table-hover' id='pxl-hw-table'>
+          <caption><h4 class='pxl-h4-hw'>Temperatures</h4></caption>
+          <thead>
+            <tr>
+              <th>Description</th>
+              <th>Temperature</th>
+              <th>Status</th>
+            </tr>
+          </thead>
+          <% temperatures.each do |index,temperature_data| %>
+            <tr>
+              <td><%= temperature_data[:description] %></td>
+              <td><%= temperature_data[:temperature] %></td>
+              <td><%= temperature_data[:status_text] %></td>
+            </tr>
+          <% end %>
+        </table>
+        <% end %>
+        <!-- End Temperatures -->
+    </div>
+      </div>
+      <div class="modal-footer">
+        <button type="button" class="btn btn-default" data-dismiss="modal">Close</button>
+      </div>
+    </div>
+  </div>
+</div>
+<% end %>
+<!--888888888888888888888-->
+<!--  END HARDWARE MODAL  -->
+<!--888888888888888888888-->

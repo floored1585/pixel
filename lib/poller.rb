@@ -789,7 +789,7 @@ module Poller
       influxdb.write_point(series_name, series_data)
     rescue Timeout::Error, Errno::ETIMEDOUT, Errno::EINVAL, Errno::ECONNRESET,
       Errno::ECONNREFUSED, EOFError, Net::HTTPBadResponse,
-      Net::HTTPHeaderSyntaxError, Net::ProtocolError
+      Net::HTTPHeaderSyntaxError, Net::ProtocolError, InfluxDB::Error
       # The request failed; Retry if allowed
       if retry_count <= retry_limit
         retry_count += 1

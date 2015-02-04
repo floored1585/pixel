@@ -51,16 +51,16 @@ module Poller
         fan = _query_device_fan(device, ip, poller_cfg, dev_info[:vendor])
         fan_time = Time.now - start; start = Time.now
 
-        mac = _query_device_mac(device, ip, poller_cfg, dev_info[:vendor])
-        mac_time = Time.now - start; start = Time.now
-
         if_table = _query_device_interfaces(ip, poller_cfg)
         if_table_time = Time.now - start; start = Time.now
+
+        mac = _query_device_mac(device, ip, poller_cfg, dev_info[:vendor], if_table)
+        mac_time = Time.now - start; start = Time.now
 
         total_time = Time.now - start_total
 
         #puts "#{device} Fan Data:"
-        #pp fan
+        #pp if_table if device.include?('cr-1') || device == 'iad1-d-1' || device == 'gar-p1u1-dist'
         #puts "\n"
       rescue RuntimeError, ArgumentError => e
         $LOG.error("POLLER: Error encountered while polling #{device}: #{e}")
@@ -350,7 +350,7 @@ module Poller
   end
 
 
-  def self._query_device_mac(device, ip, poller_cfg, vendor)
+  def self._query_device_mac(device, ip, poller_cfg, vendor, if_table)
     return [] unless vendor_cfg = poller_cfg[:oids][vendor]
     return [] unless vendor_cfg['mac_address_table'] && vendor_cfg['mac_poll_style']
     mac_table = []
@@ -363,16 +363,16 @@ module Poller
         dot1q_to_vlan = {}
         session.walk(vendor_cfg['dot1q_to_vlan_tag']) do |row|
           row.each do |vb|
-            dot1q_id = vendor_cfg['dot1q_id_regex_vlan'].match( vb.name.to_str )[1].to_i
-            dot1q_to_vlan[dot1q_id] = vb.value.to_i
+            dot1q_id = vendor_cfg['dot1q_id_regex_vlan'].match( vb.name.to_str )[1]
+            dot1q_to_vlan[dot1q_id] = vb.value.to_s
           end
         end
         # Get the conversion hash between dot1q interface id and ifIndex
         dot1q_to_if_index = {}
         session.walk(vendor_cfg['dot1q_to_if_index']) do |row|
           row.each do |vb|
-            dot1q_id = vendor_cfg['dot1q_id_regex_if'].match( vb.name.to_str )[1].to_i
-            dot1q_to_if_index[dot1q_id] = vb.value.to_i
+            dot1q_id = vendor_cfg['dot1q_id_regex_if'].match( vb.name.to_str )[1]
+            dot1q_to_if_index[dot1q_id] = vb.value.to_s
           end
         end
 
@@ -381,14 +381,27 @@ module Poller
           row.each do |vb|
             mac = {}
 
-            dot1q_vlan_id = vendor_cfg['dot1q_id_regex_mac'].match( vb.name.to_str )[1].to_i
-            dot1q_port_id = vb.value.to_i
+            dot1q_vlan_id = vendor_cfg['dot1q_id_regex_mac'].match( vb.name.to_str )[1]
+            dot1q_port_id = vb.value.to_s
 
             vlan_id = dot1q_to_vlan[dot1q_vlan_id]
             next unless vlan_id
 
             if_index = dot1q_to_if_index[dot1q_port_id]
             mac_addr = _mac_dec_to_hex( vendor_cfg['mac_address_regex'].match( vb.name.to_str )[1] )
+
+            # If this is an ae0.0 type interface, replace if_index w/ the if_index for ae0 (without the .x)
+            if if_table[if_index] && if_table[if_index]['if_name'].match(/\.[0-9]+$/)
+              if_table.each do |index,oids|
+                # Skip if this is a sub-interface
+                next if oids['if_name'].match(/\.[0-9]+$/)
+                if if_table[if_index]['if_name'].include?(oids['if_name'])
+                  # If it is a match, set the index to the non-sub interface index and break the block
+                  if_index = index
+                  break;
+                end
+              end
+            end
 
             mac[:mac] = mac_addr if mac_addr
             mac[:vlan_id] = vlan_id if vlan_id
@@ -408,8 +421,8 @@ module Poller
         # Get the list of VLANs on the device
         session.walk(vendor_cfg['vlan_status']) do |row|
           row.each do |vb|
-            vlan = vendor_cfg['vlan_id_regex_status'].match( vb.name.to_str )[1].to_i
-            next if (1002..1005).include?(vlan) && vendor == 'Cisco' || vb.value.to_i != 1
+            vlan = vendor_cfg['vlan_id_regex_status'].match( vb.name.to_str )[1]
+            next if (1002..1005).include?(vlan) && vendor == 'Cisco' || vb.value.to_s != "1"
             vlans.push(vlan)
           end
         end
@@ -424,8 +437,8 @@ module Poller
           dot1q_to_if_index = {}
           session.walk(vendor_cfg['dot1q_to_if_index']) do |row|
             row.each do |vb|
-              dot1q_id = vendor_cfg['dot1q_id_regex_if'].match( vb.name.to_str )[1].to_i
-              dot1q_to_if_index[dot1q_id] = vb.value.to_i
+              dot1q_id = vendor_cfg['dot1q_id_regex_if'].match( vb.name.to_str )[1]
+              dot1q_to_if_index[dot1q_id] = vb.value.to_s
             end
           end
 
@@ -434,7 +447,7 @@ module Poller
             row.each do |vb|
               mac = {}
 
-              dot1q_port_id = vb.value.to_i
+              dot1q_port_id = vb.value.to_s
 
               mac[:mac] = _mac_dec_to_hex( vendor_cfg['mac_address_regex'].match( vb.name.to_str )[1] )
               mac[:vlan_id] = vlan

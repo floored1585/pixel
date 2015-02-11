@@ -36,7 +36,7 @@ module API
       end
     rescue Timeout::Error, Errno::ETIMEDOUT, Errno::EINVAL, Errno::ECONNRESET,
       Errno::ECONNREFUSED, EOFError, Net::HTTPBadResponse, IOError,
-      Net::HTTPHeaderSyntaxError, Net::ProtocolError, SocketError
+      Net::HTTPHeaderSyntaxError, Net::ProtocolError, SocketError, OpenSSL::SSL::SSLError
       # The request failed; Retry if allowed
       if retry_count < retry_limit
         retry_count += 1

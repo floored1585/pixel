@@ -52,6 +52,16 @@ module Core
   end
 
 
+  def get_device_v2(settings, db, device)
+    db[:device].where(:device => device)
+  end
+
+
+  def get_interfaces(settings, db, device)
+    db[:interface].where(:device => device)
+  end
+
+
   def get_device(settings, db, device, component=nil)
     temperatures = db[:temperature]
     interfaces = db[:interface]

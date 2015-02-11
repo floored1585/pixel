@@ -9,6 +9,14 @@ class Pixel < Sinatra::Base
     JSON.generate( get_devices_poller(@@settings, @@db, count.to_i, poller_name) )
   end
 
+  get '/v1/device/*/interfaces' do |device|
+    JSON.generate( get_interfaces(@@settings, @@db, device) )
+  end
+
+  get '/v1/device/*' do |device|
+    JSON.generate( get_device_v2(@@settings, @@db, device) )
+  end
+
   get '/v1/devices/populate' do
     populate_device_table(@@settings, @@db)
   end

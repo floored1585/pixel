@@ -40,6 +40,8 @@ GEM
     rack-test (0.6.2)
       rack (>= 1.0)
     rake (10.3.2)
+    rvm-capistrano (1.5.0)
+      capistrano (>= 2.15.4)
     sequel (4.13.0)
     sinatra (1.4.5)
       rack (~> 1.4)
@@ -71,6 +73,7 @@ DEPENDENCIES
   mysql
   pg
   rack-coffee
+  rvm-capistrano
   sequel
   sinatra
   sinatra-contrib

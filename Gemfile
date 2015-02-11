@@ -10,6 +10,7 @@ gem 'mysql'
 gem 'rack-coffee'
 gem 'influxdb'
 gem 'snmp'
+gem 'rvm-capistrano'
 
 group :development do
   gem 'capistrano'

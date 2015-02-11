@@ -628,12 +628,12 @@ module Core
                 $LOG.warn("Invalid MAC data for #{device}: index #{i}")
                 data[:mac].delete_at(i)
               end
-              required_data = [:device, :mac, :if_index, :last_updated]
+              required_data = [:device, :mac, :if_index, :vlan_id, :last_updated]
               unless (required_data - mac_data.keys).empty?
                 $LOG.warn("Invalid MAC data for #{device}: index #{i}. Missing: #{required_data - mac_data.keys}")
                 data[:mac].delete_at(i)
               end
-              if mac_data[:mac] == '00:00:00:00:00:00' || !mac_data[:if_index]
+              if mac_data[:mac] == '00:00:00:00:00:00' || !mac_data[:if_index] || mac_data[:if_index].empty?
                 $LOG.warn("Invalid MAC address or empty if_index for #{device}: index #{i}")
                 data[:mac].delete_at(i)
               end

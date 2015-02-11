@@ -1,6 +1,6 @@
 source 'https://rubygems.org'
-ruby '2.0.0'
-#ruby-gemset=sinatra
+ruby '2.2.0'
+#ruby-gemset=sinatra-2.2
 gem 'sinatra'
 gem 'sinatra-contrib'
 gem 'pg'

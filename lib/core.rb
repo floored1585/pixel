@@ -53,12 +53,12 @@ module Core
 
 
   def get_device_v2(settings, db, device)
-    db[:device].where(:device => device)
+    db[:device].where(:device => device).all[0]
   end
 
 
   def get_interfaces(settings, db, device)
-    db[:interface].where(:device => device)
+    db[:interface].where(:device => device).all
   end
 
 
@@ -175,7 +175,7 @@ module Core
       rows = rows.limit(count).for_update
 
       rows.each do |row|
-        devices[row[:device]] = row
+        devices[row[:device]] = row[:ip]
         $LOG.warn("CORE: Overriding currently_polling for #{row[:device]} (#{poller_name})") if row[:currently_polling] == 1
         device_row = db[:device].where(:device => row[:device])
         device_row.update(

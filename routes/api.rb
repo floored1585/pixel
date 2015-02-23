@@ -3,6 +3,10 @@ class Pixel < Sinatra::Base
   #
   # GETS
   #
+  get '/v1/wakeup' do
+    return 200
+  end
+
   get '/v1/devices/fetch_poll' do
     count = params[:count] || 10
     poller_name = params[:hostname] || 'unknown'

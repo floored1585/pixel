@@ -246,22 +246,22 @@ module Core
             db[:fan].insert(data)
           end
         end
-        components[:mac].each do |data|
+        #components[:mac].each do |data|
           #$LOG.warn("Device: #{device} MAC: #{index}\n  Data: #{data}")
           # Try updating, and if we don't affect a row, insert instead
-          begin
-            existing = db[:mac].where(:device => device, :mac => data[:mac], :vlan_id => data[:vlan_id])
-            if existing.update(data) != 1
-              db[:mac].insert(data)
-            end
-          rescue Sequel::NotNullConstraintViolation,
-            Sequel::ForeignKeyConstraintViolation,
-            Sequel::UniqueConstraintViolation => e
-            $LOG.warn("CORE: SQL Error! \n#{e}")
-          end
-        end
+        #  begin
+        #    existing = db[:mac].where(:device => device, :mac => data[:mac], :vlan_id => data[:vlan_id])
+        #    if existing.update(data) != 1;
+        #      db[:mac].insert(data)
+        #    end
+        #  rescue Sequel::NotNullConstraintViolation,
+        #    Sequel::ForeignKeyConstraintViolation,
+        #    Sequel::UniqueConstraintViolation => e
+        #    $LOG.warn("CORE: SQL Error! \n#{e}")
+        #  end
+        #end
         # Timeout for MAC entries in DB
-        purge_count = db[:mac].where(:device => device).where{last_updated < Time.now.to_i - 600}.count
+        purge_count = db[:mac].where(:device => device).where{last_updated < Time.now.to_i - 600}.delete
         if purge_count > 0
           $LOG.info("CORE: #{purge_count} MAC addresses purged from #{device} due to timeout.")
         end

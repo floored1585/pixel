@@ -89,11 +89,16 @@ describe Interface do
     end
 
     describe '#name' do
-      specify { expect(@int.speed).to eql nil }
+      specify { expect(@int.name).to eql nil }
+    end
+
+    describe '#alias' do
+      specify { expect(@int.alias).to eql nil }
     end
 
     describe '#substitute_name' do
-      specify { expect(@int.speed).to eql nil }
+      subs = { 'xe-' => 'XE-TEST', 'Gi' => 'GigabitEthernet' }
+      specify { expect(@int.substitute_name(subs)).to eql nil }
     end
 
     describe '#status' do
@@ -134,6 +139,13 @@ describe Interface do
       specify { expect(@int2.name).to eql 'Fa0/40' }
       specify { expect(@int3.name).to eql 'ae0' }
       specify { expect(@int4.name).to eql 'Gi0/19' }
+    end
+
+    describe '#alias' do
+      specify { expect(@int1.alias).to eql 'bb__gar-crmx-1__xe-1/0/3' }
+      specify { expect(@int2.alias).to eql 'acc__' }
+      specify { expect(@int3.alias).to eql 'bb__gar-cr-1__ae3' }
+      specify { expect(@int4.alias).to eql '' }
     end
 
     describe '#substitute_name' do

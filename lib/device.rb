@@ -236,6 +236,7 @@ class Device
   end
 
 
+  # PRIVATE!
   def _process_interfaces
     # Loop through all interfaces
     @interfaces.each do |index, interface|

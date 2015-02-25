@@ -38,6 +38,11 @@ class Interface
   end
 
 
+  def alias
+    @alias
+  end
+
+
   # Substitutes characters in the current name using the provided hash
   def substitute_name(substitutions)
 
@@ -179,6 +184,8 @@ class Interface
     @in_errors = new_in_errors
     @out_discards = new_out_discards
     @out_errors = new_out_errors
+
+    return self
 
   end
 

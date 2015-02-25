@@ -144,6 +144,8 @@ describe Device do
     end
     context 'when populated' do
       test_devices.each do |device|
+        dev_obj = Device.new(device).populate
+        specify { expect(dev_obj.poll(worker: 'test-worker', poll_cfg: poll_cfg)).to equal dev_obj }
       end
     end
 

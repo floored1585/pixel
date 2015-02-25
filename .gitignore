@@ -30,4 +30,7 @@ config/settings.production.yaml
 config/deploy.rb
 config/hosts.yaml
 config/deploy/
+
 public/assets/
+
+spec/rspec.log

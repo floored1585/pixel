@@ -17,6 +17,7 @@ GEM
       execjs
     coffee-script-source (1.7.1)
     colorize (0.7.3)
+    diff-lcs (1.2.5)
     execjs (2.2.1)
     http (0.6.3)
       http_parser.rb (~> 0.6.0)
@@ -40,6 +41,19 @@ GEM
     rack-test (0.6.2)
       rack (>= 1.0)
     rake (10.3.2)
+    rspec (3.2.0)
+      rspec-core (~> 3.2.0)
+      rspec-expectations (~> 3.2.0)
+      rspec-mocks (~> 3.2.0)
+    rspec-core (3.2.0)
+      rspec-support (~> 3.2.0)
+    rspec-expectations (3.2.0)
+      diff-lcs (>= 1.2.0, < 2.0)
+      rspec-support (~> 3.2.0)
+    rspec-mocks (3.2.0)
+      diff-lcs (>= 1.2.0, < 2.0)
+      rspec-support (~> 3.2.0)
+    rspec-support (3.2.1)
     rvm-capistrano (1.5.0)
       capistrano (>= 2.15.4)
     sequel (4.13.0)
@@ -73,6 +87,7 @@ DEPENDENCIES
   mysql
   pg
   rack-coffee
+  rspec
   rvm-capistrano
   sequel
   sinatra

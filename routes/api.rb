@@ -1,5 +1,6 @@
 class Pixel < Sinatra::Base
 
+
   #
   # GETS
   #

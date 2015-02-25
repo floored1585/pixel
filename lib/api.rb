@@ -38,8 +38,8 @@ module API
       Errno::ECONNREFUSED, EOFError, Net::HTTPBadResponse, IOError, Errno::EPIPE,
       Net::HTTPHeaderSyntaxError, Net::ProtocolError, SocketError, OpenSSL::SSL::SSLError
       # The request failed; Retry if allowed
-      if retry_count < retry_limit
-        retry_count += 1
+      retry_count += 1
+      if retry_count <= retry_limit
         retry_log = "Retry ##{retry_count} (limit: #{retry_limit}) in #{retry_delay} seconds."
         $LOG.error "#{base_log}\n  #{retry_log}"
         sleep retry_delay

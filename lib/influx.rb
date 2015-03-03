@@ -23,7 +23,14 @@ module Influx
 
 
   def self.query(query, attribute, db, format=nil)
-    data = @influxdb.query(query)
+    begin
+      data = @influxdb.query(query)
+    rescue Timeout::Error, Errno::ETIMEDOUT, Errno::EINVAL, Errno::ECONNRESET, Net::ReadTimeout,
+      Errno::ECONNREFUSED, EOFError, Net::HTTPBadResponse, IOError, Errno::EPIPE,
+      Net::HTTPHeaderSyntaxError, Net::ProtocolError, SocketError, OpenSSL::SSL::SSLError
+      $LOG.error "CORE: Error polling InfluxDB!"
+      data = {}
+    end
     if format == :rickshaw
       # Format for rickshaw AJAX
       response = _transform_rickshaw(data, db, attribute)

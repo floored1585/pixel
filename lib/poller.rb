@@ -141,29 +141,6 @@ module Poller
         interfaces[if_index] = _process_interface(device, if_table.dup, if_index, oids, last_values, poller_cfg, influx_is_up)
         # Update totals
         totals.keys.each { |key| totals[key] += interfaces[if_index][key] || 0 unless oids['if_name'].downcase =~ /ae|po|bond/  }
-        # Find the parent interface if it exists, and transfer its type to child.
-        # Otherwise (if we're not a child) look at our own type.
-        # I hate this logic, but can't think of a better way to do it.
-        parent_iface_match = oids['if_alias'].match(/^[a-z]+\[([\w\/\-\s]+)\]/) || []
-        if parent_iface = parent_iface_match[1]
-          if parent_index = name_to_index[parent_iface.downcase]
-            parent_alias = if_table[parent_index]['if_alias']
-            if parent_alias_match = parent_alias.match(/^([a-z]+)(__|\[)/)
-              oids[:if_type] = parent_alias_match[1]
-            else
-              $LOG.error("POLLER: Can't determine parent if_type: #{oids['if_name']} on #{device}")
-            end
-          else
-            $LOG.error("POLLER: Can't find parent interface #{parent_iface} on device #{device} (child: #{oids['if_name']})")
-            oids[:if_type] = 'unknown'
-          end
-        else
-          if match = oids['if_alias'].match(/^([a-z]+)(__|\[)/)
-            oids[:if_type] = match[1]
-          else
-            oids[:if_type] = 'unknown'
-          end
-        end
       end
 
       # Push the totals to influx
@@ -213,17 +190,6 @@ module Poller
         average = (value.to_i - last_oids[oid_text]) / (Time.now.to_i - last_oids['last_updated'])
         average = average * 8 if series_name =~ /octets/
         avg_series_data = { :value => average, :time => Time.now.to_i }
-        # Calculate utilization if we're a bps OID
-        if avg_series_name =~ /bps/
-          # Fix for interfaces that don't report a valid speed -- set util to 0
-          if oids['if_high_speed'].to_i == 0
-            util = 0
-          else
-            util = '%.2f' % (average.to_f / (oids['if_high_speed'].to_i * 1000000) * 100)
-            util = 100 if util.to_f > 100
-          end
-          oids[poller_cfg[:avg_names][oid_text] + '_util'] = util
-        end
         # write the average
         unless average < 0
           oids[poller_cfg[:avg_names][oid_text]] = average
@@ -232,86 +198,6 @@ module Poller
       end
     end # End oids.each
     return oids
-  end
-
-
-  def self._query_device_interfaces(ip, poller_cfg)
-    SNMP::Manager.open(:host => ip, :community => poller_cfg[:snmpv2_community]) do |session|
-      if_table = {}
-      session.walk(poller_cfg[:oids][:general].keys) do |row|
-        row.each do |vb|
-          oid_text = poller_cfg[:oids][:general][vb.name.to_str.gsub(/\.[0-9]+$/,'')]
-          if_index = vb.name.to_str[/[0-9]+$/]
-          if_table[if_index] ||= {}
-          if_table[if_index][oid_text] = vb.value.to_s
-          # The following line removes ' characters from the beginning and end of aliases (Linux does this)
-          if_table[if_index][oid_text].gsub!(/^'|'$/,'') if oid_text == 'if_alias'
-        end
-      end
-      return if_table
-    end
-  end
-
-
-  def self._query_device_info(ip, poller_cfg)
-    data = {}
-    SNMP::Manager.open(
-      :host => ip,
-      :community => poller_cfg[:snmpv2_community],
-      :mib_dir => 'lib/mibs',
-      :mib_modules => [
-        'CISCO-PRODUCTS-MIB',
-        'JNX-CHAS-DEFINES-MIB',
-        'F10-PRODUCTS-MIB',
-      ]
-    ) do |session|
-
-      session.get("1.3.6.1.2.1.1.1.0").each_varbind do |vb|
-        data[:sys_descr] = vb.value.to_s
-        if data[:sys_descr] =~ /Cisco/
-          data[:vendor] = 'Cisco'
-        elsif data[:sys_descr] =~ /Juniper|SRX/
-          data[:vendor] = 'Juniper'
-        elsif data[:sys_descr] =~ /Force10.*Series: S/m
-          data[:vendor] = 'Force10 S-Series'
-        elsif data[:sys_descr] =~ /Linux/
-          data[:vendor] = 'Linux'
-        else
-          # If we don't know what type of device this is:
-          $LOG.warn("POLLER: Unknown device at #{ip}: #{data[:sys_descr]}")
-          data[:vendor] = 'Unknown'
-        end
-        if sys_descr_regex = poller_cfg[:sys_descr_regex][data[:vendor]]
-          if match = data[:sys_descr].match(sys_descr_regex)
-            data[:sw_descr] = match[1].strip
-            data[:sw_version] = match[2].strip
-          end
-        end
-      end # /session.get
-
-      # Get HW info (model)
-      session.get('1.3.6.1.2.1.1.2.0').each_varbind do |vb|
-        data[:hw_model] = (vb.value.to_s.split('::')[1] || '').gsub('jnxProductName','')
-      end
-
-      # Run though the general and vendor-specific OIDs
-      poller_cfg[:device_oids][:general].each do |oid,text|
-        session.get(oid).each_varbind { |vb| data[text] = vb.value }
-      end
-      if vendor_oids = poller_cfg[:device_oids][data[:vendor]]
-        vendor_oids.each do |oid,text|
-          session.get(oid).each_varbind { |vb| data[text] = vb.value }
-        end
-      end
-    end
-
-    # Manipulate data if needed for transmission via JSON
-    data.each do |text,value|
-      # SNMP::TimeTicks --> epoch integer
-      data[text] = value.to_i / 100 if value.is_a?(SNMP::TimeTicks)
-    end
-
-    return data
   end
 
 

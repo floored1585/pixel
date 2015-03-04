@@ -30,6 +30,17 @@ class Device
   end
 
 
+  def get_interface(name: nil, index: nil)
+    # Return nil unless either a name or index was passed
+    return nil unless name || index
+
+    return @interfaces[index.to_i_if_numeric] if index
+    @interfaces.each { |index, int| return int if name.downcase == int.name.downcase }
+
+    return nil # If nothing matched
+  end
+
+
   def poll(worker:, poll_ip: nil, poll_cfg: nil)
     @new_worker = worker
 
@@ -53,6 +64,7 @@ class Device
 
     rescue RuntimeError, ArgumentError => e
       $LOG.error("POLLER: Error encountered while polling #{device}: #{e}")
+      # TODO: Write the failure to db & reset currently_polling
     ensure
       session.close if session
     end
@@ -96,7 +108,7 @@ class Device
 
     # Fill in interfaces
     @interfaces = {}
-    if opts.include?(:interfaces)
+    if opts.include?(:interfaces) || opts.include?(:all)
       interfaces = API.get('core', "/v1/device/#{@name}/interfaces", 'Device', 'interface data')
       interfaces.each do |interface_data|
         index = interface_data['index']
@@ -106,33 +118,33 @@ class Device
     end
 
     @cpus = {}
-    if opts.include?(:cpus)
-      cpus = API.get('core', "/v1/devices/#{@name}/cpus", 'Device', 'cpu data')
+    if opts.include?(:cpus) || opts.include?(:all)
+      #cpus = API.get('core', "/v1/devices/#{@name}/cpus", 'Device', 'cpu data')
     end
 
     @memory = {}
-    if opts.include?(:memory)
-      memory = API.get('core', "/v1/devices/#{@name}/memory", 'Device', 'memory data')
+    if opts.include?(:memory) || opts.include?(:all)
+      #memory = API.get('core', "/v1/devices/#{@name}/memory", 'Device', 'memory data')
     end
 
     @temperatures = {}
-    if opts.include?(:temperatures)
-      temperatures = API.get('core', "/v1/devices/#{@name}/temperatures", 'Device', 'temperature data')
+    if opts.include?(:temperatures) || opts.include?(:all)
+      #temperatures = API.get('core', "/v1/devices/#{@name}/temperatures", 'Device', 'temperature data')
     end
 
     @psus = {}
-    if opts.include?(:psus)
-      psus = API.get('core', "/v1/devices/#{@name}/psus", 'Device', 'psu data')
+    if opts.include?(:psus) || opts.include?(:all)
+      #psus = API.get('core', "/v1/devices/#{@name}/psus", 'Device', 'psu data')
     end
 
     @fans = {}
-    if opts.include?(:fans)
-      fans = API.get('core', "/v1/devices/#{@name}/fans", 'Device', 'fan data')
+    if opts.include?(:fans) || opts.include?(:all)
+      #fans = API.get('core', "/v1/devices/#{@name}/fans", 'Device', 'fan data')
     end
 
     @macs = {}
-    if opts.include?(:macs)
-      macs = API.get('core', "/v1/devices/#{@name}/macs", 'Device', 'mac data')
+    if opts.include?(:macs) || opts.include?(:all)
+      #macs = API.get('core', "/v1/devices/#{@name}/macs", 'Device', 'mac data')
     end
 
     return self
@@ -214,7 +226,7 @@ class Device
     session.walk(@poll_cfg[:oids][:general].keys) do |row|
       row.each do |vb|
         oid_text = @poll_cfg[:oids][:general][vb.name.to_str.gsub(/\.[0-9]+$/,'')]
-        if_index = vb.name.to_str[/[0-9]+$/]
+        if_index = vb.name.to_str[/[0-9]+$/].to_i
         if_table[if_index] ||= {}
         if_table[if_index][oid_text] = vb.value.to_s
         # The following line removes ' characters from the beginning
@@ -230,32 +242,34 @@ class Device
         oids['if_name'] =~ @poll_cfg[:interesting_names[@vendor]]
       )
       @interfaces ||= []
-      @interfaces[index] ||= Interface.new(device: @device, index: index)
+      @interfaces[index] ||= Interface.new(device: @name, index: index)
       @interfaces[index].update(oids) if oids && !oids.empty?
     end
+
+    return self
   end
 
 
   # PRIVATE!
   def _process_interfaces
+
+    # If the vendor is Force10, replace interface names:
+    if @vendor == 'Force10 S-Series'
+      substitutions = {
+        'Port-channel ' => 'Po',
+        'fortyGigE ' => 'Fo',
+        'TenGigabitEthernet ' => 'Te',
+        'GigabitEthernet ' => 'Gi',
+        'FastEthernet ' => 'Fa',
+        'ManagementEthernet ' => 'Ma',
+      }
+      @interfaces.each { |index, int| int.substitute_name(substitutions) }
+    end
+
     # Loop through all interfaces
     @interfaces.each do |index, interface|
 
-      # If the vendor is Force10, replace interface names:
-      if @vendor == 'Force10 S-Series'
-        substitutions = {
-          'Port-channel ' => 'Po',
-          'fortyGigE ' => 'Fo',
-          'TenGigabitEthernet ' => 'Te',
-          'GigabitEthernet ' => 'Gi',
-          'FastEthernet ' => 'Fa',
-          'ManagementEthernet ' => 'Ma',
-        }
-        interfaces.each do |index, interface|
-          interface.substitute_name(substitutions)
-        end
-      end
-
+      # TODO: REPLACE THIS WITH SSH!! This is retarded!
       # If an interface is up w/ a speed of 0, try to get speed from children
       if interface.status == 'Up' && interface.speed == 0
         child_count = 0
@@ -271,6 +285,18 @@ class Device
         interface.set_speed(child_count * child_speed)
         $LOG.warn("POLLER: Bad speed for #{interface.name} (#{index}) on #{@name}. Calculated value from children: #{@speed}")
       end
+
+      # TODO: REPLACE THIS WITH SSH!!! This is ALSO retarded!
+      # Find the parent interface if it exists, and transfer its type to child.
+      if parent_iface_match = interface.alias.match(/^[a-z]+\[([\w\/\-\s]+)\]/) || []
+        parent_iface = parent_iface_match[1]
+        if parent = get_interface(name: parent_iface)
+          interface.clone_type(parent)
+        else
+          $LOG.error("POLLER: Can't find parent interface #{parent_iface} on #{@name} (child: #{interface.name})")
+        end
+      end
+
     end
 
   end

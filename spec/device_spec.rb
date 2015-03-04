@@ -104,50 +104,88 @@ describe Device do
       context 'when all options passed' do
         it 'should equal' do
           #dev_obj = Device.new(device)
-          #symbols = [:interfaces, :cpus, :memory, :temperatures, :psus, :fans, :macs]
-          #specify { expect(dev_obj.populate(symbols)).to equal dev_obj }
+          #specify { expect(dev_obj.populate([:all])).to equal dev_obj }
         end
       end
     end
 
   end
 
-
-  describe '#interfaces' do
-
-    context 'when newly created' do
-      specify { expect(Device.new('gar-b11u17-acc-g').interfaces).to be_a Array }
-    end
-
-    context 'when populated' do
-      specify { expect(Device.new('gar-b11u17-acc-g').populate([:interfaces]).interfaces).to be_a Array }
-    end
-
-  end
-
-
   describe '#poll' do
+
     before :each do
       @dev_name = Device.new('gar-b11u17-acc-g')
       @dev_name_ip = Device.new('gar-b11u17-acc-g', poll_ip: '172.24.7.54')
       @dev_name_ip_cfg = Device.new('gar-b11u17-acc-g', poll_ip: '172.24.7.54', poll_cfg: poll_cfg)
     end
 
+
     context 'when newly created with name' do
       specify { expect(@dev_name.poll(worker: 'test-worker')).to eql nil }
     end
+
     context 'when newly created with name and IP' do
       specify { expect(@dev_name_ip.poll(worker: 'test-worker')).to eql nil }
     end
+
     context 'when newly created with name, IP, and poll_cfg' do
+      #Device.new('irv-a3u2-acc-g', poll_cfg: poll_cfg).populate.poll(worker: 'test-worker')
       specify { expect(@dev_name_ip_cfg.poll(worker: 'test-worker')).to equal @dev_name_ip_cfg }
     end
+
     context 'when populated' do
       test_devices.each do |device|
         dev_obj = Device.new(device).populate
         specify { expect(dev_obj.poll(worker: 'test-worker', poll_cfg: poll_cfg)).to equal dev_obj }
       end
     end
+
+  end
+
+
+  context 'when newly created' do
+
+    before :each do
+      @dev_name = Device.new('gar-b11u17-acc-g')
+      @dev_name_ip = Device.new('gar-b11u17-acc-g', poll_ip: '172.24.7.54')
+      @dev_name_ip_cfg = Device.new('gar-b11u17-acc-g', poll_ip: '172.24.7.54', poll_cfg: poll_cfg)
+    end
+
+
+    describe '#interfaces' do
+      specify { expect(@dev_name.interfaces).to be_a Array }
+    end
+
+    describe '#get_interface' do
+      specify { expect(@dev_name.get_interface(name: 'Fa0/1')).to eql nil }
+      specify { expect(@dev_name.get_interface(index: '10001')).to eql nil }
+      specify { expect(@dev_name.get_interface(index: 10001)).to eql nil }
+      specify { expect(@dev_name.get_interface(index: 10001, name: 'Fa0/2')).to eql nil }
+    end
+
+
+  end
+
+
+  context 'when populated' do
+
+    before :each do
+      @dev = Device.new('gar-b11u17-acc-g').populate([:all])
+    end
+
+
+    describe '#interfaces' do
+      specify { expect(@dev.interfaces).to be_a Array }
+    end
+
+    describe '#get_interface' do
+      specify { expect(@dev.get_interface(name: 'Fa0/1').name).to eql 'Fa0/1' }
+      specify { expect(@dev.get_interface(name: 'fa0/1').name).to eql 'Fa0/1' }
+      specify { expect(@dev.get_interface(index: '10001').name).to eql 'Fa0/1' }
+      specify { expect(@dev.get_interface(index: 10001).name).to eql 'Fa0/1' }
+      specify { expect(@dev.get_interface(index: 10002, name: 'Fa0/1').name).to eql 'Fa0/2' }
+    end
+
 
   end
 

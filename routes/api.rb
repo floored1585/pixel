@@ -17,6 +17,10 @@ class Pixel < Sinatra::Base
     JSON.generate( get_interfaces(@@settings, @@db, device) )
   end
 
+  get '/v1/device/*/temperatures' do |device|
+    JSON.generate( get_temperatures(@@settings, @@db, device) )
+  end
+
   get '/v1/device/*' do |device|
     JSON.generate( get_device_v2(@@settings, @@db, device) )
   end

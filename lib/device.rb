@@ -1,5 +1,6 @@
 # device.rb
 require_relative 'interface'
+require_relative 'temperature'
 
 class Device
 
@@ -14,9 +15,9 @@ class Device
     @poll_cfg = poll_cfg
 
     @interfaces = {}
-    @cpus = {}
     @memory = {}
-    @temperatures = {}
+    @temps = {}
+    @cpus = {}
     @psus = {}
     @fans = {}
     @macs = []
@@ -27,6 +28,12 @@ class Device
   # Return an array containing all Interface objects in the device
   def interfaces
     @interfaces.values
+  end
+
+
+  # Return an array containing all Temperature objects in the device
+  def temps
+    @temps.values
   end
 
 
@@ -58,12 +65,20 @@ class Device
     begin
       session = _open_poll_session
 
+      # Poll the device
       _poll_device_info(session)
       _poll_interfaces(session)
+      _poll_temperatures(session)
+      _poll_memory(session)
+      _poll_cpus(session)
+      _poll_psus(session)
+      _poll_fans(session)
+
+      # Post-processing
       _process_interfaces
 
     rescue RuntimeError, ArgumentError => e
-      $LOG.error("POLLER: Error encountered while polling #{device}: #{e}")
+      $LOG.error("POLLER: Error encountered while polling #{@name}: #{e}")
       # TODO: Write the failure to db & reset currently_polling
     ensure
       session.close if session
@@ -119,32 +134,37 @@ class Device
 
     @cpus = {}
     if opts.include?(:cpus) || opts.include?(:all)
-      #cpus = API.get('core', "/v1/devices/#{@name}/cpus", 'Device', 'cpu data')
+      #cpus = API.get('core', "/v1/device/#{@name}/cpus", 'Device', 'cpu data')
     end
 
     @memory = {}
     if opts.include?(:memory) || opts.include?(:all)
-      #memory = API.get('core', "/v1/devices/#{@name}/memory", 'Device', 'memory data')
+      #memory = API.get('core', "/v1/device/#{@name}/memory", 'Device', 'memory data')
     end
 
     @temperatures = {}
     if opts.include?(:temperatures) || opts.include?(:all)
-      #temperatures = API.get('core', "/v1/devices/#{@name}/temperatures", 'Device', 'temperature data')
+      temps = API.get('core', "/v1/device/#{@name}/temperatures", 'Device', 'temperature data')
+      temps.each do |temperature_data|
+        index = temperature_data['index']
+        @temps[index] = Temperature.new(device: @name, index: index)
+        @temps[index].populate(temperature_data)
+      end
     end
 
     @psus = {}
     if opts.include?(:psus) || opts.include?(:all)
-      #psus = API.get('core', "/v1/devices/#{@name}/psus", 'Device', 'psu data')
+      #psus = API.get('core', "/v1/device/#{@name}/psus", 'Device', 'psu data')
     end
 
     @fans = {}
     if opts.include?(:fans) || opts.include?(:all)
-      #fans = API.get('core', "/v1/devices/#{@name}/fans", 'Device', 'fan data')
+      #fans = API.get('core', "/v1/device/#{@name}/fans", 'Device', 'fan data')
     end
 
     @macs = {}
     if opts.include?(:macs) || opts.include?(:all)
-      #macs = API.get('core', "/v1/devices/#{@name}/macs", 'Device', 'mac data')
+      #macs = API.get('core', "/v1/device/#{@name}/macs", 'Device', 'mac data')
     end
 
     return self
@@ -215,6 +235,7 @@ class Device
     @uptime = @new_uptime
     @yellow_alarm = @new_yellow_alarm
     @red_alarm = @new_red_alarm
+    @last_poll = Time.now.to_i
 
   end
 
@@ -241,12 +262,82 @@ class Device
         oids['if_alias'] =~ @poll_cfg[:interesting_alias] ||
         oids['if_name'] =~ @poll_cfg[:interesting_names[@vendor]]
       )
-      @interfaces ||= []
       @interfaces[index] ||= Interface.new(device: @name, index: index)
       @interfaces[index].update(oids) if oids && !oids.empty?
     end
 
-    return self
+  end
+
+
+  # PRIVATE!
+  def _poll_temperatures(session)
+    return {} unless vendor_cfg = @poll_cfg[:oids][@vendor]
+    return {} unless vendor_cfg['temp_temperature']
+
+    # Some of these may not exist (nil). They will be removed with compact! below.
+    temperature_oids = [
+      vendor_cfg['temp_description'],
+      vendor_cfg['temp_threshold'],
+      vendor_cfg['temp_vendor_status'],
+      vendor_cfg['temp_temperature'],
+    ]
+    temperature_oids.compact! # Removes nil values from Array
+
+    temp_table = {}
+
+    session.walk(temperature_oids) do |row|
+      row.each do |vb|
+        # Save the base OID (without index component), then use that to look up the
+        #   OID text for the OID being processed
+        oid_without_index = vb.name.to_str.gsub(vendor_cfg['temp_index_regex'],'').gsub(/\.$/,'')
+        oid_text = vendor_cfg.invert[oid_without_index].gsub('temp_','')
+
+        index = vendor_cfg['temp_index_regex'].match( vb.name.to_str )[0]
+        temp_table[index] ||= {}
+        temp_table[index][oid_text] = vb.value.to_s
+      end
+    end
+
+    # Remove any 0 value temperatures, these typically mean no sensor present
+    temp_table.delete_if { |index, oids| oids['temperature'].to_i == 0 }
+
+    # Normalize status from vendor status --> Pixel status
+    temp_table.each do |index, oids|
+      status, status_text = _normalize_status(oids['vendor_status'])
+      temp_table[index]['status'] = status
+      temp_table[index]['status_text'] = status_text
+    end
+
+    # Update temperature values
+    temp_table.each do |index, oids|
+      @temps[index] ||= Temperature.new(device: @name, index: index)
+      @temps[index].update(oids) if oids && !oids.empty?
+    end
+
+  end
+
+
+  # PRIVATE!
+  def _poll_memory(session)
+
+  end
+
+
+  # PRIVATE!
+  def _poll_cpus(session)
+
+  end
+
+
+  # PRIVATE!
+  def _poll_psus(session)
+
+  end
+
+
+  # PRIVATE!
+  def _poll_fans(session)
+
   end
 
 
@@ -299,6 +390,20 @@ class Device
 
     end
 
+  end
+
+
+  # PRIVATE!
+  def _normalize_status(vendor_status)
+    table = @poll_cfg[:status_table]
+
+    # If a vendor status table exists, get the status from there.
+    #   If the vendor status table doesn't exist, or the vendor status
+    #   isn't listed there, set status to 0 ("Unknown")
+    status = table[@vendor] ? (table[@vendor][vendor_status] || 0) : 0
+    status_text = table['Pixel'][status]
+
+    return status, status_text
   end
 
 

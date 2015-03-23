@@ -390,69 +390,6 @@ module Poller
   end
 
 
-  def self._query_device_temp(device, ip, poller_cfg, vendor)
-    return {} unless vendor_cfg = poller_cfg[:oids][vendor]
-    return {} unless vendor_cfg['temp_value']
-    temp_table = {}
-
-    SNMP::Manager.open(:host => ip, :community => poller_cfg[:snmpv2_community]) do |session|
-      if vendor_cfg['temp_description']
-        session.walk(vendor_cfg['temp_description']) do |row|
-          row.each do |vb|
-            next if vendor_cfg['temp_list_regex'] && !(vendor_cfg['temp_list_regex'] =~ vb.name.to_str)
-            temp_index = vendor_cfg['temp_index_regex'].match( vb.name.to_str )[0]
-            temp_table[temp_index] ||= {}
-            temp_table[temp_index][:description] = vb.value.to_s
-          end
-        end
-      end
-      if vendor_cfg['temp_threshold']
-        session.walk(vendor_cfg['temp_threshold']) do |row|
-          row.each do |vb|
-            next if vendor_cfg['temp_list_regex'] && !(vendor_cfg['temp_list_regex'] =~ vb.name.to_str)
-            temp_index = vendor_cfg['temp_index_regex'].match( vb.name.to_str )[0]
-            temp_table[temp_index] ||= {}
-            temp_table[temp_index][:threshold] = vb.value.to_s
-          end
-        end
-      end
-      if vendor_cfg['temp_status']
-        session.walk(vendor_cfg['temp_status']) do |row|
-          row.each do |vb|
-            next if vendor_cfg['temp_list_regex'] && !(vendor_cfg['temp_list_regex'] =~ vb.name.to_str)
-            temp_index = vendor_cfg['temp_index_regex'].match( vb.name.to_str )[0]
-            status, status_text = _normalize_status(vendor, vb.value.to_i, poller_cfg[:status_table])
-
-            temp_table[temp_index] ||= {}
-            temp_table[temp_index][:status] = status
-            temp_table[temp_index][:status_text] = status_text
-            temp_table[temp_index][:vendor_status] = vb.value.to_i
-          end
-        end
-      end
-      session.walk(vendor_cfg['temp_value']) do |row|
-        row.each do |vb|
-          next if vendor_cfg['temp_list_regex'] && !(vendor_cfg['temp_list_regex'] =~ vb.name.to_str)
-          temp_index = vendor_cfg['temp_index_regex'].match( vb.name.to_str )[0]
-
-          temp_table[temp_index] ||= {}
-          temp_table[temp_index][:index] = temp_index
-          temp_table[temp_index][:device] = device
-          temp_table[temp_index][:status] ||= 0
-          temp_table[temp_index][:status_text] ||= poller_cfg[:status_table]['Pixel'][0]
-          temp_table[temp_index][:description] ||= "TEMP #{temp_index}"
-          temp_table[temp_index][:last_updated] = Time.now.to_i
-          temp_table[temp_index][:temperature] = vb.value.to_i
-          # Don't save 0 values for temperature!
-          temp_table.delete(temp_index) if vb.value.to_i == 0
-        end
-      end
-    end
-
-    return temp_table
-  end
-
-
   def self._query_device_cpu(device, ip, poller_cfg, vendor)
     return {} unless vendor_cfg = poller_cfg[:oids][vendor]
     return {} unless vendor_cfg['cpu_util']

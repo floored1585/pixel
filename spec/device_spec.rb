@@ -1,6 +1,7 @@
 require 'logger'
 require 'snmp'
 require_relative '../lib/device'
+require_relative '../lib/temperature'
 require_relative '../lib/api'
 require_relative '../lib/core_ext/object'
 require_relative '../lib/configfile'
@@ -68,43 +69,43 @@ describe Device do
       context 'when :cpus passed' do
         it 'should equal' do
           #dev_obj = Device.new(device)
-          #specify { expect(dev_obj.populate([:cpus])).to equal dev_obj }
+          #expect(dev_obj.populate([:cpus])).to equal dev_obj
         end
       end
       context 'when :memory passed' do
         it 'should equal' do
           #dev_obj = Device.new(device)
-          #specify { expect(dev_obj.populate([:memory])).to equal dev_obj }
+          #expect(dev_obj.populate([:memory])).to equal dev_obj
         end
       end
       context 'when :temperatures passed' do
         it 'should equal' do
-          #dev_obj = Device.new(device)
-          #specify { expect(dev_obj.populate([:temperatures])).to equal dev_obj }
+          dev_obj = Device.new(device)
+          expect(dev_obj.populate([:temperatures])).to equal dev_obj
         end
       end
       context 'when :psus passed' do
         it 'should equal' do
           #dev_obj = Device.new(device)
-          #specify { expect(dev_obj.populate([:psus])).to equal dev_obj }
+          #expect(dev_obj.populate([:psus])).to equal dev_obj
         end
       end
       context 'when :fans passed' do
         it 'should equal' do
           #dev_obj = Device.new(device)
-          #specify { expect(dev_obj.populate([:fans])).to equal dev_obj }
+          #expect(dev_obj.populate([:fans])).to equal dev_obj
         end
       end
       context 'when :macs passed' do
         it 'should equal' do
           #dev_obj = Device.new(device)
-          #specify { expect(dev_obj.populate([:macs])).to equal dev_obj }
+          #expect(dev_obj.populate([:macs])).to equal dev_obj
         end
       end
       context 'when all options passed' do
         it 'should equal' do
           #dev_obj = Device.new(device)
-          #specify { expect(dev_obj.populate([:all])).to equal dev_obj }
+          #expect(dev_obj.populate([:all])).to equal dev_obj
         end
       end
     end
@@ -154,6 +155,12 @@ describe Device do
 
     describe '#interfaces' do
       specify { expect(@dev_name.interfaces).to be_a Array }
+      specify { expect(@dev_name.interfaces.first).to eql nil }
+    end
+
+    describe '#temps' do
+      specify { expect(@dev_name.temps).to be_a Array }
+      specify { expect(@dev_name.temps.first).to eql nil }
     end
 
     describe '#get_interface' do
@@ -171,11 +178,18 @@ describe Device do
 
     before :each do
       @dev = Device.new('gar-b11u17-acc-g').populate([:all])
+      @dev2 = Device.new('irv-i1u1-dist')
     end
 
 
     describe '#interfaces' do
       specify { expect(@dev.interfaces).to be_a Array }
+      specify { expect(@dev.interfaces.first).to be_a Interface }
+    end
+
+    describe '#temps' do
+      specify { expect(@dev.temps).to be_a Array }
+      specify { expect(@dev2.populate([:all]).temps.first).to be_a Temperature }
     end
 
     describe '#get_interface' do
@@ -184,6 +198,7 @@ describe Device do
       specify { expect(@dev.get_interface(index: '10001').name).to eql 'Fa0/1' }
       specify { expect(@dev.get_interface(index: 10001).name).to eql 'Fa0/1' }
       specify { expect(@dev.get_interface(index: 10002, name: 'Fa0/1').name).to eql 'Fa0/2' }
+      specify { expect(@dev.get_interface).to eql nil }
     end
 
 

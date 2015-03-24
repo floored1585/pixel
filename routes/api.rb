@@ -21,6 +21,26 @@ class Pixel < Sinatra::Base
     JSON.generate( get_temperatures(@@settings, @@db, device) )
   end
 
+  get '/v1/device/*/memory' do |device|
+    JSON.generate( get_memory(@@settings, @@db, device) )
+  end
+
+  get '/v1/device/*/cpus' do |device|
+    JSON.generate( get_cpus(@@settings, @@db, device) )
+  end
+
+  get '/v1/device/*/psus' do |device|
+    JSON.generate( get_psus(@@settings, @@db, device) )
+  end
+
+  get '/v1/device/*/fans' do |device|
+    JSON.generate( get_fans(@@settings, @@db, device) )
+  end
+
+  get '/v1/device/*/macs' do |device|
+    JSON.generate( get_macs(@@settings, @@db, device) )
+  end
+
   get '/v1/device/*' do |device|
     JSON.generate( get_device_v2(@@settings, @@db, device) )
   end

@@ -67,6 +67,31 @@ module Core
   end
 
 
+  def get_memory(settings, db, device)
+    db[:memory].where(:device => device).all
+  end
+
+
+  def get_cpus(settings, db, device)
+    db[:cpu].where(:device => device).all
+  end
+
+
+  def get_psus(settings, db, device)
+    db[:psu].where(:device => device).all
+  end
+
+
+  def get_fans(settings, db, device)
+    db[:fan].where(:device => device).all
+  end
+
+
+  def get_macs(settings, db, device)
+    db[:mac].where(:device => device).all
+  end
+
+
   def get_device(settings, db, device, component=nil)
     temperatures = db[:temperature]
     interfaces = db[:interface]

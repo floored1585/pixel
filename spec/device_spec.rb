@@ -1,7 +1,6 @@
 require 'logger'
 require 'snmp'
 require_relative '../lib/device'
-require_relative '../lib/temperature'
 require_relative '../lib/api'
 require_relative '../lib/core_ext/object'
 require_relative '../lib/configfile'
@@ -22,7 +21,14 @@ describe Device do
   # Shutdown
   interface_4 = {"device" => "irv-a3u2-acc-g","index" => 10119,"last_updated" => 1424752571,"if_alias" => "","if_name" => "Gi0/19","if_hc_in_octets" => "0.0","if_hc_out_octets" => "0.2628E4","if_hc_in_ucast_pkts" => "0.0","if_hc_out_ucast_pkts" => "0.2E1","if_speed" => 1000000000,"if_mtu" => 1500,"if_admin_status" => 2,"if_admin_status_time" => 1415142087,"if_oper_status" => 2,"if_oper_status_time" => 1415142087,"if_in_discards" => "0.0","if_in_errors" => "0.0","if_out_discards" => "0.0","if_out_errors" => "0.0","bps_in" => 0,"bps_out" => 0,"discards_in" => 0,"errors_in" => 0,"discards_out" => 0,"errors_out" => 0,"pps_in" => 0,"pps_out" => 0,"bps_in_util" => 0.0,"bps_out_util" => 0.0,"if_type" => "unknown"}
   interfaces = [ interface_1, interface_2, interface_3, interface_4 ]
-  test_devices = %w[ gar-b11u17-acc-g irv-i1u1-dist aon-cumulus-2 gar-p1u1-dist ]
+  test_devices = {
+   'Cisco 2960' => 'gar-b11u17-acc-g',
+   'Cisco 4948' => 'irv-i1u1-dist',
+   'Cumulus' => 'aon-cumulus-2',
+   'Juniper EX' => 'gar-p1u1-dist',
+   'Juniper MX' => 'iad1-bdr-1',
+   'Force10 S4810' => 'iad1-trn-1',
+  }
 
 
   # Constructor
@@ -53,59 +59,59 @@ describe Device do
   # populate should work the same no matter what state the device is in
   describe '#populate' do
 
-    test_devices.each do |device|
-      context 'when no options passed' do
+    test_devices.each do |label, device|
+      context "on a #{label} when no options passed" do
         it 'should equal' do
           dev_obj = Device.new(device)
           expect(dev_obj.populate).to equal dev_obj
         end
       end
-      context 'when :interfaces passed' do
+      context "on a #{label} when :interfaces passed" do
         it 'should equal' do
           dev_obj = Device.new(device)
           expect(dev_obj.populate([:interfaces])).to equal dev_obj
         end
       end
-      context 'when :cpus passed' do
+      context "on a #{label} when :cpus passed" do
         it 'should equal' do
-          #dev_obj = Device.new(device)
-          #expect(dev_obj.populate([:cpus])).to equal dev_obj
+          dev_obj = Device.new(device)
+          expect(dev_obj.populate([:cpus])).to equal dev_obj
         end
       end
-      context 'when :memory passed' do
+      context "on a #{label} when :memory passed" do
         it 'should equal' do
-          #dev_obj = Device.new(device)
-          #expect(dev_obj.populate([:memory])).to equal dev_obj
+          dev_obj = Device.new(device)
+          expect(dev_obj.populate([:memory])).to equal dev_obj
         end
       end
-      context 'when :temperatures passed' do
+      context "on a #{label} when :temperatures passed" do
         it 'should equal' do
           dev_obj = Device.new(device)
           expect(dev_obj.populate([:temperatures])).to equal dev_obj
         end
       end
-      context 'when :psus passed' do
+      context "on a #{label} when :psus passed" do
         it 'should equal' do
-          #dev_obj = Device.new(device)
-          #expect(dev_obj.populate([:psus])).to equal dev_obj
+          dev_obj = Device.new(device)
+          expect(dev_obj.populate([:psus])).to equal dev_obj
         end
       end
-      context 'when :fans passed' do
+      context "on a #{label} when :fans passed" do
         it 'should equal' do
-          #dev_obj = Device.new(device)
-          #expect(dev_obj.populate([:fans])).to equal dev_obj
+          dev_obj = Device.new(device)
+          expect(dev_obj.populate([:fans])).to equal dev_obj
         end
       end
-      context 'when :macs passed' do
+      context "on a #{label} when :macs passed" do
         it 'should equal' do
-          #dev_obj = Device.new(device)
-          #expect(dev_obj.populate([:macs])).to equal dev_obj
+          dev_obj = Device.new(device)
+          expect(dev_obj.populate([:macs])).to equal dev_obj
         end
       end
-      context 'when all options passed' do
+      context "on a #{label} when all options passed" do
         it 'should equal' do
-          #dev_obj = Device.new(device)
-          #expect(dev_obj.populate([:all])).to equal dev_obj
+          dev_obj = Device.new(device)
+          expect(dev_obj.populate([:all])).to equal dev_obj
         end
       end
     end
@@ -115,9 +121,9 @@ describe Device do
   describe '#poll' do
 
     before :each do
-      @dev_name = Device.new('gar-b11u17-acc-g')
-      @dev_name_ip = Device.new('gar-b11u17-acc-g', poll_ip: '172.24.7.54')
-      @dev_name_ip_cfg = Device.new('gar-b11u17-acc-g', poll_ip: '172.24.7.54', poll_cfg: poll_cfg)
+      @dev_name = Device.new('gar-c11u1-dist')
+      @dev_name_ip = Device.new('gar-c11u1-dist', poll_ip: '172.24.8.240')
+      @dev_name_ip_cfg = Device.new('gar-c11u1-dist', poll_ip: '172.24.8.240', poll_cfg: poll_cfg)
     end
 
 
@@ -132,12 +138,18 @@ describe Device do
     context 'when newly created with name, IP, and poll_cfg' do
       #Device.new('irv-a3u2-acc-g', poll_cfg: poll_cfg).populate.poll(worker: 'test-worker')
       specify { expect(@dev_name_ip_cfg.poll(worker: 'test-worker')).to equal @dev_name_ip_cfg }
+      specify { expect(@dev_name_ip_cfg.poll(worker: 'test-worker').interfaces.first).to be_a Interface }
+      specify { expect(@dev_name_ip_cfg.poll(worker: 'test-worker').temps.first).to be_a Temperature }
+      specify { expect(@dev_name_ip_cfg.poll(worker: 'test-worker').fans.first).to be_a Fan }
+      specify { expect(@dev_name_ip_cfg.poll(worker: 'test-worker').psus.first).to be_a PSU }
+      specify { expect(@dev_name_ip_cfg.poll(worker: 'test-worker').cpus.first).to be_a CPU }
+      specify { expect(@dev_name_ip_cfg.poll(worker: 'test-worker').memory.first).to be_a Memory }
     end
 
-    context 'when populated' do
-      test_devices.each do |device|
-        dev_obj = Device.new(device).populate
-        specify { expect(dev_obj.poll(worker: 'test-worker', poll_cfg: poll_cfg)).to equal dev_obj }
+    test_devices.each do |label, device|
+      context "on a #{label} when populated" do
+        dev_obj = Device.new(device, poll_cfg: poll_cfg).populate
+        specify { expect(dev_obj.poll(worker: 'test-worker')).to equal dev_obj }
       end
     end
 
@@ -161,6 +173,26 @@ describe Device do
     describe '#temps' do
       specify { expect(@dev_name.temps).to be_a Array }
       specify { expect(@dev_name.temps.first).to eql nil }
+    end
+
+    describe '#fans' do
+      specify { expect(@dev_name.fans).to be_a Array }
+      specify { expect(@dev_name.fans.first).to eql nil }
+    end
+
+    describe '#psus' do
+      specify { expect(@dev_name.psus).to be_a Array }
+      specify { expect(@dev_name.psus.first).to eql nil }
+    end
+
+    describe '#cpus' do
+      specify { expect(@dev_name.cpus).to be_a Array }
+      specify { expect(@dev_name.cpus.first).to eql nil }
+    end
+
+    describe '#memory' do
+      specify { expect(@dev_name.memory).to be_a Array }
+      specify { expect(@dev_name.memory.first).to eql nil }
     end
 
     describe '#get_interface' do
@@ -192,6 +224,26 @@ describe Device do
       specify { expect(@dev2.populate([:all]).temps.first).to be_a Temperature }
     end
 
+    describe '#fans' do
+      specify { expect(@dev.fans).to be_a Array }
+      specify { expect(@dev2.populate([:all]).fans.first).to be_a Fan }
+    end
+
+    describe '#psus' do
+      specify { expect(@dev.psus).to be_a Array }
+      specify { expect(@dev2.populate([:all]).psus.first).to be_a PSU }
+    end
+
+    describe '#cpus' do
+      specify { expect(@dev.cpus).to be_a Array }
+      specify { expect(@dev2.populate([:all]).cpus.first).to be_a CPU }
+    end
+
+    describe '#memory' do
+      specify { expect(@dev.memory).to be_a Array }
+      specify { expect(@dev2.populate([:all]).memory.first).to be_a Memory }
+    end
+
     describe '#get_interface' do
       specify { expect(@dev.get_interface(name: 'Fa0/1').name).to eql 'Fa0/1' }
       specify { expect(@dev.get_interface(name: 'fa0/1').name).to eql 'Fa0/1' }
@@ -203,5 +255,11 @@ describe Device do
 
 
   end
+
+  # True integration tests
+  describe '#poll' do
+
+  end
+    
 
 end

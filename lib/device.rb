@@ -1,6 +1,10 @@
 # device.rb
 require_relative 'interface'
 require_relative 'temperature'
+require_relative 'memory'
+require_relative 'fan'
+require_relative 'psu'
+require_relative 'cpu'
 
 class Device
 
@@ -34,6 +38,30 @@ class Device
   # Return an array containing all Temperature objects in the device
   def temps
     @temps.values
+  end
+
+
+  # Return an array containing all Fan objects in the device
+  def fans
+    @fans.values
+  end
+
+
+  # Return an array containing all PSU objects in the device
+  def psus
+    @psus.values
+  end
+
+
+  # Return an array containing all CPU objects in the device
+  def cpus
+    @cpus.values
+  end
+
+
+  # Return an array containing all Memory objects in the device
+  def memory
+    @memory.values
   end
 
 
@@ -134,12 +162,22 @@ class Device
 
     @cpus = {}
     if opts.include?(:cpus) || opts.include?(:all)
-      #cpus = API.get('core', "/v1/device/#{@name}/cpus", 'Device', 'cpu data')
+      cpus = API.get('core', "/v1/device/#{@name}/cpus", 'Device', 'cpu data')
+      cpus.each do |cpu_data|
+        index = cpu_data['index']
+        @cpus[index] = CPU.new(device: @name, index: index)
+        @cpus[index].populate(cpu_data)
+      end
     end
 
     @memory = {}
     if opts.include?(:memory) || opts.include?(:all)
-      #memory = API.get('core', "/v1/device/#{@name}/memory", 'Device', 'memory data')
+      memory = API.get('core', "/v1/device/#{@name}/memory", 'Device', 'memory data')
+      memory.each do |memory_data|
+        index = memory_data['index']
+        @memory[index] = Memory.new(device: @name, index: index)
+        @memory[index].populate(memory_data)
+      end
     end
 
     @temperatures = {}
@@ -154,12 +192,22 @@ class Device
 
     @psus = {}
     if opts.include?(:psus) || opts.include?(:all)
-      #psus = API.get('core', "/v1/device/#{@name}/psus", 'Device', 'psu data')
+      psus = API.get('core', "/v1/device/#{@name}/psus", 'Device', 'psu data')
+      psus.each do |psu_data|
+        index = psu_data['index']
+        @psus[index] = PSU.new(device: @name, index: index)
+        @psus[index].populate(psu_data)
+      end
     end
 
     @fans = {}
     if opts.include?(:fans) || opts.include?(:all)
-      #fans = API.get('core', "/v1/device/#{@name}/fans", 'Device', 'fan data')
+      fans = API.get('core', "/v1/device/#{@name}/fans", 'Device', 'fan data')
+      fans.each do |fan_data|
+        index = fan_data['index']
+        @fans[index] = Fan.new(device: @name, index: index)
+        @fans[index].populate(fan_data)
+      end
     end
 
     @macs = {}
@@ -247,12 +295,12 @@ class Device
     session.walk(@poll_cfg[:oids][:general].keys) do |row|
       row.each do |vb|
         oid_text = @poll_cfg[:oids][:general][vb.name.to_str.gsub(/\.[0-9]+$/,'')]
-        if_index = vb.name.to_str[/[0-9]+$/].to_i
-        if_table[if_index] ||= {}
-        if_table[if_index][oid_text] = vb.value.to_s
+        if_numericndex = vb.name.to_str[/[0-9]+$/].to_i
+        if_table[if_numericndex] ||= {}
+        if_table[if_numericndex][oid_text] = vb.value.to_s
         # The following line removes ' characters from the beginning
         #   and end of aliases (Linux does this)
-        #if_table[if_index][oid_text].gsub!(/^'|'$/,'') if oid_text == 'if_alias'
+        #if_table[if_numericndex][oid_text].gsub!(/^'|'$/,'') if oid_text == 'if_alias'
       end
     end
 
@@ -271,10 +319,11 @@ class Device
 
   # PRIVATE!
   def _poll_temperatures(session)
-    return {} unless vendor_cfg = @poll_cfg[:oids][@vendor]
-    return {} unless vendor_cfg['temp_temperature']
+    # Delete all the irrelevant vendor_cfg values (to prevent .invert from having duplicates)
+    return nil unless vendor_cfg = @poll_cfg[:oids][@vendor].dup.delete_if { |k,v| k !~ /^temp_/ }
+    return nil unless vendor_cfg['temp_temperature']
 
-    # Some of these may not exist (nil). They will be removed with compact! below.
+    # Some of these may not exist (vendor dependant). Nils will be removed with compact! below.
     temperature_oids = [
       vendor_cfg['temp_description'],
       vendor_cfg['temp_threshold'],
@@ -319,24 +368,197 @@ class Device
 
   # PRIVATE!
   def _poll_memory(session)
+    # Delete all the irrelevant vendor_cfg values (to prevent .invert from having duplicates)
+    return nil unless vendor_cfg = @poll_cfg[:oids][@vendor].dup.delete_if { |k,v| k !~ /^mem_/ }
+    return nil unless vendor_cfg['mem_util'] || vendor_cfg['mem_free']
+
+    # Some of these may not exist (vendor dependant). Nils will be removed with compact! below.
+    mem_oids = [
+      vendor_cfg['mem_total'],
+      vendor_cfg['mem_used'],
+      vendor_cfg['mem_free'],
+      vendor_cfg['mem_description'],
+      vendor_cfg['mem_util'],
+    ]
+    mem_oids.compact! # Removes nil values from Array
+
+    mem_table = {}
+
+    session.walk(mem_oids) do |row|
+      row.each do |vb|
+        # Save the base OID (without index component), then use that to look up the
+        #   OID text for the OID being processed
+        oid_without_index = vb.name.to_str.gsub(vendor_cfg['mem_index_regex'],'').gsub(/\.$/,'')
+        oid_text = vendor_cfg.invert[oid_without_index].gsub('mem_','')
+
+        index = vendor_cfg['mem_index_regex'].match( vb.name.to_str )[0]
+        mem_table[index] ||= {}
+        mem_table[index][oid_text] = vb.value.to_s
+      end
+    end
+
+    # If we didn't get the utilization directly, calculate it
+    if vendor_cfg['mem_util'] == nil
+      mem_table.each do |index, oids|
+        mem_free = oids['free'].to_i # Always present
+        mem_used = oids['used'].to_i_if_numeric # Will be nil unless Cisco style
+        mem_total = oids['total'].to_i_if_numeric # Will be nil unless Linux style
+        
+        oids['util'] = (mem_used.to_f / (mem_used + mem_free) * 100).to_i if mem_used
+        oids['util'] = ((mem_total - mem_free).to_f / mem_total * 100).to_i if mem_total
+      end
+    end
+
+    # Update mem values
+    mem_table.each do |index, oids|
+      # Skip Memory we don't care about (next if mem_list_regex
+      #   exists and doesn't match the index.
+      next if vendor_cfg['mem_list_regex'] && !(vendor_cfg['mem_list_regex'] =~ index)
+
+      @memory[index] ||= Memory.new(device: @name, index: index)
+      @memory[index].update(oids) if oids && !oids.empty?
+    end
 
   end
 
 
   # PRIVATE!
   def _poll_cpus(session)
+    # Delete all the irrelevant vendor_cfg values (to prevent .invert from having duplicates)
+    return nil unless vendor_cfg = @poll_cfg[:oids][@vendor].dup.delete_if { |k,v| k !~ /^cpu_/ }
+    return nil unless vendor_cfg['cpu_util']
+
+    # Some of these may not exist (vendor dependant). Nils will be removed with compact! below.
+    cpu_oids = [
+      vendor_cfg['cpu_util'],
+      vendor_cfg['cpu_hw_id'],
+      vendor_cfg['cpu_description'],
+    ]
+    cpu_oids.compact! # Removes nil values from Array
+
+    cpu_table = {}
+
+    session.walk(cpu_oids) do |row|
+      row.each do |vb|
+        # Save the base OID (without index component), then use that to look up the
+        #   OID text for the OID being processed
+        oid_without_index = vb.name.to_str.gsub(vendor_cfg['cpu_index_regex'],'').gsub(/\.$/,'')
+        oid_text = vendor_cfg.invert[oid_without_index].gsub('cpu_','')
+
+        index = vendor_cfg['cpu_index_regex'].match( vb.name.to_str )[0]
+        cpu_table[index] ||= {}
+        cpu_table[index][oid_text] = vb.value.to_s
+      end
+    end
+
+    # Get descriptions for CPUs with hardware IDs (Cisco style)
+    if hw_descr_oid = vendor_cfg['cpu_hw_description']
+      cpu_table.each do |index, oids|
+        session.get("#{hw_descr_oid}.#{oids['hw_id']}").each_varbind do |vb|
+          # Skip missing descriptions
+          next if vb.value == SNMP::NoSuchInstance
+          cpu_table[index]['description'] ||= vb.value.to_s
+        end
+      end
+    end
+
+    # Update cpu values
+    cpu_table.each do |index, oids|
+      # Skip CPUs we don't care about (next if cpu_list_regex
+      #   exists and doesn't match the index.
+      next if vendor_cfg['cpu_list_regex'] && !(vendor_cfg['cpu_list_regex'] =~ index)
+
+      @cpus[index] ||= CPU.new(device: @name, index: index)
+      @cpus[index].update(oids) if oids && !oids.empty?
+    end
 
   end
 
 
   # PRIVATE!
   def _poll_psus(session)
+    # Delete all the irrelevant vendor_cfg values (to prevent .invert from having duplicates)
+    return nil unless vendor_cfg = @poll_cfg[:oids][@vendor].dup.delete_if { |k,v| k !~ /^psu_/ }
+    return nil unless vendor_cfg['psu_vendor_status']
+
+    # Some of these may not exist (vendor dependant). Nils will be removed with compact! below.
+    psu_oids = [
+      vendor_cfg['psu_description'],
+      vendor_cfg['psu_vendor_status'],
+    ]
+    psu_oids.compact! # Removes nil values from Array
+
+    psu_table = {}
+
+    session.walk(psu_oids) do |row|
+      row.each do |vb|
+        # Save the base OID (without index component), then use that to look up the
+        #   OID text for the OID being processed
+        oid_without_index = vb.name.to_str.gsub(vendor_cfg['psu_index_regex'],'').gsub(/\.$/,'')
+        oid_text = vendor_cfg.invert[oid_without_index].gsub('psu_','')
+
+        index = vendor_cfg['psu_index_regex'].match( vb.name.to_str )[0]
+        psu_table[index] ||= {}
+        psu_table[index][oid_text] = vb.value.to_s
+      end
+    end
+
+    # Normalize status from vendor status --> Pixel status
+    psu_table.each do |index, oids|
+      status, status_text = _normalize_status(oids['vendor_status'])
+      psu_table[index]['status'] = status
+      psu_table[index]['status_text'] = status_text
+    end
+
+    # Update psu values
+    psu_table.each do |index, oids|
+      @psus[index] ||= PSU.new(device: @name, index: index)
+      @psus[index].update(oids) if oids && !oids.empty?
+    end
 
   end
 
 
   # PRIVATE!
   def _poll_fans(session)
+    # Delete all the irrelevant vendor_cfg values (to prevent .invert from having duplicates)
+    return nil unless vendor_cfg = @poll_cfg[:oids][@vendor].dup.delete_if { |k,v| k !~ /^fan_/ }
+    return nil unless vendor_cfg['fan_vendor_status']
+
+    # Some of these may not exist (vendor dependant). Nils will be removed with compact! below.
+    fan_oids = [
+      vendor_cfg['fan_description'],
+      vendor_cfg['fan_vendor_status'],
+    ]
+    fan_oids.compact! # Removes nil values from Array
+
+    fan_table = {}
+
+    session.walk(fan_oids) do |row|
+      row.each do |vb|
+        # Save the base OID (without index component), then use that to look up the
+        #   OID text for the OID being processed
+        oid_without_index = vb.name.to_str.gsub(vendor_cfg['fan_index_regex'],'').gsub(/\.$/,'')
+        oid_text = vendor_cfg.invert[oid_without_index].gsub('fan_','')
+
+        index = vendor_cfg['fan_index_regex'].match( vb.name.to_str )[0]
+        fan_table[index] ||= {}
+        fan_table[index][oid_text] = vb.value.to_s
+      end
+    end
+
+    # Normalize status from vendor status --> Pixel status
+    fan_table.each do |index, oids|
+      status, status_text = _normalize_status(oids['vendor_status'])
+      fan_table[index]['status'] = status
+      fan_table[index]['status_text'] = status_text
+    end
+
+    # Update fan values
+    fan_table.each do |index, oids|
+      @fans[index] ||= Fan.new(device: @name, index: index)
+      @fans[index].update(oids) if oids && !oids.empty?
+    end
 
   end
 
@@ -396,6 +618,7 @@ class Device
   # PRIVATE!
   def _normalize_status(vendor_status)
     table = @poll_cfg[:status_table]
+    vendor_status = vendor_status.to_i
 
     # If a vendor status table exists, get the status from there.
     #   If the vendor status table doesn't exist, or the vendor status

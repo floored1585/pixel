@@ -54,9 +54,6 @@ module Poller
         if_table = _query_device_interfaces(ip, poller_cfg)
         if_table_time = Time.now - start; start = Time.now
 
-        mac = _query_device_mac(device, ip, poller_cfg, dev_info[:vendor], if_table)
-        mac_time = Time.now - start; start = Time.now
-
         total_time = Time.now - start_total
 
         #puts "#{device} Fan Data:"
@@ -73,7 +70,6 @@ module Poller
           :temperature => {},
           :psu => {},
           :fan => {},
-          :mac => [],
           :devicedata => {},
         } }
         _post_data(post_devices)
@@ -87,7 +83,6 @@ module Poller
       #  "temperature_time: #{'%.2f' % temperature_time}\n" +
       #  "psu_time: #{'%.2f' % psu_time}\n" +
       #  "fan_time: #{'%.2f' % fan_time}\n" +
-      #  "mac_time: #{'%.2f' % mac_time}\n" +
       #  "if_table_time: #{'%.2f' % if_table_time}\n" +
       #  "Total Time: #{'%.2f' % total_time}"
       #)
@@ -190,7 +185,6 @@ module Poller
         :temperature => temperature,
         :psu => psu,
         :fan => fan,
-        :mac => mac,
         :devicedata => dev_info,
       } }
 

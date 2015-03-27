@@ -677,30 +677,6 @@ module Core
             $LOG.warn("Invalid or missing Fans data received for #{device}")
             data[:fan] = {}
           end
-          # Validate MACs
-          if data[:mac].class == Array
-            # Validate MAC data
-            data[:mac].each_with_index do |mac_data, i|
-              if mac_data.class == Hash
-                mac_data.symbolize!
-              else
-                $LOG.warn("Invalid MAC data for #{device}: index #{i}")
-                data[:mac].delete_at(i)
-              end
-              required_data = [:device, :mac, :if_index, :vlan_id, :last_updated]
-              unless (required_data - mac_data.keys).empty?
-                $LOG.warn("Invalid MAC data for #{device}: index #{i}. Missing: #{required_data - mac_data.keys}")
-                data[:mac].delete_at(i)
-              end
-              if mac_data[:mac] == '00:00:00:00:00:00' || !mac_data[:if_index] || mac_data[:if_index].empty?
-                $LOG.warn("Invalid MAC address or empty if_index for #{device}: index #{i}")
-                data[:mac].delete_at(i)
-              end
-            end
-          else
-            $LOG.warn("Invalid or missing MACs data received for #{device}")
-            data[:mac] = []
-          end
         else
           $LOG.error("Invalid or missing data received for #{device}")
           devices[device] = {}

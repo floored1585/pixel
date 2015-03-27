@@ -57,38 +57,57 @@ module Core
   end
 
 
-  def get_interfaces(settings, db, device)
-    db[:interface].where(:device => device).all
+  def get_interfaces(settings, db, device, index=nil)
+    if index
+      db[:interface].where(:device => device, :index => index).all[0] || {}
+    else
+      db[:interface].where(:device => device).all
+    end
   end
 
 
-  def get_temperatures(settings, db, device)
-    db[:temperature].where(:device => device).all
+  def get_temperatures(settings, db, device, index=nil)
+    if index
+      db[:temperature].where(:device => device, :index => index).all[0] || {}
+    else
+      db[:temperature].where(:device => device).all
+    end
   end
 
 
-  def get_memory(settings, db, device)
-    db[:memory].where(:device => device).all
+  def get_memory(settings, db, device, index=nil)
+    if index
+      db[:memory].where(:device => device, :index => index).all[0] || {}
+    else
+      db[:memory].where(:device => device).all
+    end
   end
 
 
-  def get_cpus(settings, db, device)
-    db[:cpu].where(:device => device).all
+  def get_cpus(settings, db, device, index=nil)
+    if index
+      db[:cpu].where(:device => device, :index => index).all[0] || {}
+    else
+      db[:cpu].where(:device => device).all
+    end
   end
 
 
-  def get_psus(settings, db, device)
-    db[:psu].where(:device => device).all
+  def get_psus(settings, db, device, index=nil)
+    if index
+      db[:psu].where(:device => device, :index => index).all[0] || {}
+    else
+      db[:psu].where(:device => device).all
+    end
   end
 
 
-  def get_fans(settings, db, device)
-    db[:fan].where(:device => device).all
-  end
-
-
-  def get_macs(settings, db, device)
-    db[:mac].where(:device => device).all
+  def get_fans(settings, db, device, index=nil)
+    if index
+      db[:fan].where(:device => device, :index => index).all[0] || {}
+    else
+      db[:fan].where(:device => device).all
+    end
   end
 
 

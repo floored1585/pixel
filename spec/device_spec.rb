@@ -1,11 +1,4 @@
-require 'logger'
-require 'snmp'
 require_relative '../lib/device'
-require_relative '../lib/api'
-require_relative '../lib/core_ext/object'
-require_relative '../lib/configfile'
-
-poll_cfg = Configfile.retrieve['poller']
 
 APP_ROOT = File.dirname(__FILE__)
 $LOG = Logger.new("#{APP_ROOT}/rspec.log", 0, 100*1024*1024)
@@ -100,12 +93,6 @@ describe Device do
         it 'should equal' do
           dev_obj = Device.new(device)
           expect(dev_obj.populate([:fans])).to equal dev_obj
-        end
-      end
-      context "on a #{label} when :macs passed" do
-        it 'should equal' do
-          dev_obj = Device.new(device)
-          expect(dev_obj.populate([:macs])).to equal dev_obj
         end
       end
       context "on a #{label} when all options passed" do
@@ -258,8 +245,37 @@ describe Device do
 
   # True integration tests
   describe '#poll' do
+    #c2960 = Device.new(test_devices['Cisco 2960'], poll_cfg: poll_cfg).populate.poll(worker: 't')
+    #c4948 = Device.new(test_devices['Cisco 4948'], poll_cfg: poll_cfg).populate.poll(worker: 't')
+    #cumulus = Device.new(test_devices['Cumulus'], poll_cfg: poll_cfg).populate.poll(worker: 't')
+    #ex = Device.new(test_devices['Juniper EX'], poll_cfg: poll_cfg).populate.poll(worker: 't')
+    #mx = Device.new(test_devices['Juniper MX'], poll_cfg: poll_cfg).populate.poll(worker: 't')
+    #f10_s4810 = Device.new(test_devices['Force10 S4810'], poll_cfg: poll_cfg).populate.poll(worker: 't')
+
+    context 'on a Cisco 2960' do
+      #'Cisco 2960' => 'gar-b11u17-acc-g',
+    end
+
+    context 'on a Cisco 4948' do
+      #'Cisco 4948' => 'irv-i1u1-dist',
+    end
+
+    context 'on a Cumulus device' do
+      #'Cumulus' => 'aon-cumulus-2',
+    end
+
+    context 'on a Juniper EX' do
+      #'Juniper EX' => 'gar-p1u1-dist',
+    end
+
+    context 'on a Juniper MX' do
+      #'Juniper MX' => 'iad1-bdr-1',
+    end
+
+    context 'on a Force10 S4810' do
+      #'Force10 S4810' => 'iad1-trn-1',
+    end
 
   end
-    
 
 end

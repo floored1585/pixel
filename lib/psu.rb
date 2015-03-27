@@ -1,6 +1,10 @@
 # psu.rb
 #
+require 'logger'
 require 'json'
+require_relative 'api'
+require_relative 'core_ext/object'
+$LOG ||= Logger.new(STDOUT)
 
 class PSU
 
@@ -14,19 +18,19 @@ class PSU
   end
   
 
-  def populate(data={})
+  def populate(data=nil)
 
     # If we weren't passed data, look ourselves up
-    if data.empty?
-      return nil
-      ## TODO ##
-    else
-      @description = data['description']
-      @last_updated = data['last_updated'].to_i_if_numeric
-      @status = data['status'].to_i_if_numeric
-      @vendor_status = data['vendor_status'].to_i_if_numeric
-      @status_text = data['status_text']
-    end
+    data ||= API.get('core', "/v1/device/#{@device}/psu/#{@index}", 'PSU', 'psu data')
+    # Return nil if we didn't find any data
+    # TODO: Raise an exception instead?
+    return nil if data.empty?
+
+    @description = data['description']
+    @last_updated = data['last_updated'].to_i_if_numeric
+    @status = data['status'].to_i_if_numeric
+    @vendor_status = data['vendor_status'].to_i_if_numeric
+    @status_text = data['status_text']
 
     return self
   end
@@ -52,16 +56,19 @@ class PSU
   end
 
 
-  def to_json
-    return "{}" unless @last_updated && @description && @status && @status_text
-    { "device" => @device,
-      "index" => @index,
-      "description" => @description,
-      "last_updated" => @last_updated,
-      "status" => @status,
-      "vendor_status" => @vendor_status,
-      "status_text" => @status_text,
-    }.to_json
+  def to_json(*a)
+    { 
+      "json_class" => self.class.name,
+      "data" => {
+        "device" => @device,
+        "index" => @index,
+        "description" => @description,
+        "last_updated" => @last_updated,
+        "status" => @status,
+        "vendor_status" => @vendor_status,
+        "status_text" => @status_text,
+      }
+    }.to_json(*a)
   end
 
 

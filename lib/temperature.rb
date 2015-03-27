@@ -1,6 +1,10 @@
 # temperature.rb
 #
+require 'logger'
 require 'json'
+require_relative 'api'
+require_relative 'core_ext/object'
+$LOG ||= Logger.new(STDOUT)
 
 class Temperature
 
@@ -14,21 +18,21 @@ class Temperature
   end
   
 
-  def populate(data={})
+  def populate(data=nil)
 
     # If we weren't passed data, look ourselves up
-    if data.empty?
-      return nil
-      ## TODO ##
-    else
-      @temperature = data['temperature'].to_i_if_numeric
-      @last_updated = data['last_updated'].to_i_if_numeric
-      @description = data['description']
-      @status = data['status'].to_i_if_numeric
-      @threshold = data['threshold'].to_i_if_numeric
-      @vendor_status = data['vendor_status'].to_i_if_numeric
-      @status_text = data['status_text']
-    end
+    data ||= API.get('core', "/v1/device/#{@device}/temperature/#{@index}", 'Temperature', 'temperature data')
+    # Return nil if we didn't find any data
+    # TODO: Raise an exception instead?
+    return nil if data.empty?
+
+    @temperature = data['temperature'].to_i_if_numeric
+    @last_updated = data['last_updated'].to_i_if_numeric
+    @description = data['description']
+    @status = data['status'].to_i_if_numeric
+    @threshold = data['threshold'].to_i_if_numeric
+    @vendor_status = data['vendor_status'].to_i_if_numeric
+    @status_text = data['status_text']
 
     return self
   end
@@ -58,18 +62,21 @@ class Temperature
   end
 
 
-  def to_json
-    return "{}" unless @temperature && @last_updated && @description && @status && @status_text
-    { "device" => @device,
-      "index" => @index,
-      "temperature" => @temperature,
-      "last_updated" => @last_updated,
-      "description" => @description,
-      "status" => @status,
-      "threshold" => @threshold,
-      "vendor_status" => @vendor_status,
-      "status_text" => @status_text,
-    }.to_json
+  def to_json(*a)
+    {
+      "json_class" => self.class.name,
+      "data" => {
+        "device" => @device,
+        "index" => @index,
+        "temperature" => @temperature,
+        "last_updated" => @last_updated,
+        "description" => @description,
+        "status" => @status,
+        "threshold" => @threshold,
+        "vendor_status" => @vendor_status,
+        "status_text" => @status_text,
+      }
+    }.to_json(*a)
   end
 
 

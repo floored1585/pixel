@@ -1,5 +1,4 @@
 require_relative '../lib/fan'
-require_relative '../lib/core_ext/object'
 
 describe Fan do
 
@@ -52,19 +51,21 @@ describe Fan do
   describe '#populate' do
 
     before :each do
-      @fan = Fan.new(device: 'gar-test-1', index: 'test')
+      @bad_fan = Fan.new(device: 'gar-test-1', index: 'test')
+      @good_fan = Fan.new(device: 'iad1-bdr-1', index: '4.1.4.0')
     end
 
-    it 'should return a Fan object' do
-      expect(@fan.populate(data1_base)).to be_a Fan
-      expect(@fan.populate(data2_base)).to be_a Fan
-      expect(@fan.populate(data3_base)).to be_a Fan
+
+    it 'should return nil if the object does not exist' do
+      expect(@bad_fan.populate).to eql nil
+    end
+
+    it 'should return an object if the object exists' do
+      expect(@good_fan.populate).to be_a Fan
     end
 
     it 'should fill up the object' do
-      expect(JSON.parse(@fan.populate(data1_base).to_json).keys).to eql json_keys
-      expect(JSON.parse(@fan.populate(data2_base).to_json).keys).to eql json_keys
-      expect(JSON.parse(@fan.populate(data3_base).to_json).keys).to eql json_keys
+      expect(JSON.parse(@good_fan.populate(data1_base).to_json)['data'].keys).to eql json_keys
     end
 
 
@@ -108,7 +109,7 @@ describe Fan do
   end
 
   # to_json
-  describe '#to_json' do
+  describe '#to_json and #json_create' do
 
     context 'when freshly created' do
 
@@ -121,8 +122,9 @@ describe Fan do
         expect(@fan.to_json).to be_a String
       end
 
-      it 'should return empty' do
-        expect(JSON.parse(@fan.to_json)).to be_empty
+      it 'should serialize and deserialize' do
+        json = @fan.to_json
+        expect(JSON.load(json).to_json).to eql json
       end
 
     end
@@ -131,16 +133,22 @@ describe Fan do
     context 'when populated' do
 
       before(:each) do
-        @fan = Fan.new(device: 'gar-b11u1-dist', index: '7.1.0.0').populate(data1_base)
-        @fan2 = Fan.new(device: 'gar-k11u1-dist', index: '1').populate(data2_base)
-        @fan3 = Fan.new(device: 'gar-k11u1-dist', index: '1').populate(data3_base)
+        @fan1 = Fan.new(device: 'gar-b11u1-dist', index: '4.1.1.1').populate
+        @fan2 = Fan.new(device: 'iad1-bdr-1', index: '4.1.4.0').populate
+        @fan3 = Fan.new(device: 'gar-k11u1-dist', index: '1').populate
+        @fan4 = Fan.new(device: 'iad1-trn-1', index: '2.1').populate
       end
 
 
-      it 'should have all required keys' do
-        expect(JSON.parse(@fan.to_json).keys).to eql json_keys
-        expect(JSON.parse(@fan2.to_json).keys).to eql json_keys
-        expect(JSON.parse(@fan3.to_json).keys).to eql json_keys
+      it 'should serialize and deserialize properly' do
+        json1 = @fan1.to_json
+        json2 = @fan2.to_json
+        json3 = @fan3.to_json
+        json4 = @fan4.to_json
+        expect(JSON.load(json1).to_json).to eql json1
+        expect(JSON.load(json2).to_json).to eql json2
+        expect(JSON.load(json3).to_json).to eql json3
+        expect(JSON.load(json4).to_json).to eql json4
       end
 
     end

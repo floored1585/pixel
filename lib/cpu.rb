@@ -1,6 +1,10 @@
 # cpu.rb
 #
+require 'logger'
 require 'json'
+require_relative 'api'
+require_relative 'core_ext/object'
+$LOG ||= Logger.new(STDOUT)
 
 class CPU
 
@@ -14,17 +18,17 @@ class CPU
   end
   
 
-  def populate(data={})
+  def populate(data=nil)
 
     # If we weren't passed data, look ourselves up
-    if data.empty?
-      return nil
-      ## TODO ##
-    else
-      @util = data['util'].to_i
-      @description = data['description']
-      @last_updated = data['last_updated'].to_i
-    end
+    data ||= API.get('core', "/v1/device/#{@device}/cpu/#{@index}", 'CPU', 'cpu data')
+    # Return nil if we didn't find any data
+    # TODO: Raise an exception instead?
+    return nil if data.empty?
+
+    @util = data['util'].to_i
+    @description = data['description']
+    @last_updated = data['last_updated'].to_i
 
     return self
   end
@@ -46,14 +50,22 @@ class CPU
   end
 
 
-  def to_json
-    return "{}" unless @util && @description && @last_updated
-    { "device" => @device,
-      "index" => @index,
-      "util" => @util,
-      "description" => @description,
-      "last_updated" => @last_updated,
-    }.to_json
+  def write_to_influxdb
+    #TODO
+  end
+
+
+  def to_json(*a)
+    {
+      "json_class" => self.class.name,
+      "data" => {
+        "device" => @device,
+        "index" => @index,
+        "util" => @util,
+        "description" => @description,
+        "last_updated" => @last_updated,
+      }
+    }.to_json(*a)
   end
 
 

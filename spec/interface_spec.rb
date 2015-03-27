@@ -1,7 +1,39 @@
 require_relative '../lib/interface'
-require_relative '../lib/core_ext/object'
 
 describe Interface do
+
+  json_keys = [
+    'device',
+    'index',
+    'last_updated',
+    'if_alias',
+    'if_name',
+    'if_hc_in_octets',
+    'if_hc_out_octets',
+    'if_hc_in_ucast_pkts',
+    'if_hc_out_ucast_pkts',
+    'if_speed',
+    'if_mtu',
+    'if_admin_status',
+    'if_admin_status_time',
+    'if_oper_status',
+    'if_oper_status_time',
+    'if_in_discards',
+    'if_in_errors',
+    'if_out_discards',
+    'if_out_errors',
+    'bps_in',
+    'bps_out',
+    'discards_in',
+    'errors_in',
+    'discards_out',
+    'errors_out',
+    'pps_in',
+    'pps_out',
+    'bps_in_util',
+    'bps_out_util',
+    'if_type',
+  ]
 
   # Up/Up
   interface_1 = {"device" => "gar-b11u1-dist","index" => 604,"last_updated" => 1424752121,"if_alias" => "bb__gar-crmx-1__xe-1/0/3","if_name" => "xe-0/2/0","if_hc_in_octets" => "0.3959706331274391E16","if_hc_out_octets" => "0.3281296197965732E16","if_hc_in_ucast_pkts" => "0.4388140890014E13","if_hc_out_ucast_pkts" => "0.3813525530792E13","if_speed" => 10000000000,"if_mtu" => 1522,"if_admin_status" => 1,"if_admin_status_time" => 1409786067,"if_oper_status" => 1,"if_oper_status_time" => 1409786067,"if_in_discards" => "0.0","if_in_errors" => "0.0","if_out_discards" => "0.0","if_out_errors" => "0.0","bps_in" => 1349172320,"bps_out" => 1371081672,"discards_in" => 0,"errors_in" => 0,"discards_out" => 0,"errors_out" => 0,"pps_in" => 180411,"pps_out" => 262760,"bps_in_util" => 13.49,"bps_out_util" => 13.71,"if_type" => "bb"}
@@ -43,17 +75,21 @@ describe Interface do
 
     before(:each) do
       # Create our empty interface
-      @int = Interface.new(device: 'gar-test-1', index: 103)
+      @bad_int = Interface.new(device: 'gar-test-1', index: 103)
+      @good_int = Interface.new(device: 'gar-p1u1-dist', index: 656)
     end
 
-    context 'when no data passed' do
-      specify { expect(@int.populate).to eql nil }
+
+    it 'should return nil if the object does not exist' do
+      expect(@bad_int.populate).to eql nil
     end
 
-    context 'when data passed' do
-      interfaces.each do |int_data|
-        specify { expect(@int.populate(int_data)).to eql @int }
-      end
+    it 'should return an object if the object exists' do
+      expect(@good_int.populate).to be_a Interface
+    end
+
+    it 'should fill up the object' do
+      expect(JSON.parse(@good_int.populate(interface_1).to_json)['data'].keys).to eql json_keys
     end
 
   end
@@ -241,6 +277,53 @@ describe Interface do
 
     describe '#write_to_influxdb' do
       #TODO
+    end
+
+  end
+
+  # to_json
+  describe '#to_json and #json_create' do
+
+    context 'when freshly created' do
+
+      before(:each) do
+        @interface = Interface.new(device: 'gar-p1u1-dist', index: '656')
+      end
+
+
+      it 'should return a string' do
+        expect(@interface.to_json).to be_a String
+      end
+
+      it 'should serialize and deserialize' do
+        json = @interface.to_json
+        expect(JSON.load(json).to_json).to eql json
+      end
+
+    end
+
+
+    context 'when populated' do
+
+      before(:each) do
+        @int1 = Interface.new(device: 'gar-b11u1-dist', index: 604).populate
+        @int2 = Interface.new(device: 'gar-b11u17-acc-g', index: 10040).populate
+        @int3 = Interface.new(device: 'gar-bdr-1', index: 541).populate
+        @int4 = Interface.new(device: 'aon-cumulus-2', index: 15).populate
+      end
+
+
+      it 'should serialize and deserialize properly' do
+        json1 = @int1.to_json
+        json2 = @int2.to_json
+        json3 = @int3.to_json
+        json4 = @int4.to_json
+        expect(JSON.load(json1).to_json).to eql json1
+        expect(JSON.load(json2).to_json).to eql json2
+        expect(JSON.load(json3).to_json).to eql json3
+        expect(JSON.load(json4).to_json).to eql json4
+      end
+
     end
 
   end

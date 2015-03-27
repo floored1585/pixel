@@ -1,10 +1,17 @@
 # device.rb
+require 'logger'
+require 'snmp'
+require_relative 'api'
+require_relative 'configfile'
+require_relative 'core_ext/object'
 require_relative 'interface'
 require_relative 'temperature'
 require_relative 'memory'
 require_relative 'fan'
 require_relative 'psu'
 require_relative 'cpu'
+
+$LOG ||= Logger.new('device.log')
 
 class Device
 
@@ -16,7 +23,7 @@ class Device
 
     # optional
     @poll_ip = poll_ip
-    @poll_cfg = poll_cfg
+    @poll_cfg = poll_cfg || Configfile.retrieve['poller']
 
     @interfaces = {}
     @memory = {}
@@ -24,7 +31,6 @@ class Device
     @cpus = {}
     @psus = {}
     @fans = {}
-    @macs = []
 
   end
 
@@ -180,7 +186,7 @@ class Device
       end
     end
 
-    @temperatures = {}
+    @temps = {}
     if opts.include?(:temperatures) || opts.include?(:all)
       temps = API.get('core', "/v1/device/#{@name}/temperatures", 'Device', 'temperature data')
       temps.each do |temperature_data|
@@ -210,12 +216,43 @@ class Device
       end
     end
 
-    @macs = {}
-    if opts.include?(:macs) || opts.include?(:all)
-      #macs = API.get('core', "/v1/device/#{@name}/macs", 'Device', 'mac data')
-    end
-
     return self
+
+  end
+
+
+  def to_json(*a)
+    {
+      'json_class' => self.class.name,
+      'data' => {
+        'device' => @name,
+        'ip' => @poll_ip,
+        'last_poll' => @last_poll,
+        'next_poll' => @next_poll,
+        'last_poll_duration' => @last_poll_duration,
+        'last_poll_result' => @last_poll_result,
+        'last_poll_text' => @last_poll_text,
+        'currently_polling' => @currently_polling,
+        'worker' => @worker,
+        'pps_out' => @pps_out,
+        'bps_out' => @bps_out,
+        'discards_out' => @discards_out,
+        'sys_descr' => @sys_descr,
+        'vendor' => @vendor,
+        'sw_descr' => @sw_descr,
+        'sw_version' => @sw_version,
+        'hw_model' => @hw_model,
+        'uptime' => @uptime,
+        'yellow_alarm' => @yellow_alarm,
+        'red_alarm' => @red_alarm,
+        'interfaces' => @interfaces,
+        'memory' => @memory,
+        'temps' => @temps,
+        'cpus' => @cpus,
+        'psus' => @psus,
+        'fans' => @fans,
+      }
+    }.to_json(*a)
 
   end
 
@@ -403,7 +440,7 @@ class Device
         mem_free = oids['free'].to_i # Always present
         mem_used = oids['used'].to_i_if_numeric # Will be nil unless Cisco style
         mem_total = oids['total'].to_i_if_numeric # Will be nil unless Linux style
-        
+
         oids['util'] = (mem_used.to_f / (mem_used + mem_free) * 100).to_i if mem_used
         oids['util'] = ((mem_total - mem_free).to_f / mem_total * 100).to_i if mem_total
       end

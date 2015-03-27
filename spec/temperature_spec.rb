@@ -1,5 +1,4 @@
 require_relative '../lib/temperature'
-require_relative '../lib/core_ext/object'
 
 describe Temperature do
 
@@ -53,17 +52,22 @@ describe Temperature do
   describe '#populate' do
 
     before :each do
-      @temp = Temperature.new(device: 'gar-test-1', index: 'test')
+      @bad_temp = Temperature.new(device: 'gar-test-1', index: 'test')
+      @good_temp = Temperature.new(device: 'gar-p1u1-dist', index: '7.1.0.0')
     end
 
-    it 'should return a Temperature object' do
-      expect(@temp.populate(data1_base)).to be_a Temperature
+
+    it 'should return nil if the object does not exist' do
+      expect(@bad_temp.populate).to eql nil
+    end
+
+    it 'should return an object if the object exists' do
+      expect(@good_temp.populate).to be_a Temperature
     end
 
     it 'should fill up the object' do
-      expect(JSON.parse(@temp.populate(data1_base).to_json).keys).to eql json_keys
+      expect(JSON.parse(@good_temp.populate(data1_base).to_json)['data'].keys).to eql json_keys
     end
-
 
   end
 
@@ -103,7 +107,7 @@ describe Temperature do
   end
 
   # to_json
-  describe '#to_json' do
+  describe '#to_json and #json_create' do
 
     context 'when freshly created' do
 
@@ -116,8 +120,9 @@ describe Temperature do
         expect(@temp.to_json).to be_a String
       end
 
-      it 'should return empty' do
-        expect(JSON.parse(@temp.to_json)).to be_empty
+      it 'should serialize and deserialize' do
+        json = @cpu.to_json
+        expect(JSON.load(json).to_json).to eql json
       end
 
     end
@@ -126,14 +131,22 @@ describe Temperature do
     context 'when populated' do
 
       before(:each) do
-        @temp = Temperature.new(device: 'gar-b11u1-dist', index: '7.1.0.0').populate(data1_base)
-        @temp2 = Temperature.new(device: 'gar-k11u1-dist', index: '1').populate(data2_base)
+        @temp1 = Temperature.new(device: 'gar-b11u1-dist', index: '7.1.0.0').populate
+        @temp2 = Temperature.new(device: 'irv-i1u1-dist', index: '1').populate
+        @temp3 = Temperature.new(device: 'gar-bdr-1', index: '4.2.5.0').populate
+        @temp4 = Temperature.new(device: 'iad1-trn-1', index: '1').populate
       end
 
 
-      it 'should have all required keys' do
-        expect(JSON.parse(@temp.update(data1_update_ok).to_json).keys).to eql json_keys
-        expect(JSON.parse(@temp2.update(data2_update_ok).to_json).keys).to eql json_keys
+      it 'should serialize and deserialize properly' do
+        json1 = @temp1.to_json
+        json2 = @temp2.to_json
+        json3 = @temp3.to_json
+        json4 = @temp4.to_json
+        expect(JSON.load(json1).to_json).to eql json1
+        expect(JSON.load(json2).to_json).to eql json2
+        expect(JSON.load(json3).to_json).to eql json3
+        expect(JSON.load(json4).to_json).to eql json4
       end
 
     end

@@ -1,5 +1,4 @@
 require_relative '../lib/psu'
-require_relative '../lib/core_ext/object'
 
 describe PSU do
 
@@ -52,21 +51,22 @@ describe PSU do
   describe '#populate' do
 
     before :each do
-      @psu = PSU.new(device: 'gar-test-1', index: 'test')
+      @bad_psu = PSU.new(device: 'gar-test-1', index: 'test')
+      @good_psu = PSU.new(device: 'iad1-trn-1', index: '1.1')
     end
 
-    it 'should return a PSU object' do
-      expect(@psu.populate(data1_base)).to be_a PSU
-      expect(@psu.populate(data2_base)).to be_a PSU
-      expect(@psu.populate(data3_base)).to be_a PSU
+
+    it 'should return nil if the object does not exist' do
+      expect(@bad_psu.populate).to eql nil
+    end
+
+    it 'should return an object if the object exists' do
+      expect(@good_psu.populate).to be_a PSU
     end
 
     it 'should fill up the object' do
-      expect(JSON.parse(@psu.populate(data1_base).to_json).keys).to eql json_keys
-      expect(JSON.parse(@psu.populate(data2_base).to_json).keys).to eql json_keys
-      expect(JSON.parse(@psu.populate(data3_base).to_json).keys).to eql json_keys
+      expect(JSON.parse(@good_psu.populate(data1_base).to_json)['data'].keys).to eql json_keys
     end
-
 
   end
 
@@ -108,7 +108,7 @@ describe PSU do
   end
 
   # to_json
-  describe '#to_json' do
+  describe '#to_json and #json_create' do
 
     context 'when freshly created' do
 
@@ -121,8 +121,9 @@ describe PSU do
         expect(@psu.to_json).to be_a String
       end
 
-      it 'should return empty' do
-        expect(JSON.parse(@psu.to_json)).to be_empty
+      it 'should serialize and deserialize' do
+        json = @psu.to_json
+        expect(JSON.load(json).to_json).to eql json
       end
 
     end
@@ -131,16 +132,22 @@ describe PSU do
     context 'when populated' do
 
       before(:each) do
-        @psu = PSU.new(device: 'gar-b11u1-dist', index: '7.1.0.0').populate(data1_base)
-        @psu2 = PSU.new(device: 'gar-k11u1-dist', index: '1').populate(data2_base)
-        @psu3 = PSU.new(device: 'gar-k11u1-dist', index: '1').populate(data3_base)
+        @psu1 = PSU.new(device: 'gar-b11u1-dist', index: '2.1.1.0').populate
+        @psu2 = PSU.new(device: 'gar-b11u17-acc-g', index: '1003').populate
+        @psu3 = PSU.new(device: 'gar-bdr-1', index: '2.1.0.0').populate
+        @psu4 = PSU.new(device: 'iad1-trn-1', index: '1.1').populate
       end
 
 
-      it 'should have all required keys' do
-        expect(JSON.parse(@psu.to_json).keys).to eql json_keys
-        expect(JSON.parse(@psu2.to_json).keys).to eql json_keys
-        expect(JSON.parse(@psu3.to_json).keys).to eql json_keys
+      it 'should serialize and deserialize properly' do
+        json1 = @psu1.to_json
+        json2 = @psu2.to_json
+        json3 = @psu3.to_json
+        json4 = @psu4.to_json
+        expect(JSON.load(json1).to_json).to eql json1
+        expect(JSON.load(json2).to_json).to eql json2
+        expect(JSON.load(json3).to_json).to eql json3
+        expect(JSON.load(json4).to_json).to eql json4
       end
 
     end

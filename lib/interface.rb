@@ -1,7 +1,10 @@
 # interface.rb
 #
-# TODO: @type must be calculated in device.rb somewhere
-#
+require 'logger'
+require 'json'
+require_relative 'api'
+require_relative 'core_ext/object'
+$LOG ||= Logger.new(STDOUT)
 
 class Interface
 
@@ -103,44 +106,44 @@ class Interface
   end
 
 
-  def populate(data={})
+  def populate(data=nil)
 
     # If we weren't passed data, look ourselves up
-    if data.empty?
-      return nil
-      ## TODO ##
-    else
-      @last_updated = data['last_updated'].to_i_if_numeric
-      @alias = data['if_alias']
-      @name = data['if_name']
-      @hc_in_octets = data['if_hc_in_octets'].to_i_if_numeric
-      @hc_out_octets = data['if_hc_out_octets'].to_i_if_numeric
-      @hc_in_ucast_pkts = data['if_hc_in_ucast_pkts'].to_i_if_numeric
-      @hc_out_ucast_pkts = data['if_hc_out_ucast_pkts'].to_i_if_numeric
-      @speed = data['if_speed'].to_i_if_numeric
-      @mtu = data['if_mtu'].to_i_if_numeric
-      @admin_status = data['if_admin_status'].to_i_if_numeric
-      @admin_status_time = data['if_admin_status_time'].to_i_if_numeric
-      @oper_status = data['if_oper_status'].to_i_if_numeric
-      @oper_status_time = data['if_oper_status_time'].to_i_if_numeric
-      @in_discards = data['if_in_discards'].to_i_if_numeric
-      @in_errors = data['if_in_errors'].to_i_if_numeric
-      @out_discards = data['if_out_discards'].to_i_if_numeric
-      @out_errors = data['if_out_errors'].to_i_if_numeric
-      @bps_in = data['bps_in'].to_i_if_numeric
-      @bps_out = data['bps_out'].to_i_if_numeric
-      @discards_in = data['discards_in'].to_i_if_numeric
-      @errors_in = data['errors_in'].to_i_if_numeric
-      @discards_out = data['discards_out'].to_i_if_numeric
-      @errors_out = data['errors_out'].to_i_if_numeric
-      @pps_in = data['pps_in'].to_i_if_numeric
-      @pps_out = data['pps_out'].to_i_if_numeric
-      @bps_in_util = data['bps_in_util'].to_f
-      @bps_out_util = data['bps_out_util'].to_f
-      @type = data['if_type']
+    data ||= API.get('core', "/v1/device/#{@device}/interface/#{@index}", 'Interface', 'interface data')
+    # Return nil if we didn't find any data
+    # TODO: Raise an exception instead?
+    return nil if data.empty?
 
-      return self
-    end
+    @last_updated = data['last_updated'].to_i_if_numeric
+    @alias = data['if_alias']
+    @name = data['if_name']
+    @hc_in_octets = data['if_hc_in_octets'].to_i_if_numeric
+    @hc_out_octets = data['if_hc_out_octets'].to_i_if_numeric
+    @hc_in_ucast_pkts = data['if_hc_in_ucast_pkts'].to_i_if_numeric
+    @hc_out_ucast_pkts = data['if_hc_out_ucast_pkts'].to_i_if_numeric
+    @speed = data['if_speed'].to_i_if_numeric
+    @mtu = data['if_mtu'].to_i_if_numeric
+    @admin_status = data['if_admin_status'].to_i_if_numeric
+    @admin_status_time = data['if_admin_status_time'].to_i_if_numeric
+    @oper_status = data['if_oper_status'].to_i_if_numeric
+    @oper_status_time = data['if_oper_status_time'].to_i_if_numeric
+    @in_discards = data['if_in_discards'].to_i_if_numeric
+    @in_errors = data['if_in_errors'].to_i_if_numeric
+    @out_discards = data['if_out_discards'].to_i_if_numeric
+    @out_errors = data['if_out_errors'].to_i_if_numeric
+    @bps_in = data['bps_in'].to_i_if_numeric
+    @bps_out = data['bps_out'].to_i_if_numeric
+    @discards_in = data['discards_in'].to_i_if_numeric
+    @errors_in = data['errors_in'].to_i_if_numeric
+    @discards_out = data['discards_out'].to_i_if_numeric
+    @errors_out = data['errors_out'].to_i_if_numeric
+    @pps_in = data['pps_in'].to_i_if_numeric
+    @pps_out = data['pps_out'].to_i_if_numeric
+    @bps_in_util = data['bps_in_util'].to_f if data['bps_in_util']
+    @bps_out_util = data['bps_out_util'].to_f if data['bps_in_util']
+    @type = data['if_type']
+
+    return self
 
   end
 
@@ -239,6 +242,51 @@ class Interface
   end
 
 
+  def to_json(*a)
+    {
+      "json_class" => self.class.name,
+      "data" => {
+        "device" => @device,
+        "index" => @index,
+        "last_updated" => @last_updated,
+        "if_alias" => @alias,
+        "if_name" => @name,
+        "if_hc_in_octets" => @hc_in_octets,
+        "if_hc_out_octets" => @hc_out_octets,
+        "if_hc_in_ucast_pkts" => @hc_in_ucast_pkts,
+        "if_hc_out_ucast_pkts" => @hc_out_ucast_pkts,
+        "if_speed" => @speed,
+        "if_mtu" => @mtu,
+        "if_admin_status" => @admin_status,
+        "if_admin_status_time" => @admin_status_time,
+        "if_oper_status" => @oper_status,
+        "if_oper_status_time" => @oper_status_time,
+        "if_in_discards" => @in_discards,
+        "if_in_errors" => @in_errors,
+        "if_out_discards" => @out_discards,
+        "if_out_errors" => @out_errors,
+        "bps_in" => @bps_in,
+        "bps_out" => @bps_out,
+        "discards_in" => @discards_in,
+        "errors_in" => @errors_in,
+        "discards_out" => @discards_out,
+        "errors_out" => @errors_out,
+        "pps_in" => @pps_in,
+        "pps_out" => @pps_out,
+        "bps_in_util" => @bps_in_util,
+        "bps_out_util" => @bps_out_util,
+        "if_type" => @type,
+      }
+    }.to_json(*a)
+  end
+
+
+  def self.json_create(json)
+    data = json["data"]
+    Interface.new(device: data['device'], index: data['index']).populate(data)
+  end
+
+
   private # All methods below are private!!
 
   # PRIVATE!
@@ -253,8 +301,8 @@ class Interface
   def _calculate_utilization
 
     if @speed == nil || @speed == 0
-      @bps_in_util = 0.0
-      @bps_out_util = 0.0
+      @bps_in_util = nil
+      @bps_out_util = nil
     else
       @bps_in_util = ('%.2f' % (@bps_in.to_f / (@speed) * 100)).to_f if @bps_in
       @bps_out_util = ('%.2f' % (@bps_out.to_f / (@speed) * 100)).to_f if @bps_out

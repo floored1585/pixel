@@ -1,5 +1,4 @@
 require_relative '../lib/cpu'
-require_relative '../lib/core_ext/object'
 
 describe CPU do
 
@@ -45,19 +44,21 @@ describe CPU do
   describe '#populate' do
 
     before :each do
-      @cpu = CPU.new(device: 'gar-test-1', index: 'test')
+      @bad_cpu = CPU.new(device: 'gar-test-1', index: 'test')
+      @good_cpu = CPU.new(device: 'iad1-trn-1', index: '2')
     end
 
-    it 'should return a CPU object' do
-      expect(@cpu.populate(data1_base)).to be_a CPU
-      expect(@cpu.populate(data2_base)).to be_a CPU
-      expect(@cpu.populate(data3_base)).to be_a CPU
+
+    it 'should return nil if the object does not exist' do
+      expect(@bad_cpu.populate).to eql nil
+    end
+
+    it 'should return an object if the object exists' do
+      expect(@good_cpu.populate).to be_a CPU
     end
 
     it 'should fill up the object' do
-      expect(JSON.parse(@cpu.populate(data1_base).to_json).keys).to eql json_keys
-      expect(JSON.parse(@cpu.populate(data2_base).to_json).keys).to eql json_keys
-      expect(JSON.parse(@cpu.populate(data3_base).to_json).keys).to eql json_keys
+      expect(JSON.parse(@good_cpu.populate(data1_base).to_json)['data'].keys).to eql json_keys
     end
 
 
@@ -101,7 +102,7 @@ describe CPU do
   end
 
   # to_json
-  describe '#to_json' do
+  describe '#to_json and #json_create' do
 
     context 'when freshly created' do
 
@@ -114,8 +115,9 @@ describe CPU do
         expect(@cpu.to_json).to be_a String
       end
 
-      it 'should return empty' do
-        expect(JSON.parse(@cpu.to_json)).to be_empty
+      it 'should serialize and deserialize' do
+        json = @cpu.to_json
+        expect(JSON.load(json).to_json).to eql json
       end
 
     end
@@ -124,16 +126,22 @@ describe CPU do
     context 'when populated' do
 
       before(:each) do
-        @cpu = CPU.new(device: 'gar-b11u1-dist', index: '7.1.0.0').populate(data1_base)
-        @cpu2 = CPU.new(device: 'gar-k11u1-dist', index: '1').populate(data2_base)
-        @cpu3 = CPU.new(device: 'gar-k11u1-dist', index: '1').populate(data3_base)
+        @cpu1 = CPU.new(device: 'gar-b11u1-dist', index: '7.1.0.0').populate
+        @cpu2 = CPU.new(device: 'aon-cumulus-2', index: '768').populate
+        @cpu3 = CPU.new(device: 'gar-k11u1-dist', index: '1').populate
+        @cpu4 = CPU.new(device: 'iad1-trn-1', index: '2').populate
       end
 
 
-      it 'should have all required keys' do
-        expect(JSON.parse(@cpu.to_json).keys).to eql json_keys
-        expect(JSON.parse(@cpu2.to_json).keys).to eql json_keys
-        expect(JSON.parse(@cpu3.to_json).keys).to eql json_keys
+      it 'should serialize and deserialize properly' do
+        json1 = @cpu1.to_json
+        json2 = @cpu2.to_json
+        json3 = @cpu3.to_json
+        json4 = @cpu4.to_json
+        expect(JSON.load(json1).to_json).to eql json1
+        expect(JSON.load(json2).to_json).to eql json2
+        expect(JSON.load(json3).to_json).to eql json3
+        expect(JSON.load(json4).to_json).to eql json4
       end
 
     end

@@ -1,5 +1,4 @@
 require_relative '../lib/memory'
-require_relative '../lib/core_ext/object'
 
 describe Memory do
 
@@ -45,19 +44,21 @@ describe Memory do
   describe '#populate' do
 
     before :each do
-      @memory = Memory.new(device: 'gar-test-1', index: 'test')
+      @bad_memory = Memory.new(device: 'gar-test-1', index: 'test')
+      @good_memory = Memory.new(device: 'iad1-trn-1', index: '2')
     end
 
-    it 'should return a Memory object' do
-      expect(@memory.populate(data1_base)).to be_a Memory
-      expect(@memory.populate(data2_base)).to be_a Memory
-      expect(@memory.populate(data3_base)).to be_a Memory
+
+    it 'should return nil if the object does not exist' do
+      expect(@bad_memory.populate).to eql nil
+    end
+
+    it 'should return an object if the object exists' do
+      expect(@good_memory.populate).to be_a Memory
     end
 
     it 'should fill up the object' do
-      expect(JSON.parse(@memory.populate(data1_base).to_json).keys).to eql json_keys
-      expect(JSON.parse(@memory.populate(data2_base).to_json).keys).to eql json_keys
-      expect(JSON.parse(@memory.populate(data3_base).to_json).keys).to eql json_keys
+      expect(JSON.parse(@good_memory.populate(data1_base).to_json)['data'].keys).to eql json_keys
     end
 
 
@@ -101,7 +102,7 @@ describe Memory do
   end
 
   # to_json
-  describe '#to_json' do
+  describe '#to_json and #json_create' do
 
     context 'when freshly created' do
 
@@ -114,8 +115,9 @@ describe Memory do
         expect(@memory.to_json).to be_a String
       end
 
-      it 'should return empty' do
-        expect(JSON.parse(@memory.to_json)).to be_empty
+      it 'should serialize and deserialize' do
+        json = @memory.to_json
+        expect(JSON.load(json).to_json).to eql json
       end
 
     end
@@ -124,16 +126,22 @@ describe Memory do
     context 'when populated' do
 
       before(:each) do
-        @memory = Memory.new(device: 'gar-b11u1-dist', index: '7.1.0.0').populate(data1_base)
-        @memory2 = Memory.new(device: 'gar-k11u1-dist', index: '1').populate(data2_base)
-        @memory3 = Memory.new(device: 'gar-k11u1-dist', index: '1').populate(data3_base)
+        @memory1 = Memory.new(device: 'gar-b11u1-dist', index: '7.2.0.0').populate
+        @memory2 = Memory.new(device: 'aon-cumulus-2', index: '0').populate
+        @memory3 = Memory.new(device: 'gar-k11u1-dist', index: '1').populate
+        @memory4 = Memory.new(device: 'iad1-trn-1', index: '2').populate
       end
 
 
-      it 'should have all required keys' do
-        expect(JSON.parse(@memory.to_json).keys).to eql json_keys
-        expect(JSON.parse(@memory2.to_json).keys).to eql json_keys
-        expect(JSON.parse(@memory3.to_json).keys).to eql json_keys
+      it 'should serialize and deserialize properly' do
+        json1 = @memory1.to_json
+        json2 = @memory2.to_json
+        json3 = @memory3.to_json
+        json4 = @memory4.to_json
+        expect(JSON.load(json1).to_json).to eql json1
+        expect(JSON.load(json2).to_json).to eql json2
+        expect(JSON.load(json3).to_json).to eql json3
+        expect(JSON.load(json4).to_json).to eql json4
       end
 
     end

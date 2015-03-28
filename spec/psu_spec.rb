@@ -123,6 +123,7 @@ describe PSU do
 
       it 'should serialize and deserialize' do
         json = @psu.to_json
+        expect(JSON.load(json)).to be_a PSU
         expect(JSON.load(json).to_json).to eql json
       end
 

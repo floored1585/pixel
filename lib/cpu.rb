@@ -26,9 +26,9 @@ class CPU
     # TODO: Raise an exception instead?
     return nil if data.empty?
 
-    @util = data['util'].to_i
+    @util = data['util'].to_i_if_numeric
     @description = data['description']
-    @last_updated = data['last_updated'].to_i
+    @last_updated = data['last_updated'].to_i_if_numeric
 
     return self
   end
@@ -66,6 +66,12 @@ class CPU
         "last_updated" => @last_updated,
       }
     }.to_json(*a)
+  end
+
+
+  def self.json_create(json)
+    data = json["data"]
+    CPU.new(device: data['device'], index: data['index']).populate(data)
   end
 
 

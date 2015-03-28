@@ -72,4 +72,10 @@ class PSU
   end
 
 
+  def self.json_create(json)
+    data = json["data"]
+    PSU.new(device: data['device'], index: data['index']).populate(data)
+  end
+
+
 end

@@ -5,8 +5,13 @@ describe Temperature do
   json_keys = [ 'device', 'index', 'temperature', 'last_updated', 'description',
                 'status', 'threshold', 'vendor_status', 'status_text' ]
 
-  data1_base = {"device"=>"gar-b11u1-dist","index"=>"7.1.0.0","temperature"=>52,"last_updated"=>1426657712,"description"=>"FPC=> EX4300-48T @ 0/*/*","status"=>0,"threshold"=>nil,"vendor_status"=>nil,"status_text"=>"Unknown"}
-  data2_base = {"device"=>"gar-k11u1-dist","index"=>"1","temperature"=>38,"last_updated"=>1426657935,"description"=>"Chassis Temperature Sensor","status"=>1,"threshold"=>95,"vendor_status"=>1,"status_text"=>"OK"}
+  data1_base = {"device"=>"gar-b11u1-dist","index"=>"7.1.0.0","temperature"=>52,
+                "last_updated"=>1426657712,"description"=>"FPC=> EX4300-48T @ 0/*/*","status"=>0,
+                "threshold"=>nil,"vendor_status"=>nil,"status_text"=>"Unknown"}
+  data2_base = {"device"=>"gar-k11u1-dist","index"=>"1","temperature"=>38,
+                "last_updated"=>1426657935,"description"=>"Chassis Temperature Sensor","status"=>1,
+                "threshold"=>95,"vendor_status"=>1,"status_text"=>"OK"}
+
   data1_decimal = {
     "description"=>"FPC: EX4300-48T @ 0/*/*",
     "temperature"=>"54.2",
@@ -121,7 +126,8 @@ describe Temperature do
       end
 
       it 'should serialize and deserialize' do
-        json = @cpu.to_json
+        json = @temp.to_json
+        expect(JSON.load(json)).to be_a Temperature
         expect(JSON.load(json).to_json).to eql json
       end
 

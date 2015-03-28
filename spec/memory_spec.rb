@@ -117,6 +117,7 @@ describe Memory do
 
       it 'should serialize and deserialize' do
         json = @memory.to_json
+        expect(JSON.load(json)).to be_a Memory
         expect(JSON.load(json).to_json).to eql json
       end
 

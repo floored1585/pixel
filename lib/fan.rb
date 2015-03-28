@@ -72,4 +72,10 @@ class Fan
   end
 
 
+  def self.json_create(json)
+    data = json["data"]
+    Fan.new(device: data['device'], index: data['index']).populate(data)
+  end
+
+
 end

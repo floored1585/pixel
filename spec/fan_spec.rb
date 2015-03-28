@@ -124,6 +124,7 @@ describe Fan do
 
       it 'should serialize and deserialize' do
         json = @fan.to_json
+        expect(JSON.load(json)).to be_a Fan
         expect(JSON.load(json).to_json).to eql json
       end
 

@@ -297,6 +297,7 @@ describe Interface do
 
       it 'should serialize and deserialize' do
         json = @interface.to_json
+        expect(JSON.load(json)).to be_a Interface
         expect(JSON.load(json).to_json).to eql json
       end
 

@@ -15,7 +15,6 @@ module API
 
   def self.post(dst_component, request, rawdata, src_component, task, retry_limit=5)
     url = @settings[dst_component] + request
-    return false if rawdata.empty?
     _execute_request(url, 'POST', src_component, rawdata, task, retry_limit)
   end
 
@@ -25,7 +24,9 @@ module API
 
     begin # Attempt the connection
       if req_type == 'POST'
-        response = HTTP.post(url, :body => rawdata.to_json)
+        # Convert the object to JSON unless it's already a string!
+        rawdata = rawdata.to_json unless rawdata.class == String
+        response = HTTP.post(url, :body => rawdata)
       elsif req_type == 'GET'
         response = HTTP.get(url)
       end

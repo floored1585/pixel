@@ -135,7 +135,7 @@ class Device
     # Read any data passed into populate, and if it's present do not
     # get data from the API later (if JSON data is passed, ONLY use that)
     data = opts['data']
-    data = JSON.load(data.to_json) if data # To allow for raw JSON and already-loaded JSON
+    data = JSON.load(data) if data.class == String # To allow for raw JSON as well as objects
     get_data = true if data == nil
 
     # First get device metadata from pixel API & update instance variables
@@ -256,9 +256,9 @@ class Device
     start = Time.now.to_i
     if API.post('core', '/v2/device', to_json, 'POLLER', 'poll results')
       elapsed = Time.now.to_i - start
-      $LOG.info("POLLER: POST successful for #{devices.keys[0]} (#{elapsed} seconds)")
+      $LOG.info("POLLER: POST successful for #{@name} (#{elapsed} seconds)")
     else
-      $LOG.error("POLLER: POST failed for #{devices.keys[0]} (#{elapsed} seconds); Aborting")
+      $LOG.error("POLLER: POST failed for #{@name}; Aborting")
     end
   end
 

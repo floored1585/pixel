@@ -238,6 +238,18 @@ module Core
   end
 
 
+  def post_device(settings, db, device)
+    $LOG.info("CORE: Received data for #{device.name} from #{device.worker}")
+
+    begin
+      #device.save(db)
+    rescue Sequel::PoolTimeout => e
+      $LOG.error("CORE: SQL error! \n#{e}")
+    end
+
+  end
+
+
   def post_devices(settings, db, devices)
     _validate_devices_post!(devices)
 

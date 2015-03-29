@@ -109,7 +109,7 @@ class Interface
   def populate(data=nil)
 
     # If we weren't passed data, look ourselves up
-    data ||= API.get('core', "/v1/device/#{@device}/interface/#{@index}", 'Interface', 'interface data')
+    data ||= API.get('core', "/v2/device/#{@device}/interface/#{@index}", 'Interface', 'interface data')
     # Return nil if we didn't find any data
     # TODO: Raise an exception instead?
     return nil if data.empty?

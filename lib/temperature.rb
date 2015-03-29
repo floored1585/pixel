@@ -21,7 +21,7 @@ class Temperature
   def populate(data=nil)
 
     # If we weren't passed data, look ourselves up
-    data ||= API.get('core', "/v1/device/#{@device}/temperature/#{@index}", 'Temperature', 'temperature data')
+    data ||= API.get('core', "/v2/device/#{@device}/temperature/#{@index}", 'Temperature', 'temperature data')
     # Return nil if we didn't find any data
     # TODO: Raise an exception instead?
     return nil if data.empty?

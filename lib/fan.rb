@@ -21,7 +21,7 @@ class Fan
   def populate(data=nil)
 
     # If we weren't passed data, look ourselves up
-    data ||= API.get('core', "/v1/device/#{@device}/fan/#{@index}", 'Fan', 'fan data')
+    data ||= API.get('core', "/v2/device/#{@device}/fan/#{@index}", 'Fan', 'fan data')
     # Return nil if we didn't find any data
     # TODO: Raise an exception instead?
     return nil if data.empty?

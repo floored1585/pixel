@@ -75,9 +75,11 @@ describe Device do
       expect(device).to be_a Device
     end
 
-    it 'should return' do
-      device = Device.new('gar-b11u17-acc-g', poll_ip: '172.24.7.54')
-      expect(device).to be_a Device
+    it 'should take the right name' do
+      device1 = Device.new('gar-c11u1-dist', poll_ip: '172.24.7.54')
+      device2 = Device.new('gar-c11u1-dist', poll_ip: '172.24.7.54')
+      expect(device1.name).to eql 'gar-c11u1-dist'
+      expect(device2.name).to eql 'gar-c11u1-dist'
     end
 
   end
@@ -142,23 +144,44 @@ describe Device do
   describe '#poll' do
 
     before :each do
-      @dev_name = Device.new('gar-c11u1-dist')
-      @dev_name_ip = Device.new('gar-c11u1-dist', poll_ip: '172.24.8.240')
     end
 
 
     context 'when newly created with name' do
-      specify { expect(@dev_name.poll(worker: 'test-worker')).to eql nil }
+      dev = Device.new('gar-c11u1-dist')
+
+      specify { expect(dev.poll(worker: 'test-worker')).to eql nil }
     end
 
     context 'when newly created with name and IP' do
-      specify { expect(@dev_name_ip.poll(worker: 'test-worker')).to be_a Device }
-      specify { expect(@dev_name_ip.poll(worker: 'test-worker').interfaces.first).to be_a Interface }
-      specify { expect(@dev_name_ip.poll(worker: 'test-worker').temps.first).to be_a Temperature }
-      specify { expect(@dev_name_ip.poll(worker: 'test-worker').fans.first).to be_a Fan }
-      specify { expect(@dev_name_ip.poll(worker: 'test-worker').psus.first).to be_a PSU }
-      specify { expect(@dev_name_ip.poll(worker: 'test-worker').cpus.first).to be_a CPU }
-      specify { expect(@dev_name_ip.poll(worker: 'test-worker').memory.first).to be_a Memory }
+      dev = Device.new('gar-c11u1-dist', poll_ip: '172.24.8.240')
+      dev.poll(worker: 'test-worker')
+
+      it 'should return a Device object' do
+        expect(dev).to be_a Device
+      end
+      it 'should have Interface objects' do
+        expect(dev.interfaces.first).to be_a Interface
+      end
+      it 'should have Temperature objects' do
+        expect(dev.temps.first).to be_a Temperature
+      end
+      it 'should have Fan objects' do
+        expect(dev.fans.first).to be_a Fan
+      end
+      it 'should have PSU objects' do
+        expect(dev.psus.first).to be_a PSU
+      end
+      it 'should have CPU objects' do
+        expect(dev.cpus.first).to be_a CPU
+      end
+      it 'should have Memory objects' do
+        expect(dev.memory.first).to be_a Memory
+      end
+      it 'should know the worker' do
+        expect(dev.worker).to eql 'test-worker'
+      end
+
     end
 
     test_devices.each do |label, device|
@@ -327,7 +350,7 @@ describe Device do
 
   # True integration tests
   describe '#poll' do
-    #c2960 = Device.new(test_devices['Cisco 2960']).populate.poll(worker: 't')
+    c2960 = Device.new(test_devices['Cisco 2960']).populate.poll(worker: 't')
     #c4948 = Device.new(test_devices['Cisco 4948']).populate.poll(worker: 't')
     #cumulus = Device.new(test_devices['Cumulus']).populate.poll(worker: 't')
     #ex = Device.new(test_devices['Juniper EX']).populate.poll(worker: 't')

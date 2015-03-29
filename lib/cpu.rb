@@ -21,7 +21,7 @@ class CPU
   def populate(data=nil)
 
     # If we weren't passed data, look ourselves up
-    data ||= API.get('core', "/v1/device/#{@device}/cpu/#{@index}", 'CPU', 'cpu data')
+    data ||= API.get('core', "/v2/device/#{@device}/cpu/#{@index}", 'CPU', 'cpu data')
     # Return nil if we didn't find any data
     # TODO: Raise an exception instead?
     return nil if data.empty?

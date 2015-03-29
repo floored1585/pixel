@@ -336,18 +336,6 @@ module Poller
   end
 
 
-  def self._post_data(devices)
-    start = Time.now.to_i
-    if API.post('core', '/v1/devices', devices, 'POLLER', 'poll results')
-      elapsed = Time.now.to_i - start
-      $LOG.info("POLLER: POST successful for #{devices.keys[0]} (#{elapsed} seconds)")
-    else
-      $LOG.error("POLLER: POST failed for #{devices.keys[0]} (#{elapsed} seconds); Aborting")
-    end
-    abort
-  end
-
-
   def self._delete_interfaces(data)
     device = data.keys[0]
     count = data[device][:interface].length

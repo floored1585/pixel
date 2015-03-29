@@ -1,4 +1,5 @@
 require_relative 'configfile'
+require 'net/http'
 require 'http'
 require 'json'
 
@@ -24,7 +25,7 @@ module API
 
     begin # Attempt the connection
       if req_type == 'POST'
-        response = HTTP.post(url, :body => JSON.generate(rawdata))
+        response = HTTP.post(url, :body => rawdata.to_json)
       elsif req_type == 'GET'
         response = HTTP.get(url)
       end

@@ -71,6 +71,14 @@ class Device
   end
 
 
+  def name
+    @name
+  end
+  def worker
+    @worker
+  end
+
+
   def get_interface(name: nil, index: nil)
     # Return nil unless either a name or index was passed
     return nil unless name || index
@@ -83,7 +91,7 @@ class Device
 
 
   def poll(worker:, poll_ip: nil, poll_cfg: nil)
-    @new_worker = worker
+    @worker = worker
 
     # If poll_ip or poll_cfg were passed in, update them
     @poll_ip = poll_ip if poll_ip
@@ -122,10 +130,6 @@ class Device
   end
 
 
-  def save
-  end
-
-
   def populate(opts={})
 
     # Read any data passed into populate, and if it's present do not
@@ -135,7 +139,7 @@ class Device
     get_data = true if data == nil
 
     # First get device metadata from pixel API & update instance variables
-    data ||= API.get('core', "/v1/device/#{@name}", 'Device', 'device data')
+    data ||= API.get('core', "/v2/device/#{@name}", 'Device', 'device data')
 
     # These will all be nil unless data was passed into populate via opts
     @interfaces = data['interfaces'] || {}
@@ -174,7 +178,7 @@ class Device
     # Fill in interfaces
     if get_data && (opts[:interfaces] || opts[:all])
       @interfaces = {}
-      interfaces = API.get('core', "/v1/device/#{@name}/interfaces", 'Device', 'interface data') 
+      interfaces = API.get('core', "/v2/device/#{@name}/interfaces", 'Device', 'interface data') 
       interfaces.each do |interface_data|
         # eliminate the 'data' key when building object from json
         interface_data = interface_data.delete('data') || interface_data
@@ -186,7 +190,7 @@ class Device
     # Fill in CPUs
     if get_data && (opts[:cpus] || opts[:all])
       @cpus = {}
-      cpus = API.get('core', "/v1/device/#{@name}/cpus", 'Device', 'cpu data')
+      cpus = API.get('core', "/v2/device/#{@name}/cpus", 'Device', 'cpu data')
       cpus.each do |cpu_data|
         # eliminate the 'data' key when building object from json
         cpu_data = cpu_data.delete('data') || cpu_data
@@ -198,7 +202,7 @@ class Device
     # Fill in memory
     if get_data && (opts[:memory] || opts[:all])
       @memory = {}
-      memory = API.get('core', "/v1/device/#{@name}/memory", 'Device', 'memory data')
+      memory = API.get('core', "/v2/device/#{@name}/memory", 'Device', 'memory data')
       memory.each do |memory_data|
         # eliminate the 'data' key when building object from json
         memory_data = memory_data.delete('data') || memory_data
@@ -210,7 +214,7 @@ class Device
     # Fill in temperatures
     if get_data && (opts[:temperatures] || opts[:all])
       @temps = {}
-      temps = API.get('core', "/v1/device/#{@name}/temperatures", 'Device', 'temperature data')
+      temps = API.get('core', "/v2/device/#{@name}/temperatures", 'Device', 'temperature data')
       temps.each do |temperature_data|
         # eliminate the 'data' key when building object from json
         temperature_data = temperature_data.delete('data') || temperature_data
@@ -222,7 +226,7 @@ class Device
     # Fill in PSUs
     if get_data && (opts[:psus] || opts[:all])
       @psus = {}
-      psus = API.get('core', "/v1/device/#{@name}/psus", 'Device', 'psu data')
+      psus = API.get('core', "/v2/device/#{@name}/psus", 'Device', 'psu data')
       psus.each do |psu_data|
         # eliminate the 'data' key when building object from json
         psu_data = psu_data.delete('data') || psu_data
@@ -234,7 +238,7 @@ class Device
     # Fill in fans
     if get_data && (opts[:fans] || opts[:all])
       @fans = {}
-      fans = API.get('core', "/v1/device/#{@name}/fans", 'Device', 'fan data')
+      fans = API.get('core', "/v2/device/#{@name}/fans", 'Device', 'fan data')
       fans.each do |fan_data|
         # eliminate the 'data' key when building object from json
         fan_data = fan_data.delete('data') || fan_data
@@ -245,6 +249,21 @@ class Device
 
     return self
 
+  end
+
+
+  def send
+    start = Time.now.to_i
+    if API.post('core', '/v2/device', to_json, 'POLLER', 'poll results')
+      elapsed = Time.now.to_i - start
+      $LOG.info("POLLER: POST successful for #{devices.keys[0]} (#{elapsed} seconds)")
+    else
+      $LOG.error("POLLER: POST failed for #{devices.keys[0]} (#{elapsed} seconds); Aborting")
+    end
+  end
+
+
+  def save
   end
 
 

@@ -90,7 +90,7 @@ class Device
   end
 
 
-  def poll(worker:, poll_ip: nil, poll_cfg: nil)
+  def poll(worker:, poll_ip: nil, poll_cfg: nil, components: [ :all ])
     @worker = worker
 
     # If poll_ip or poll_cfg were passed in, update them
@@ -107,17 +107,17 @@ class Device
     begin
       session = _open_poll_session
 
-      # Poll the device
+      # Poll the device components that were requested (component defaults to :all)
       _poll_device_info(session)
-      _poll_interfaces(session)
-      _poll_temperatures(session)
-      _poll_memory(session)
-      _poll_cpus(session)
-      _poll_psus(session)
-      _poll_fans(session)
+      _poll_interfaces(session) if components.include? :all || components.include? :interfaces
+      _poll_temperatures(session) if components.include? :all || components.include? :temperatures
+      _poll_memory(session) if components.include? :all || components.include? :memory
+      _poll_cpus(session) if components.include? :all || components.include? :cpus
+      _poll_psus(session) if components.include? :all || components.include? :psus
+      _poll_fans(session) if components.include? :all || components.include? :fans
 
       # Post-processing
-      _process_interfaces
+      _process_interfaces if components.include? :all || components.include? :interfaces
 
     rescue RuntimeError, ArgumentError => e
       $LOG.error("POLLER: Error encountered while polling #{@name}: #{e}")
@@ -263,7 +263,17 @@ class Device
   end
 
 
-  def save
+  def save(db)
+
+    # Remove keys from the from_json output that are not part of the device table
+    not_device_keys = %w( interfaces memory temps cpus psus fans )
+    device_update = JSON.parse(self.to_json)['data'].delete_if { |k,v| not_device_keys.include?(k) }
+
+    # Update the device table
+    #existing = db[:device].where(:device => device)
+    #if existing.update(device_update) != 1
+    #  $LOG.error("Problem updating device table for #{device}")
+    #end
   end
 
 

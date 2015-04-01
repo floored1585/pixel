@@ -31,12 +31,13 @@ class PSU
     @status = data['status'].to_i_if_numeric
     @vendor_status = data['vendor_status'].to_i_if_numeric
     @status_text = data['status_text']
+    @worker = data['worker']
 
     return self
   end
 
 
-  def update(data)
+  def update(data, worker:)
 
     # TODO: Data validation? See mac class for example
 
@@ -45,12 +46,14 @@ class PSU
     new_status = data['status'].to_i_if_numeric
     new_vendor_status = data['vendor_status'].to_i_if_numeric
     new_status_text = data['status_text']
+    new_worker = worker
 
     @description = new_description
     @last_updated = current_time
     @status = new_status
     @vendor_status = new_vendor_status
     @status_text = new_status_text
+    @worker = new_worker
 
     return self
   end
@@ -67,6 +70,7 @@ class PSU
         "status" => @status,
         "vendor_status" => @vendor_status,
         "status_text" => @status_text,
+        "worker" => @worker,
       }
     }.to_json(*a)
   end

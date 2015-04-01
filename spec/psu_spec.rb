@@ -3,7 +3,7 @@ require_relative '../lib/psu'
 describe PSU do
 
   json_keys = [ 'device', 'index', 'description', 'last_updated',
-                'status', 'vendor_status', 'status_text' ]
+                'status', 'vendor_status', 'status_text', 'worker' ]
 
   data1_base = {"device" => "gar-b11u1-dist", "index" => "4.1.1.1", "description" => "PSU 0 @ 0/0/0", "last_updated" => 1427164532, "status" => 1, "vendor_status" => 2, "status_text" => "OK"}
   data2_base = {"device" => "gar-b11u17-acc-g", "index" => "1004", "description" => "Switch#1,  PSU#1", "last_updated" => 1427164623, "status" => 1, "vendor_status" => 1, "status_text" => "OK"}
@@ -82,7 +82,7 @@ describe PSU do
 
 
       it 'should return a PSU object' do
-        expect(@psu.update(data1_update_ok)).to be_a PSU
+        expect(@psu.update(data1_update_ok, worker: 'test')).to be_a PSU
       end
 
     end
@@ -98,9 +98,9 @@ describe PSU do
 
 
       it 'should return a PSU object' do
-        expect(@psu.update(data1_update_ok)).to be_a PSU
-        expect(@psu2.update(data2_update_ok)).to be_a PSU
-        expect(@psu3.update(data3_update_ok)).to be_a PSU
+        expect(@psu.update(data1_update_ok, worker: 'test')).to be_a PSU
+        expect(@psu2.update(data2_update_ok, worker: 'test')).to be_a PSU
+        expect(@psu3.update(data3_update_ok, worker: 'test')).to be_a PSU
       end
 
     end

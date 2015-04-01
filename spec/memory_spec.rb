@@ -2,7 +2,7 @@ require_relative '../lib/memory'
 
 describe Memory do
 
-  json_keys = [ 'device', 'index', 'util', 'description', 'last_updated' ]
+  json_keys = [ 'device', 'index', 'util', 'description', 'last_updated', 'worker' ]
 
   data1_base = { "device" => "irv-i1u1-dist", "index" => "1", "util" => 8.0, "description" => "Linecard(slot 1)", "last_updated" => 1427224290 }
   data2_base = { "device" => "gar-b11u1-dist", "index" => "7.2.0.0", "util" => 54.0, "description" => "FPC: EX4300-48T @ 1/*/*", "last_updated" => 1427224144 }
@@ -76,7 +76,7 @@ describe Memory do
 
 
       it 'should return a Memory object' do
-        expect(@memory.update(data1_update_ok)).to be_a Memory
+        expect(@memory.update(data1_update_ok, worker: 'test')).to be_a Memory
       end
 
     end
@@ -92,9 +92,9 @@ describe Memory do
 
 
       it 'should return a Memory object' do
-        expect(@memory.update(data1_update_ok)).to be_a Memory
-        expect(@memory2.update(data2_update_ok)).to be_a Memory
-        expect(@memory3.update(data3_update_ok)).to be_a Memory
+        expect(@memory.update(data1_update_ok, worker: 'test')).to be_a Memory
+        expect(@memory2.update(data2_update_ok, worker: 'test')).to be_a Memory
+        expect(@memory3.update(data3_update_ok, worker: 'test')).to be_a Memory
       end
 
     end

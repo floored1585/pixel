@@ -33,6 +33,7 @@ describe Interface do
     'bps_in_util',
     'bps_out_util',
     'if_type',
+    'worker',
   ]
 
   # Up/Up
@@ -156,7 +157,7 @@ describe Interface do
     end
 
     describe '#update' do
-      specify { expect(@int.update(interface_1_update)).to equal @int }
+      specify { expect(@int.update(interface_1_update, worker: 'test')).to equal @int }
     end
 
     describe '#write_to_influxdb' do
@@ -261,18 +262,18 @@ describe Interface do
     describe '#update' do
       # The interface_1 and interface_1_update are specicially crated to give these
       #   outputs, ensuring accurate calcuation of bps and bps_util
-      specify { expect(@int1.update(interface_1_update)).to equal @int1 }
-      specify { expect(@int1.update(interface_1_update).bps_in_util).to eql 10.0 }
-      specify { expect(@int1.update(interface_1_update).bps_out_util).to eql 20.0 }
-      specify { expect(@int1.update(interface_1_update).bps_in).to eql 999_999_999 }
-      specify { expect(@int1.update(interface_1_update).bps_out).to eql 1_999_999_999 }
-      specify { expect(@int2.update(interface_2_update)).to equal @int2 }
-      specify { expect(@int2.update(interface_2_update).bps_in_util).to eql 0.0 }
-      specify { expect(@int2.update(interface_2_update).bps_out_util).to eql 0.0 }
-      specify { expect(@int3.update(interface_3_update)).to equal @int3 }
-      specify { expect(@int4.update(interface_4_update)).to equal @int4 }
-      specify { expect(@int4.update(interface_4_update).bps_in_util).to eql 0.0 }
-      specify { expect(@int4.update(interface_4_update).bps_out_util).to eql 0.0 }
+      specify { expect(@int1.update(interface_1_update, worker: 'test')).to equal @int1 }
+      specify { expect(@int1.update(interface_1_update, worker: 'test').bps_in_util).to eql 10.0 }
+      specify { expect(@int1.update(interface_1_update, worker: 'test').bps_out_util).to eql 20.0 }
+      specify { expect(@int1.update(interface_1_update, worker: 'test').bps_in).to eql 999_999_999 }
+      specify { expect(@int1.update(interface_1_update, worker: 'test').bps_out).to eql 1_999_999_999 }
+      specify { expect(@int2.update(interface_2_update, worker: 'test')).to equal @int2 }
+      specify { expect(@int2.update(interface_2_update, worker: 'test').bps_in_util).to eql 0.0 }
+      specify { expect(@int2.update(interface_2_update, worker: 'test').bps_out_util).to eql 0.0 }
+      specify { expect(@int3.update(interface_3_update, worker: 'test')).to equal @int3 }
+      specify { expect(@int4.update(interface_4_update, worker: 'test')).to equal @int4 }
+      specify { expect(@int4.update(interface_4_update, worker: 'test').bps_in_util).to eql 0.0 }
+      specify { expect(@int4.update(interface_4_update, worker: 'test').bps_out_util).to eql 0.0 }
     end
 
     describe '#write_to_influxdb' do

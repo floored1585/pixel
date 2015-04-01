@@ -29,22 +29,25 @@ class CPU
     @util = data['util'].to_i_if_numeric
     @description = data['description']
     @last_updated = data['last_updated'].to_i_if_numeric
+    @worker = data['worker']
 
     return self
   end
 
 
-  def update(data)
+  def update(data, worker:)
 
     # TODO: Data validation? See mac class for example
 
     new_util = data['util'].to_i
     new_description = data['description'] || "CPU #{@index}"
     current_time = Time.now.to_i
+    new_worker = worker
 
     @util = new_util
     @description = new_description
     @last_updated = current_time
+    @worker = new_worker
 
     return self
   end
@@ -64,6 +67,7 @@ class CPU
         "util" => @util,
         "description" => @description,
         "last_updated" => @last_updated,
+        "worker" => @worker,
       }
     }.to_json(*a)
   end

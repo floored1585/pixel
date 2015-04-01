@@ -3,7 +3,7 @@ require_relative '../lib/temperature'
 describe Temperature do
 
   json_keys = [ 'device', 'index', 'temperature', 'last_updated', 'description',
-                'status', 'threshold', 'vendor_status', 'status_text' ]
+                'status', 'threshold', 'vendor_status', 'status_text', 'worker' ]
 
   data1_base = {"device"=>"gar-b11u1-dist","index"=>"7.1.0.0","temperature"=>52,
                 "last_updated"=>1426657712,"description"=>"FPC=> EX4300-48T @ 0/*/*","status"=>0,
@@ -88,7 +88,7 @@ describe Temperature do
 
 
       it 'should return a Temperature object' do
-        expect(@temp.update(data1_update_ok)).to be_a Temperature
+        expect(@temp.update(data1_update_ok, worker: 'test')).to be_a Temperature
       end
 
     end
@@ -103,8 +103,8 @@ describe Temperature do
 
 
       it 'should return a Temperature object' do
-        expect(@temp.update(data1_update_ok)).to be_a Temperature
-        expect(@temp2.update(data2_update_ok)).to be_a Temperature
+        expect(@temp.update(data1_update_ok, worker: 'test')).to be_a Temperature
+        expect(@temp2.update(data2_update_ok, worker: 'test')).to be_a Temperature
       end
 
     end

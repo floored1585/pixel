@@ -3,7 +3,7 @@ require_relative '../lib/fan'
 describe Fan do
 
   json_keys = [ 'device', 'index', 'description', 'last_updated',
-                'status', 'vendor_status', 'status_text' ]
+                'status', 'vendor_status', 'status_text', 'worker' ]
 
   data1_base = {"device" => "gar-b11u1-dist", "index" => "4.1.1.1", "description" => "FAN 0 @ 0/0/0", "last_updated" => 1427164532, "status" => 1, "vendor_status" => 2, "status_text" => "OK"}
   data2_base = {"device" => "gar-b11u17-acc-g", "index" => "1004", "description" => "Switch#1,  Fan#1", "last_updated" => 1427164623, "status" => 1, "vendor_status" => 1, "status_text" => "OK"}
@@ -83,7 +83,7 @@ describe Fan do
 
 
       it 'should return a Fan object' do
-        expect(@fan.update(data1_update_ok)).to be_a Fan
+        expect(@fan.update(data1_update_ok, worker: 'test')).to be_a Fan
       end
 
     end
@@ -99,9 +99,9 @@ describe Fan do
 
 
       it 'should return a Fan object' do
-        expect(@fan.update(data1_update_ok)).to be_a Fan
-        expect(@fan2.update(data2_update_ok)).to be_a Fan
-        expect(@fan3.update(data3_update_ok)).to be_a Fan
+        expect(@fan.update(data1_update_ok, worker: 'test')).to be_a Fan
+        expect(@fan2.update(data2_update_ok, worker: 'test')).to be_a Fan
+        expect(@fan3.update(data3_update_ok, worker: 'test')).to be_a Fan
       end
 
     end

@@ -33,12 +33,13 @@ class Temperature
     @threshold = data['threshold'].to_i_if_numeric
     @vendor_status = data['vendor_status'].to_i_if_numeric
     @status_text = data['status_text']
+    @worker = data['worker']
 
     return self
   end
 
 
-  def update(data)
+  def update(data, worker:)
 
     # TODO: Data validation? See mac class for example
 
@@ -49,6 +50,7 @@ class Temperature
     new_threshold = data['threshold'].to_i_if_numeric
     new_vendor_status = data['vendor_status'].to_i_if_numeric
     new_status_text = data['status_text']
+    new_worker = worker
 
     @temperature = new_temperature
     @last_updated = current_time
@@ -57,6 +59,7 @@ class Temperature
     @threshold = new_threshold
     @vendor_status = new_vendor_status
     @status_text = new_status_text
+    @worker = new_worker
 
     return self
   end
@@ -75,6 +78,7 @@ class Temperature
         "threshold" => @threshold,
         "vendor_status" => @vendor_status,
         "status_text" => @status_text,
+        "worker" => @worker,
       }
     }.to_json(*a)
   end

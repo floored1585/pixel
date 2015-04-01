@@ -154,32 +154,241 @@ describe Device do
     end
 
     context 'when newly created with name and IP' do
-      dev = Device.new('gar-c11u1-dist', poll_ip: '172.24.8.240')
-      dev.poll(worker: 'test-worker')
+      dev = Device.new('irv-i1u1-dist', poll_ip: '208.113.142.180')
+      dev_device = Device.new('irv-i1u1-dist', poll_ip: '208.113.142.180')
+      dev_interfaces = Device.new('irv-i1u1-dist', poll_ip: '208.113.142.180')
+      dev_temperatures = Device.new('irv-i1u1-dist', poll_ip: '208.113.142.180')
+      dev_fans = Device.new('irv-i1u1-dist', poll_ip: '208.113.142.180')
+      dev_psus = Device.new('irv-i1u1-dist', poll_ip: '208.113.142.180')
+      dev_cpus = Device.new('irv-i1u1-dist', poll_ip: '208.113.142.180')
+      dev_memory = Device.new('irv-i1u1-dist', poll_ip: '208.113.142.180')
+      dev_all = Device.new('irv-i1u1-dist', poll_ip: '208.113.142.180')
 
-      it 'should return a Device object' do
-        expect(dev).to be_a Device
+      dev.poll(worker: 'test-worker')
+      dev_device.poll(worker: 'test-worker', components: [])
+      dev_interfaces.poll(worker: 'test-worker', components: [:interfaces])
+      dev_temperatures.poll(worker: 'test-worker', components: [:temperatures])
+      dev_fans.poll(worker: 'test-worker', components: [:fans])
+      dev_psus.poll(worker: 'test-worker', components: [:psus])
+      dev_cpus.poll(worker: 'test-worker', components: [:cpus])
+      dev_memory.poll(worker: 'test-worker', components: [:memory])
+      dev_all.poll(worker: 'test-worker', components: [:all])
+
+      context 'and when all components polled' do
+        it 'should return a Device object' do
+          expect(dev).to be_a Device
+          expect(dev_all).to be_a Device
+        end
+        it 'should have Interface objects' do
+          expect(dev.interfaces.first).to be_a Interface
+          expect(dev_all.interfaces.first).to be_a Interface
+        end
+        it 'should have Temperature objects' do
+          expect(dev.temps.first).to be_a Temperature
+          expect(dev_all.temps.first).to be_a Temperature
+        end
+        it 'should have Fan objects' do
+          expect(dev.fans.first).to be_a Fan
+          expect(dev_all.fans.first).to be_a Fan
+        end
+        it 'should have PSU objects' do
+          expect(dev.psus.first).to be_a PSU
+          expect(dev_all.psus.first).to be_a PSU
+        end
+        it 'should have CPU objects' do
+          expect(dev.cpus.first).to be_a CPU
+          expect(dev_all.cpus.first).to be_a CPU
+        end
+        it 'should have Memory objects' do
+          expect(dev.memory.first).to be_a Memory
+          expect(dev_all.memory.first).to be_a Memory
+        end
+        it 'should know the worker' do
+          expect(dev.worker).to eql 'test-worker'
+          expect(dev_all.worker).to eql 'test-worker'
+        end
       end
-      it 'should have Interface objects' do
-        expect(dev.interfaces.first).to be_a Interface
+      context 'and when an empty components array passed' do
+        it 'should return a Device object' do
+          expect(dev_device).to be_a Device
+        end
+        it 'should not have Interface objects' do
+          expect(dev_device.interfaces.first).to eql nil
+        end
+        it 'should not have Temperature objects' do
+          expect(dev_device.temps.first).to eql nil
+        end
+        it 'should not have Fan objects' do
+          expect(dev_device.fans.first).to eql nil
+        end
+        it 'should not have PSU objects' do
+          expect(dev_device.psus.first).to eql nil
+        end
+        it 'should not have CPU objects' do
+          expect(dev_device.cpus.first).to eql nil
+        end
+        it 'should not have Memory objects' do
+          expect(dev_device.memory.first).to eql nil
+        end
+        it 'should know the worker' do
+          expect(dev_device.worker).to eql 'test-worker'
+        end
       end
-      it 'should have Temperature objects' do
-        expect(dev.temps.first).to be_a Temperature
+      context 'and when only interfaces polled' do
+        it 'should return a Device object' do
+          expect(dev_interfaces).to be_a Device
+        end
+        it 'should have Interface objects' do
+          expect(dev_interfaces.interfaces.first).to be_a Interface
+        end
+        it 'should not have Temperature objects' do
+          expect(dev_interfaces.temps.first).to eql nil
+        end
+        it 'should not have Fan objects' do
+          expect(dev_interfaces.fans.first).to eql nil
+        end
+        it 'should not have PSU objects' do
+          expect(dev_interfaces.psus.first).to eql nil
+        end
+        it 'should not have CPU objects' do
+          expect(dev_interfaces.cpus.first).to eql nil
+        end
+        it 'should not have Memory objects' do
+          expect(dev_interfaces.memory.first).to eql nil
+        end
+        it 'should know the worker' do
+          expect(dev_interfaces.worker).to eql 'test-worker'
+        end
       end
-      it 'should have Fan objects' do
-        expect(dev.fans.first).to be_a Fan
+      context 'and when only temperatures polled' do
+        it 'should return a Device object' do
+          expect(dev_temperatures).to be_a Device
+        end
+        it 'should not have Interface objects' do
+          expect(dev_temperatures.interfaces.first).to eql nil
+        end
+        it 'should have Temperature objects' do
+          expect(dev_temperatures.temps.first).to be_a Temperature
+        end
+        it 'should not have Fan objects' do
+          expect(dev_temperatures.fans.first).to eql nil
+        end
+        it 'should not have PSU objects' do
+          expect(dev_temperatures.psus.first).to eql nil
+        end
+        it 'should not have CPU objects' do
+          expect(dev_temperatures.cpus.first).to eql nil
+        end
+        it 'should not have Memory objects' do
+          expect(dev_temperatures.memory.first).to eql nil
+        end
+        it 'should know the worker' do
+          expect(dev_temperatures.worker).to eql 'test-worker'
+        end
       end
-      it 'should have PSU objects' do
-        expect(dev.psus.first).to be_a PSU
+      context 'and when only fans polled' do
+        it 'should return a Device object' do
+          expect(dev_fans).to be_a Device
+        end
+        it 'should not have Interface objects' do
+          expect(dev_fans.interfaces.first).to eql nil
+        end
+        it 'should not have Temperature objects' do
+          expect(dev_fans.temps.first).to eql nil
+        end
+        it 'should have Fan objects' do
+          expect(dev_fans.fans.first).to be_a Fan
+        end
+        it 'should not have PSU objects' do
+          expect(dev_fans.psus.first).to eql nil
+        end
+        it 'should not have CPU objects' do
+          expect(dev_fans.cpus.first).to eql nil
+        end
+        it 'should not have Memory objects' do
+          expect(dev_fans.memory.first).to eql nil
+        end
+        it 'should know the worker' do
+          expect(dev_fans.worker).to eql 'test-worker'
+        end
       end
-      it 'should have CPU objects' do
-        expect(dev.cpus.first).to be_a CPU
+      context 'and when only psus polled' do
+        it 'should return a Device object' do
+          expect(dev_psus).to be_a Device
+        end
+        it 'should not have Interface objects' do
+          expect(dev_psus.interfaces.first).to eql nil
+        end
+        it 'should not have Temperature objects' do
+          expect(dev_psus.temps.first).to eql nil
+        end
+        it 'should not have Fan objects' do
+          expect(dev_psus.fans.first).to eql nil
+        end
+        it 'should have PSU objects' do
+          expect(dev_psus.psus.first).to be_a PSU
+        end
+        it 'should not have CPU objects' do
+          expect(dev_psus.cpus.first).to eql nil
+        end
+        it 'should not have Memory objects' do
+          expect(dev_psus.memory.first).to eql nil
+        end
+        it 'should know the worker' do
+          expect(dev_psus.worker).to eql 'test-worker'
+        end
       end
-      it 'should have Memory objects' do
-        expect(dev.memory.first).to be_a Memory
+      context 'and when only cpus polled' do
+        it 'should return a Device object' do
+          expect(dev_cpus).to be_a Device
+        end
+        it 'should not have Interface objects' do
+          expect(dev_cpus.interfaces.first).to eql nil
+        end
+        it 'should not have Temperature objects' do
+          expect(dev_cpus.temps.first).to eql nil
+        end
+        it 'should not have Fan objects' do
+          expect(dev_cpus.fans.first).to eql nil
+        end
+        it 'should not have PSU objects' do
+          expect(dev_cpus.psus.first).to eql nil
+        end
+        it 'should have CPU objects' do
+          expect(dev_cpus.cpus.first).to be_a CPU
+        end
+        it 'should not have Memory objects' do
+          expect(dev_cpus.memory.first).to eql nil
+        end
+        it 'should know the worker' do
+          expect(dev_cpus.worker).to eql 'test-worker'
+        end
       end
-      it 'should know the worker' do
-        expect(dev.worker).to eql 'test-worker'
+      context 'and when only memory polled' do
+        it 'should return a Device object' do
+          expect(dev_memory).to be_a Device
+        end
+        it 'should not have Interface objects' do
+          expect(dev_memory.interfaces.first).to eql nil
+        end
+        it 'should not have Temperature objects' do
+          expect(dev_memory.temps.first).to eql nil
+        end
+        it 'should not have Fan objects' do
+          expect(dev_memory.fans.first).to eql nil
+        end
+        it 'should not have PSU objects' do
+          expect(dev_memory.psus.first).to eql nil
+        end
+        it 'should not have CPU objects' do
+          expect(dev_memory.cpus.first).to eql nil
+        end
+        it 'should have Memory objects' do
+          expect(dev_memory.memory.first).to be_a Memory
+        end
+        it 'should know the worker' do
+          expect(dev_memory.worker).to eql 'test-worker'
+        end
       end
 
     end

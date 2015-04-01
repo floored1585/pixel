@@ -142,13 +142,14 @@ class Interface
     @bps_in_util = data['bps_in_util'].to_f if data['bps_in_util']
     @bps_out_util = data['bps_out_util'].to_f if data['bps_in_util']
     @type = data['if_type']
+    @worker = data['worker']
 
     return self
 
   end
 
 
-  def update(data)
+  def update(data, worker:)
     # Save the data we need for deltas as new variables
     current_time = Time.now.to_i
     new_name = data['if_name']
@@ -165,6 +166,7 @@ class Interface
     new_in_errors = data['if_in_errors'].to_i_if_numeric
     new_out_discards = data['if_out_discards'].to_i_if_numeric
     new_out_errors = data['if_out_errors'].to_i_if_numeric
+    new_worker = data['worker']
 
     # Determine interface type, by capturing the part of the alias before __ or [
     if type_match = new_alias.match(/^([a-z]+)(?:__|\[)/)
@@ -229,6 +231,7 @@ class Interface
     @in_errors = new_in_errors
     @out_discards = new_out_discards
     @out_errors = new_out_errors
+    @worker = new_worker
 
     _calculate_utilization
 
@@ -276,6 +279,7 @@ class Interface
         "bps_in_util" => @bps_in_util,
         "bps_out_util" => @bps_out_util,
         "if_type" => @type,
+        "worker" => @worker,
       }
     }.to_json(*a)
   end

@@ -109,15 +109,15 @@ class Device
 
       # Poll the device components that were requested (component defaults to :all)
       _poll_device_info(session)
-      _poll_interfaces(session) if components.include? :all || components.include? :interfaces
-      _poll_temperatures(session) if components.include? :all || components.include? :temperatures
-      _poll_memory(session) if components.include? :all || components.include? :memory
-      _poll_cpus(session) if components.include? :all || components.include? :cpus
-      _poll_psus(session) if components.include? :all || components.include? :psus
-      _poll_fans(session) if components.include? :all || components.include? :fans
+      _poll_interfaces(session) if components.include?(:all) || components.include?(:interfaces)
+      _poll_temperatures(session) if components.include?(:all) || components.include?(:temperatures)
+      _poll_memory(session) if components.include?(:all) || components.include?(:memory)
+      _poll_cpus(session) if components.include?(:all) || components.include?(:cpus)
+      _poll_psus(session) if components.include?(:all) || components.include?(:psus)
+      _poll_fans(session) if components.include?(:all) || components.include?(:fans)
 
       # Post-processing
-      _process_interfaces if components.include? :all || components.include? :interfaces
+      _process_interfaces if components.include?(:all) || components.include?(:interfaces)
 
     rescue RuntimeError, ArgumentError => e
       $LOG.error("POLLER: Error encountered while polling #{@name}: #{e}")
@@ -248,7 +248,6 @@ class Device
     end
 
     return self
-
   end
 
 
@@ -260,6 +259,8 @@ class Device
     else
       $LOG.error("POLLER: POST failed for #{@name}; Aborting")
     end
+
+    return self
   end
 
 
@@ -270,10 +271,19 @@ class Device
     device_update = JSON.parse(self.to_json)['data'].delete_if { |k,v| not_device_keys.include?(k) }
 
     # Update the device table
-    #existing = db[:device].where(:device => device)
-    #if existing.update(device_update) != 1
-    #  $LOG.error("Problem updating device table for #{device}")
-    #end
+    existing = db[:device].where(:device => device)
+    if existing.update(device_update) != 1
+      $LOG.error("Problem updating device table for #{device}")
+    end
+
+    @interfaces.each { |index, interface| interface.save(db) }
+    @memory.each { |index, memory| memory.save(db) }
+    @temps.each { |index, temp| temp.save(db) }
+    @cpus.each { |index, cpu| cpu.save(db) }
+    @psus.each { |index, psu| psu.save(db) }
+    @fans.each { |index, fan| fan.save(db) }
+
+    return self
   end
 
 
@@ -309,7 +319,6 @@ class Device
         'fans' => @fans,
       }
     }.to_json(*a)
-
   end
 
 
@@ -340,7 +349,7 @@ class Device
       else
         # If we don't know what type of device this is:
         $LOG.warn("POLLER: Unknown device at #{ip}: #{@new_sys_descr}")
-        @new_vendor = 'Unknown'
+                  @new_vendor = 'Unknown'
       end
 
       # Check for the existence of a regex for extracting sw/version info
@@ -394,12 +403,12 @@ class Device
     session.walk(@poll_cfg[:oids][:general].keys) do |row|
       row.each do |vb|
         oid_text = @poll_cfg[:oids][:general][vb.name.to_str.gsub(/\.[0-9]+$/,'')]
-        if_numericndex = vb.name.to_str[/[0-9]+$/].to_i
-        if_table[if_numericndex] ||= {}
-        if_table[if_numericndex][oid_text] = vb.value.to_s
+        if_index = vb.name.to_str[/[0-9]+$/].to_i
+        if_table[if_index] ||= {}
+        if_table[if_index][oid_text] = vb.value.to_s
         # The following line removes ' characters from the beginning
         #   and end of aliases (Linux does this)
-        #if_table[if_numericndex][oid_text].gsub!(/^'|'$/,'') if oid_text == 'if_alias'
+        #if_table[if_index][oid_text].gsub!(/^'|'$/,'') if oid_text == 'if_alias'
       end
     end
 
@@ -407,10 +416,10 @@ class Device
       # Don't create the interface unless it has an interesting alias or an interesting name
       next unless (
         oids['if_alias'] =~ @poll_cfg[:interesting_alias] ||
-        oids['if_name'] =~ @poll_cfg[:interesting_names[@vendor]]
+        oids['if_name'] =~ @poll_cfg[:interesting_names][@vendor]
       )
       @interfaces[index] ||= Interface.new(device: @name, index: index)
-      @interfaces[index].update(oids) if oids && !oids.empty?
+      @interfaces[index].update(oids, worker: @worker) if oids && !oids.empty?
     end
 
   end
@@ -459,7 +468,7 @@ class Device
     # Update temperature values
     temp_table.each do |index, oids|
       @temps[index] ||= Temperature.new(device: @name, index: index)
-      @temps[index].update(oids) if oids && !oids.empty?
+      @temps[index].update(oids, worker: @worker) if oids && !oids.empty?
     end
 
   end
@@ -515,7 +524,7 @@ class Device
       next if vendor_cfg['mem_list_regex'] && !(vendor_cfg['mem_list_regex'] =~ index)
 
       @memory[index] ||= Memory.new(device: @name, index: index)
-      @memory[index].update(oids) if oids && !oids.empty?
+      @memory[index].update(oids, worker: @worker) if oids && !oids.empty?
     end
 
   end
@@ -568,7 +577,7 @@ class Device
       next if vendor_cfg['cpu_list_regex'] && !(vendor_cfg['cpu_list_regex'] =~ index)
 
       @cpus[index] ||= CPU.new(device: @name, index: index)
-      @cpus[index].update(oids) if oids && !oids.empty?
+      @cpus[index].update(oids, worker: @worker) if oids && !oids.empty?
     end
 
   end
@@ -612,7 +621,7 @@ class Device
     # Update psu values
     psu_table.each do |index, oids|
       @psus[index] ||= PSU.new(device: @name, index: index)
-      @psus[index].update(oids) if oids && !oids.empty?
+      @psus[index].update(oids, worker: @worker) if oids && !oids.empty?
     end
 
   end
@@ -656,7 +665,7 @@ class Device
     # Update fan values
     fan_table.each do |index, oids|
       @fans[index] ||= Fan.new(device: @name, index: index)
-      @fans[index].update(oids) if oids && !oids.empty?
+      @fans[index].update(oids, worker: @worker) if oids && !oids.empty?
     end
 
   end
@@ -695,7 +704,7 @@ class Device
           end
         end
         interface.set_speed(child_count * child_speed)
-        $LOG.warn("POLLER: Bad speed for #{interface.name} (#{index}) on #{@name}. Calculated value from children: #{@speed}")
+        $LOG.warn("POLLER: Bad speed for #{interface.name} (#{index}) on #{@name}. Calculated value from children: #{interface.speed}")
       end
 
       # TODO: REPLACE THIS WITH SSH!!! This is ALSO retarded!

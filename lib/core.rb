@@ -52,12 +52,7 @@ module Core
   end
 
 
-  def get_device_v2(settings, db, device)
-    db[:device].where(:device => device).all[0]
-  end
-
-
-  def get_interfaces(settings, db, device, index=nil)
+  def get_interface(settings, db, device, index=nil)
     if index
       db[:interface].where(:device => device, :index => index).all[0] || {}
     else
@@ -66,11 +61,20 @@ module Core
   end
 
 
-  def get_temperatures(settings, db, device, index=nil)
+  def get_cpu(settings, db, device, index=nil)
     if index
-      db[:temperature].where(:device => device, :index => index).all[0] || {}
+      db[:cpu].where(:device => device, :index => index).all[0] || {}
     else
-      db[:temperature].where(:device => device).all
+      db[:cpu].where(:device => device).all
+    end
+  end
+
+
+  def get_fan(settings, db, device, index=nil)
+    if index
+      db[:fan].where(:device => device, :index => index).all[0] || {}
+    else
+      db[:fan].where(:device => device).all
     end
   end
 
@@ -84,16 +88,7 @@ module Core
   end
 
 
-  def get_cpus(settings, db, device, index=nil)
-    if index
-      db[:cpu].where(:device => device, :index => index).all[0] || {}
-    else
-      db[:cpu].where(:device => device).all
-    end
-  end
-
-
-  def get_psus(settings, db, device, index=nil)
+  def get_psu(settings, db, device, index=nil)
     if index
       db[:psu].where(:device => device, :index => index).all[0] || {}
     else
@@ -102,57 +97,17 @@ module Core
   end
 
 
-  def get_fans(settings, db, device, index=nil)
+  def get_temperature(settings, db, device, index=nil)
     if index
-      db[:fan].where(:device => device, :index => index).all[0] || {}
+      db[:temperature].where(:device => device, :index => index).all[0] || {}
     else
-      db[:fan].where(:device => device).all
+      db[:temperature].where(:device => device).all
     end
   end
 
 
-  def get_device(settings, db, device, component=nil)
-    temperatures = db[:temperature]
-    interfaces = db[:interface]
-    devicedata = db[:device]
-    memory = db[:memory]
-    cpus = db[:cpu]
-    psus = db[:psu]
-    fans = db[:fan]
-    # Filter if a device was specified, otherwise return all
-    if device
-      # Return an empty hash if the device doesn't exist
-      return {} if db[:device].filter(:device => device).empty?
-      temperatures = temperatures.filter(:device => device)
-      interfaces = interfaces.filter(:device => device)
-      devicedata = devicedata.filter(:device => device)
-      memory = memory.filter(:device => device)
-      cpus = cpus.filter(:device => device)
-      fans = fans.filter(:device => device)
-      psus = psus.filter(:device => device)
-    end
-
-    # Return just an empty device if there are no CPUs, memory, interfaces or hardware for the device
-    return { device => {} } if cpus.empty? && interfaces.empty? && temperatures.empty? && memory.empty? && fans.empty? && psus.empty? && device
-
-    (devices, name_to_index) = _device_map(:devicedata => devicedata,
-                                           :temperatures => temperatures,
-                                           :interfaces => interfaces,
-                                           :cpus => cpus,
-                                           :psus => psus,
-                                           :fans => fans,
-                                           :memory => memory,
-                                          )
-    _fill_metadata!(devices, settings, name_to_index)
-
-    # If we only want certain components, delete the others
-    if component
-      devices.each do |dev,data|
-        data.delete_if { |k,v| k.to_s != component }
-      end
-    end
-
-    return devices
+  def get_device(settings, db, device)
+    db[:device].where(:device => device).all[0]
   end
 
 
@@ -239,111 +194,81 @@ module Core
 
 
   def post_device(settings, db, device)
-    $LOG.info("CORE: Received data for #{device.name} from #{device.worker}")
-
+    db.disconnect
+    $LOG.info("CORE: Received device #{device.name} from #{device.worker}")
     begin
-      #device.save(db)
+      device.save(db)
     rescue Sequel::PoolTimeout => e
       $LOG.error("CORE: SQL error! \n#{e}")
     end
 
+    return 200
   end
 
-
-  def post_devices(settings, db, devices)
-    _validate_devices_post!(devices)
-
-    devices.each do |device, components|
-
-      $LOG.info("CORE: Received data for #{device} from #{components[:metadata][:worker]}")
-
-      begin # To catch SQL exceptions
-
-        components[:interfaces].each do |index, data|
-          #$LOG.warn("Device: #{device}  Interface: #{index}\n  OIDs: #{oids}")
-          # Try updating, and if we don't affect a row, insert instead
-          existing = db[:interface].where(:device => device, :index => index)
-          if existing.update(data) != 1
-            db[:interface].insert(data)
-          end
-        end
-        components[:cpus].each do |index, data|
-          #$LOG.warn("Device: #{device}  CPU: #{index}\n  Data: #{data}")
-          # Try updating, and if we don't affect a row, insert instead
-          existing = db[:cpu].where(:device => device, :index => index)
-          if existing.update(data) != 1
-            db[:cpu].insert(data)
-          end
-        end
-        components[:memory].each do |index, data|
-          #$LOG.warn("Device: #{device} Memory: #{index}\n  Data: #{data}")
-          # Try updating, and if we don't affect a row, insert instead
-          existing = db[:memory].where(:device => device, :index => index)
-          if existing.update(data) != 1
-            db[:memory].insert(data)
-          end
-        end
-        components[:temperature].each do |index, data|
-          #$LOG.warn("Device: #{device} Temperature: #{index}\n  Data: #{data}")
-          # Try updating, and if we don't affect a row, insert instead
-          existing = db[:temperature].where(:device => device, :index => index)
-          if existing.update(data) != 1
-            db[:temperature].insert(data)
-          end
-        end
-        components[:psu].each do |index, data|
-          #$LOG.warn("Device: #{device} PSU: #{index}\n  Data: #{data}")
-          # Try updating, and if we don't affect a row, insert instead
-          existing = db[:psu].where(:device => device, :index => index)
-          if existing.update(data) != 1
-            db[:psu].insert(data)
-          end
-        end
-        components[:fan].each do |index, data|
-          #$LOG.warn("Device: #{device} Fan: #{index}\n  Data: #{data}")
-          # Try updating, and if we don't affect a row, insert instead
-          existing = db[:fan].where(:device => device, :index => index)
-          if existing.update(data) != 1
-            db[:fan].insert(data)
-          end
-        end
-        #components[:mac].each do |data|
-          #$LOG.warn("Device: #{device} MAC: #{index}\n  Data: #{data}")
-          # Try updating, and if we don't affect a row, insert instead
-        #  begin
-        #    existing = db[:mac].where(:device => device, :mac => data[:mac], :vlan_id => data[:vlan_id])
-        #    if existing.update(data) != 1;
-        #      db[:mac].insert(data)
-        #    end
-        #  rescue Sequel::NotNullConstraintViolation,
-        #    Sequel::ForeignKeyConstraintViolation,
-        #    Sequel::UniqueConstraintViolation => e
-        #    $LOG.warn("CORE: SQL Error! \n#{e}")
-        #  end
-        #end
-        # Timeout for MAC entries in DB
-        purge_count = db[:mac].where(:device => device).where{last_updated < Time.now.to_i - 600}.delete
-        if purge_count > 0
-          $LOG.info("CORE: #{purge_count} MAC addresses purged from #{device} due to timeout.")
-        end
-
-        device_update = components[:metadata].merge(components[:devicedata])
-        existing = db[:device].where(:device => device)
-        if existing.update(device_update) != 1
-          $LOG.error("Problem updating device table for #{device}")
-        end
-
-      rescue Sequel::PoolTimeout => e
-        $LOG.error("CORE: SQL error! \n#{e}")
-      end
-
-      # Update the rest of the device attributes
-      db[:device].where(:device => device).update(
-        :currently_polling => 0,
-        :next_poll => Time.now.to_i + 100,
-      )
+  def post_interface(settings, db, int)
+    db.disconnect
+    $LOG.info("CORE: Received if #{int.index} (#{int.name}) on #{int.device} from #{int.worker}")
+    begin
+      int.save(db)
+    rescue Sequel::PoolTimeout => e
+      $LOG.error("CORE: SQL error! \n#{e}")
     end
-    return true
+    return 200
+  end
+
+  def post_cpu(settings, db, cpu)
+    db.disconnect
+    $LOG.info("CORE: Received cpu #{cpu.index} on #{cpu.device} from #{cpu.worker}")
+    begin
+      cpu.save(db)
+    rescue Sequel::PoolTimeout => e
+      $LOG.error("CORE: SQL error! \n#{e}")
+    end
+    return 200
+  end
+
+  def post_fan(settings, db, fan)
+    db.disconnect
+    $LOG.info("CORE: Received fan #{fan.index} on #{fan.device} from #{fan.worker}")
+    begin
+      fan.save(db)
+    rescue Sequel::PoolTimeout => e
+      $LOG.error("CORE: SQL error! \n#{e}")
+    end
+    return 200
+  end
+
+  def post_memory(settings, db, memory)
+    db.disconnect
+    $LOG.info("CORE: Received memory #{memory.index} on #{memory.device} from #{memory.worker}")
+    begin
+      memory.save(db)
+    rescue Sequel::PoolTimeout => e
+      $LOG.error("CORE: SQL error! \n#{e}")
+    end
+    return 200
+  end
+
+  def post_psu(settings, db, psu)
+    db.disconnect
+    $LOG.info("CORE: Received psu #{psu.index} on #{psu.device} from #{psu.worker}")
+    begin
+      psu.save(db)
+    rescue Sequel::PoolTimeout => e
+      $LOG.error("CORE: SQL error! \n#{e}")
+    end
+    return 200
+  end
+
+  def post_temperature(settings, db, temp)
+    db.disconnect
+    $LOG.info("CORE: Received temp #{temp.index} on #{temp.device} from #{temp.worker}")
+    begin
+      temp.save(db)
+    rescue Sequel::PoolTimeout => e
+      $LOG.error("CORE: SQL error! \n#{e}")
+    end
+    return 200
   end
 
 

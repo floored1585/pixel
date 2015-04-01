@@ -166,7 +166,7 @@ class Interface
     new_in_errors = data['if_in_errors'].to_i_if_numeric
     new_out_discards = data['if_out_discards'].to_i_if_numeric
     new_out_errors = data['if_out_errors'].to_i_if_numeric
-    new_worker = data['worker']
+    new_worker = worker
 
     # Determine interface type, by capturing the part of the alias before __ or [
     if type_match = new_alias.match(/^([a-z]+)(?:__|\[)/)

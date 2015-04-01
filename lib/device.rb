@@ -379,7 +379,6 @@ class Device
     # Get uptime
     session.get('1.3.6.1.2.1.1.3.0').each_varbind { |vb| @new_uptime = vb.value.to_i / 100 }
 
-
     # Update values
     #   This could be its own method if we want to extend functionality later
     #   ie. send alerts on significant changes (alarm status, uptime reset, etc)
@@ -392,6 +391,8 @@ class Device
     @yellow_alarm = @new_yellow_alarm
     @red_alarm = @new_red_alarm
     @last_poll = Time.now.to_i
+    @currently_polling = 0
+    @next_poll = Time.now.to_i + 100
 
   end
 

@@ -53,6 +53,20 @@ class Memory
   end
 
 
+  def save(db)
+    data = JSON.parse(self.to_json)['data']
+
+    # Update the memory table
+    existing = db[:memory].where(:device => @device, :index => @index)
+    if existing.update(data) != 1
+      db[:memory].insert(data)
+      $LOG.info("Adding new memory #{@index} on #{@device} from #{@worker}")
+    end
+
+    return self
+  end
+
+
   def to_json(*a)
     {
       "json_class" => self.class.name,

@@ -59,6 +59,20 @@ class PSU
   end
 
 
+  def save(db)
+    data = JSON.parse(self.to_json)['data']
+
+    # Update the psu table
+    existing = db[:psu].where(:device => @device, :index => @index)
+    if existing.update(data) != 1
+      db[:psu].insert(data)
+      $LOG.info("Adding new psu #{@index} on #{@device} from #{@worker}")
+    end
+
+    return self
+  end
+
+
   def to_json(*a)
     { 
       "json_class" => self.class.name,

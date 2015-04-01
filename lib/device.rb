@@ -267,13 +267,13 @@ class Device
   def save(db)
 
     # Remove keys from the from_json output that are not part of the device table
-    not_device_keys = %w( interfaces memory temps cpus psus fans )
-    device_update = JSON.parse(self.to_json)['data'].delete_if { |k,v| not_device_keys.include?(k) }
+    not_keys = %w( interfaces memory temps cpus psus fans )
+    data = JSON.parse(self.to_json)['data'].delete_if { |k,v| not_keys.include?(k) }
 
     # Update the device table
-    existing = db[:device].where(:device => device)
-    if existing.update(device_update) != 1
-      $LOG.error("Problem updating device table for #{device}")
+    existing = db[:device].where(:device => @name)
+    if existing.update(data) != 1
+      $LOG.error("Problem updating device table for #{@name}")
     end
 
     @interfaces.each { |index, interface| interface.save(db) }

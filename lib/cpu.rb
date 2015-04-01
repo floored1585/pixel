@@ -58,6 +58,20 @@ class CPU
   end
 
 
+  def save(db)
+    data = JSON.parse(self.to_json)['data']
+
+    # Update the cpu table
+    existing = db[:cpu].where(:device => @device, :index => @index)
+    if existing.update(data) != 1
+      db[:cpu].insert(data)
+      $LOG.info("Adding new cpu #{@index} on #{@device} from #{@worker}")
+    end
+
+    return self
+  end
+
+
   def to_json(*a)
     {
       "json_class" => self.class.name,

@@ -59,6 +59,20 @@ class Fan
   end
 
 
+  def save(db)
+    data = JSON.parse(self.to_json)['data']
+
+    # Update the fan table
+    existing = db[:fan].where(:device => @device, :index => @index)
+    if existing.update(data) != 1
+      db[:fan].insert(data)
+      $LOG.info("Adding new fan #{@index} on #{@device} from #{@worker}")
+    end
+
+    return self
+  end
+
+
   def to_json(*a)
     {
       "json_class" => self.class.name,

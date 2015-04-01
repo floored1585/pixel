@@ -65,6 +65,20 @@ class Temperature
   end
 
 
+  def save(db)
+    data = JSON.parse(self.to_json)['data']
+
+    # Update the temperature table
+    existing = db[:temperature].where(:device => @device, :index => @index)
+    if existing.update(data) != 1
+      db[:temperature].insert(data)
+      $LOG.info("Adding new temperature #{@index} on #{@device} from #{@worker}")
+    end
+
+    return self
+  end
+
+
   def to_json(*a)
     {
       "json_class" => self.class.name,

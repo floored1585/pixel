@@ -1,53 +1,9 @@
 require_relative '../lib/device'
+require_relative 'device_spec_data'
 
 describe Device do
 
-  # Up/Up
-  interface_1 = {
-    "device" => "gar-b11u1-dist","index" => 604,"last_updated" => 1424752121,
-    "if_alias" => "bb__gar-crmx-1__xe-1/0/3","if_name" => "xe-0/2/0",
-    "if_hc_in_octets" => "0.3959706331274391E16","if_hc_out_octets" => "0.3281296197965732E16",
-    "if_hc_in_ucast_pkts" => "0.4388140890014E13","if_hc_out_ucast_pkts" => "0.3813525530792E13",
-    "if_speed" => 10000000000,"if_mtu" => 1522,"if_admin_status" => 1,
-    "if_admin_status_time" => 1409786067,"if_oper_status" => 1,"if_oper_status_time" => 1409786067,
-    "if_in_discards" => "0.0","if_in_errors" => "0.0","if_out_discards" => "0.0",
-    "if_out_errors" => "0.0","bps_in" => 1349172320,"bps_out" => 1371081672,"discards_in" => 0,
-    "errors_in" => 0,"discards_out" => 0,"errors_out" => 0,"pps_in" => 180411,"pps_out" => 262760,
-    "bps_in_util" => 13.49,"bps_out_util" => 13.71,"if_type" => "bb" }
-  # Up/Down
-  interface_2 = {
-    "device" => "gar-b11u17-acc-g","index" => 10040,"last_updated" => 1424752718,
-    "if_alias" => "acc__","if_name" => "Fa0/40","if_hc_in_octets" => "0.0",
-    "if_hc_out_octets" => "0.0","if_hc_in_ucast_pkts" => "0.0","if_hc_out_ucast_pkts" => "0.0",
-    "if_speed" => 10000000,"if_mtu" => 1500,"if_admin_status" => 1,
-    "if_admin_status_time" => 1415142088,"if_oper_status" => 2,"if_oper_status_time" => 1415142088,
-    "if_in_discards" => "0.0","if_in_errors" => "0.0","if_out_discards" => "0.0",
-    "if_out_errors" => "0.0","bps_in" => 0,"bps_out" => 0,"discards_in" => 0,"errors_in" => 0,
-    "discards_out" => 0,"errors_out" => 0,"pps_in" => 0,"pps_out" => 0,"bps_in_util" => 0.0,
-    "bps_out_util" => 0.0,"if_type" => "acc"}
-  # Up/Up, AE
-  interface_3 = {
-    "device" => "gar-p1u1-dist","index" => 656,"last_updated" => 1424752472,
-    "if_alias" => "bb__gar-cr-1__ae3","if_name" => "ae0",
-    "if_hc_in_octets" => "0.484779762679182E15","if_hc_out_octets" => "0.1111644194120525E16",
-    "if_hc_in_ucast_pkts" => "0.878552042051E12","if_hc_out_ucast_pkts" => "0.1174804345552E13",
-    "if_speed" => 20000000000,"if_mtu" => 1514,"if_admin_status" => 1,
-    "if_admin_status_time" => 1416350411,"if_oper_status" => 1,"if_oper_status_time" => 1416350411,
-    "if_in_discards" => "0.0","if_in_errors" => "0.0","if_out_discards" => "0.0",
-    "if_out_errors" => "0.0","bps_in" => 408764184,"bps_out" => 1172468480,"discards_in" => 0,
-    "errors_in" => 0,"discards_out" => 0,"errors_out" => 0,"pps_in" => 104732,"pps_out" => 144934,
-    "bps_in_util" => 2.04,"bps_out_util" => 5.86,"if_type" => "bb"}
-  # Shutdown
-  interface_4 = {
-    "device" => "irv-a3u2-acc-g","index" => 10119,"last_updated" => 1424752571,"if_alias" => "",
-    "if_name" => "Gi0/19","if_hc_in_octets" => "0.0","if_hc_out_octets" => "0.2628E4",
-    "if_hc_in_ucast_pkts" => "0.0","if_hc_out_ucast_pkts" => "0.2E1","if_speed" => 1000000000,
-    "if_mtu" => 1500,"if_admin_status" => 2,"if_admin_status_time" => 1415142087,
-    "if_oper_status" => 2,"if_oper_status_time" => 1415142087,"if_in_discards" => "0.0",
-    "if_in_errors" => "0.0","if_out_discards" => "0.0","if_out_errors" => "0.0","bps_in" => 0,
-    "bps_out" => 0,"discards_in" => 0,"errors_in" => 0,"discards_out" => 0,"errors_out" => 0,
-    "pps_in" => 0,"pps_out" => 0,"bps_in_util" => 0.0,"bps_out_util" => 0.0,"if_type" => "unknown"}
-  interfaces = [ interface_1, interface_2, interface_3, interface_4 ]
+
   test_devices = {
    'Cisco 2960' => 'gar-b11u17-acc-g',
    'Cisco 4948' => 'irv-i1u1-dist',
@@ -165,16 +121,16 @@ describe Device do
       dev_all = Device.new('irv-i1u1-dist', poll_ip: '208.113.142.180')
 
       dev.poll(worker: 'test-worker')
-      dev_device.poll(worker: 'test-worker', components: [])
-      dev_interfaces.poll(worker: 'test-worker', components: [:interfaces])
-      dev_temperatures.poll(worker: 'test-worker', components: [:temperatures])
-      dev_fans.poll(worker: 'test-worker', components: [:fans])
-      dev_psus.poll(worker: 'test-worker', components: [:psus])
-      dev_cpus.poll(worker: 'test-worker', components: [:cpus])
-      dev_memory.poll(worker: 'test-worker', components: [:memory])
-      dev_all.poll(worker: 'test-worker', components: [:all])
+      dev_device.poll(worker: 'test-worker', items: [])
+      dev_interfaces.poll(worker: 'test-worker', items: [:interfaces])
+      dev_temperatures.poll(worker: 'test-worker', items: [:temperatures])
+      dev_fans.poll(worker: 'test-worker', items: [:fans])
+      dev_psus.poll(worker: 'test-worker', items: [:psus])
+      dev_cpus.poll(worker: 'test-worker', items: [:cpus])
+      dev_memory.poll(worker: 'test-worker', items: [:memory])
+      dev_all.poll(worker: 'test-worker', items: [:all])
 
-      context 'and when all components polled' do
+      context 'and when all items polled' do
         it 'should return a Device object' do
           expect(dev).to be_a Device
           expect(dev_all).to be_a Device
@@ -208,7 +164,7 @@ describe Device do
           expect(dev_all.worker).to eql 'test-worker'
         end
       end
-      context 'and when an empty components array passed' do
+      context 'and when an empty items array passed' do
         it 'should return a Device object' do
           expect(dev_device).to be_a Device
         end
@@ -501,6 +457,36 @@ describe Device do
 
   end
 
+  # update_totals
+  describe '#update_totals' do
+
+    context 'when freshly created' do
+
+      dev = Device.new('test')
+
+      specify { expect(dev).to be_a Device }
+
+      specify { expect(dev.bps_out).to eql 0 }
+      specify { expect(dev.pps_out).to eql 0 }
+      specify { expect(dev.discards_out).to eql 0 }
+      specify { expect(dev.errors_out).to eql 0 }
+
+    end
+
+    context 'when fully populated' do
+
+      dev = JSON.load(DEV1_JSON)
+
+      specify { expect(dev).to be_a Device }
+
+      specify { expect(dev.bps_out).to eql 3365960688 }
+      specify { expect(dev.pps_out).to eql 465065 }
+      specify { expect(dev.discards_out).to eql 5131 }
+      specify { expect(dev.errors_out).to eql 500 }
+
+    end
+
+  end
 
   # to_json
   describe '#to_json and #json_create' do
@@ -508,7 +494,7 @@ describe Device do
     context 'when freshly created' do
 
       before(:each) do
-        @dev = Device.new(device: 'gar-test-1')
+        @dev = Device.new('gar-test-1')
       end
 
 

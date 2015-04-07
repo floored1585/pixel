@@ -13,7 +13,7 @@ class Interface
 
     # If index doesn't look like an integer, raise an exception.
     unless index.to_s =~ /^[0-9]+$/
-      raise TypeError.new("index (#{index}) must look like an Integer!") 
+      raise TypeError.new("index (#{index}) must look like an Integer!")
     end
 
     # required
@@ -47,33 +47,53 @@ class Interface
     @name
   end
 
-
-  # Substitutes characters in the current name using the provided hash
-  def substitute_name(substitutions)
-
-    # If @name hasn't been set, return nil (we can't gsub what doesn't exist)
-    return nil unless @name
-
-    @name.gsub!(Regexp.new(substitutions.keys.join('|')), substitutions)
-    return @name
-  end
-
-
   def alias
     @alias
   end
-
 
   def type
     @type
   end
 
+  def bps_in
+    @bps_in || 0
+  end
+  def bps_out
+    @bps_out || 0
+  end
 
-  # This method takes an interface, and mimics its type (sets this interface's
-  #   type to be the same as the interface that was passed in)
-  def clone_type(int)
-    @type = int.type unless int.type == nil
-    return self
+  def pps_in
+    @pps_in || 0
+  end
+  def pps_out
+    @pps_out || 0
+  end
+
+  def discards_in
+    @discards_in || 0
+  end
+  def discards_out
+    @discards_out || 0
+  end
+
+  def errors_in
+    @errors_in || 0
+  end
+  def errors_out
+    @errors_out || 0
+  end
+
+  def bps_in_util
+    @bps_in_util || 0.0
+  end
+  def bps_out_util
+    @bps_out_util || 0.0
+  end
+
+
+  # Returns true unless the interface is name looks logical.  Also returns true if @name is nil.
+  def physical?
+    !(@name =~ /Po|ae|bond/)
   end
 
 
@@ -90,19 +110,22 @@ class Interface
   end
 
 
-  def bps_in
-    @bps_in || 0.0
-  end
-  def bps_out
-    @bps_out || 0.0
+  # Substitutes characters in the current name using the provided hash
+  def substitute_name(substitutions)
+
+    # If @name hasn't been set, return nil (we can't gsub what doesn't exist)
+    return nil unless @name
+
+    @name.gsub!(Regexp.new(substitutions.keys.join('|')), substitutions)
+    return @name
   end
 
 
-  def bps_in_util
-    @bps_in_util || 0.0
-  end
-  def bps_out_util
-    @bps_out_util || 0.0
+  # This method takes an interface, and mimics its type (sets this interface's
+  #   type to be the same as the interface that was passed in)
+  def clone_type(int)
+    @type = int.type unless int.type == nil
+    return self
   end
 
 
@@ -240,7 +263,7 @@ class Interface
   end
 
 
-  def write_to_influxdb
+  def write_tsdb
     #TODO
   end
 

@@ -9,13 +9,13 @@ require_relative 'core_ext/hash'
 module Poller
 
 
-  def self.check_for_work(settings, db)
-    poller_cfg = _poller_cfg(settings)
-    concurrency = poller_cfg[:concurrency]
+  def self.check_for_work(settings)
+    poll_cfg = settings['poller']
+    concurrency = poll_cfg['concurrency']
     request = "/v1/devices/fetch_poll?count=#{concurrency}&hostname=#{Socket.gethostname}"
 
-    if devices = API.get('core', request, 'POLLER', 'devices to poll', 0)
-      devices.each { |device, ip| _poll(poller_cfg, device, ip) }
+    if device_names = API.get('core', request, 'POLLER', 'devices to poll', 0)
+      device_names.each { |device_name| _poll(poll_cfg, device_name) }
       return 200 # Doesn't do any error checking here
     else # HTTP request failed
       return 500
@@ -23,7 +23,7 @@ module Poller
   end
 
 
-  def self._poll(poll_cfg, device_name, ip)
+  def self._poll(poll_cfg, device_name)
     pid = fork do
       start_time = Time.now
       metadata = { :worker => Socket.gethostname }
@@ -32,89 +32,18 @@ module Poller
       start = Time.now
       start_total = Time.now
 
-      device = Device.new(device_name, poll_ip: ip, poll_cfg: poll_cfg)
+      device = Device.new(device_name, poll_cfg: poll_cfg)
 
-      # Get current values for interfaces
-      device.populate([:interfaces])
+      # Get current values
+      device.populate(:all => true)
 
-      # Poll for new values
+
+      # Poll the device; send data back to core
       if device.poll(poller_cfg, worker: Socket.gethostname)
-
-        # Calculate / process polled values
-        device.update
-
-        # Send the data back to Pixel core
-        device.save
+        device.send
       else
         $LOG.error("POLLER: Poll failed for #{device_name}")
       end
-
-
-
-
-
-
-      begin
-        dev_info = _query_device_info(ip, poller_cfg)
-        dev_info_time = Time.now - start; start = Time.now
-
-        cpus = _query_device_cpu(device, ip, poller_cfg, dev_info[:vendor])
-        cpus_time = Time.now - start; start = Time.now
-
-        memory = _query_device_mem(device, ip, poller_cfg, dev_info[:vendor])
-        memory_time = Time.now - start; start = Time.now
-
-        temperature = _query_device_temp(device, ip, poller_cfg, dev_info[:vendor])
-        temperature_time = Time.now - start; start = Time.now
-
-        psu = _query_device_psu(device, ip, poller_cfg, dev_info[:vendor])
-        psu_time = Time.now - start; start = Time.now
-
-        fan = _query_device_fan(device, ip, poller_cfg, dev_info[:vendor])
-        fan_time = Time.now - start; start = Time.now
-
-        if_table = _query_device_interfaces(ip, poller_cfg)
-        if_table_time = Time.now - start; start = Time.now
-
-        total_time = Time.now - start_total
-
-        #puts "#{device} Fan Data:"
-        #pp if_table if device.include?('cr-1') || device == 'iad1-d-1' || device == 'gar-p1u1-dist'
-        #puts "\n"
-      rescue RuntimeError, ArgumentError => e
-        $LOG.error("POLLER: Error encountered while polling #{device}: #{e}")
-        metadata[:last_poll_result] = 1
-        post_devices = { device => {
-          :metadata => metadata,
-          :interfaces => {},
-          :cpus => {},
-          :memory => {},
-          :temperature => {},
-          :psu => {},
-          :fan => {},
-          :devicedata => {},
-        } }
-        _post_data(post_devices)
-      end
-      #$LOG.info(
-      #  "POLLER: SNMP poll successful:\n" +
-      #  "Dev: #{device}\n" +
-      #  "dev_info_time: #{'%.2f' % dev_info_time}\n" +
-      #  "cpus_time: #{'%.2f' % cpus_time}\n" +
-      #  "memory_time: #{'%.2f' % memory_time}\n" +
-      #  "temperature_time: #{'%.2f' % temperature_time}\n" +
-      #  "psu_time: #{'%.2f' % psu_time}\n" +
-      #  "fan_time: #{'%.2f' % fan_time}\n" +
-      #  "if_table_time: #{'%.2f' % if_table_time}\n" +
-      #  "Total Time: #{'%.2f' % total_time}"
-      #)
-
-
-      total_polled = if_table.size
-
-      # Populate name_to_index hash
-      name_to_index = {}
-      if_table.each { |index,oids| name_to_index[oids['if_name'].downcase] = index }
 
       influx_is_up = true
 
@@ -123,6 +52,7 @@ module Poller
         series_data = { :value => data[:util], :time => Time.now.to_i }
         influx_is_up = _write_influxdb(series_name, series_data, poller_cfg) if influx_is_up
       end
+
       memory.each do |index, data|
         series_name = "#{device}.memory.#{data[:description]}"
         series_data = { :value => data[:util], :time => Time.now.to_i }

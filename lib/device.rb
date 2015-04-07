@@ -78,6 +78,27 @@ class Device
     @worker
   end
 
+  def bps_out
+    bps_out = 0
+    @interfaces.each { |index,int| bps_out += int.bps_out if int.physical? }
+    return bps_out
+  end
+  def pps_out
+    pps_out = 0
+    @interfaces.each { |index,int| pps_out += int.pps_out if int.physical? }
+    return pps_out
+  end
+  def discards_out
+    discards_out = 0
+    @interfaces.each { |index,int| discards_out += int.discards_out if int.physical? }
+    return discards_out
+  end
+  def errors_out
+    errors_out = 0
+    @interfaces.each { |index,int| errors_out += int.errors_out if int.physical? }
+    return errors_out
+  end
+
 
   def get_interface(name: nil, index: nil)
     # Return nil unless either a name or index was passed
@@ -90,7 +111,7 @@ class Device
   end
 
 
-  def poll(worker:, poll_ip: nil, poll_cfg: nil, components: [ :all ])
+  def poll(worker:, poll_ip: nil, poll_cfg: nil, items: [ :all ])
     @worker = worker
 
     # If poll_ip or poll_cfg were passed in, update them
@@ -107,24 +128,36 @@ class Device
     begin
       session = _open_poll_session
 
-      # Poll the device components that were requested (component defaults to :all)
-      _poll_device_info(session)
-      _poll_interfaces(session) if components.include?(:all) || components.include?(:interfaces)
-      _poll_temperatures(session) if components.include?(:all) || components.include?(:temperatures)
-      _poll_memory(session) if components.include?(:all) || components.include?(:memory)
-      _poll_cpus(session) if components.include?(:all) || components.include?(:cpus)
-      _poll_psus(session) if components.include?(:all) || components.include?(:psus)
-      _poll_fans(session) if components.include?(:all) || components.include?(:fans)
+      start = Time.now.to_i
+
+      # Poll the device items that were requested (component defaults to :all)
+      dev_time = _poll_device_info(session)
+      int_time = _poll_interfaces(session) if items.include?(:all) || items.include?(:interfaces)
+      temp_time = _poll_temperatures(session) if items.include?(:all) || items.include?(:temperatures)
+      mem_time = _poll_memory(session) if items.include?(:all) || items.include?(:memory)
+      cpu_time = _poll_cpus(session) if items.include?(:all) || items.include?(:cpus)
+      psu_time = _poll_psus(session) if items.include?(:all) || items.include?(:psus)
+      fan_time = _poll_fans(session) if items.include?(:all) || items.include?(:fans)
+
+      total_time = Time.now.to_i - start
 
       # Post-processing
-      _process_interfaces if components.include?(:all) || components.include?(:interfaces)
+
+      processing_time = _process_interfaces if items.include?(:all) || items.include?(:interfaces)
 
     rescue RuntimeError, ArgumentError => e
       $LOG.error("POLLER: Error encountered while polling #{@name}: #{e}")
-      # TODO: Write the failure to db & reset currently_polling
+      @last_poll_result = 1
+      @last_poll_text = e.to_s
+      send
     ensure
       session.close if session
     end
+
+    @last_poll_result = 0
+    @last_poll_text = "Success: #{dev_time},#{int_time},#{temp_time},#{mem_time},#{cpu_time},#{psu_time},#{fan_time},#{total_time},#{processing_time}"
+    @last_poll_duration = total_time
+    @currently_polling = 0
 
     return self
   end
@@ -163,9 +196,6 @@ class Device
     @last_poll_text = data['last_poll_text']
     @currently_polling = data['currently_polling'].to_i_if_numeric
     @worker = data['worker']
-    @pps_out = data['pps_out'].to_i_if_numeric
-    @bps_out = data['bps_out'].to_i_if_numeric
-    @discards_out = data['discards_out'].to_i_if_numeric
     @sys_descr = data['sys_descr']
     @vendor = data['vendor']
     @sw_descr = data['sw_descr']
@@ -264,6 +294,16 @@ class Device
   end
 
 
+  def write_tsdb()
+    @interfaces.each { |index, interface| interface.write_tsdb }
+    @memory.each { |index, memory| memory.write_tsdb }
+    @temps.each { |index, temp| temp.write_tsdb }
+    @cpus.each { |index, cpu| cpu.write_tsdb }
+    @psus.each { |index, psu| psu.write_tsdb }
+    @fans.each { |index, fan| fan.write_tsdb }
+  end
+
+
   def save(db)
 
     # Remove keys from the from_json output that are not part of the device table
@@ -300,9 +340,10 @@ class Device
         'last_poll_text' => @last_poll_text,
         'currently_polling' => @currently_polling,
         'worker' => @worker,
-        'pps_out' => @pps_out,
-        'bps_out' => @bps_out,
-        'discards_out' => @discards_out,
+        'pps_out' => pps_out,
+        'bps_out' => bps_out,
+        'discards_out' => discards_out,
+        'errors_out' => errors_out,
         'sys_descr' => @sys_descr,
         'vendor' => @vendor,
         'sw_descr' => @sw_descr,
@@ -333,6 +374,7 @@ class Device
 
   # PRIVATE!
   def _poll_device_info(session)
+    start = Time.now.to_i
 
     # SysDescr, for determining vendor
     session.get("1.3.6.1.2.1.1.1.0").each_varbind do |vb|
@@ -370,10 +412,10 @@ class Device
     # Get alarms
     vendor_oids = @poll_cfg[:oids][@new_vendor] || {}
     if vendor_oids['yellow_alarm']
-      session.get(vendor_oids['yellow_alarm']).each_varbind { |vb| @new_yellow_alarm = vb.value }
+      session.get(vendor_oids['yellow_alarm']).each_varbind { |vb| @new_yellow_alarm = vb.value.to_i }
     end
     if vendor_oids['red_alarm']
-      session.get(vendor_oids['red_alarm']).each_varbind { |vb| @new_red_alarm = vb.value }
+      session.get(vendor_oids['red_alarm']).each_varbind { |vb| @new_red_alarm = vb.value.to_i }
     end
 
     # Get uptime
@@ -391,14 +433,16 @@ class Device
     @yellow_alarm = @new_yellow_alarm
     @red_alarm = @new_red_alarm
     @last_poll = Time.now.to_i
-    @currently_polling = 0
     @next_poll = Time.now.to_i + 100
 
+    return Time.now.to_i - start
   end
 
 
   # PRIVATE!
   def _poll_interfaces(session)
+    start = Time.now.to_i
+
     if_table = {}
 
     session.walk(@poll_cfg[:oids][:general].keys) do |row|
@@ -423,11 +467,14 @@ class Device
       @interfaces[index].update(oids, worker: @worker) if oids && !oids.empty?
     end
 
+    return Time.now.to_i - start
   end
 
 
   # PRIVATE!
   def _poll_temperatures(session)
+    start = Time.now.to_i
+
     # Delete all the irrelevant vendor_cfg values (to prevent .invert from having duplicates)
     return nil unless vendor_cfg = @poll_cfg[:oids][@vendor].dup.delete_if { |k,v| k !~ /^temp_/ }
     return nil unless vendor_cfg['temp_temperature']
@@ -472,11 +519,14 @@ class Device
       @temps[index].update(oids, worker: @worker) if oids && !oids.empty?
     end
 
+    return Time.now.to_i - start
   end
 
 
   # PRIVATE!
   def _poll_memory(session)
+    start = Time.now.to_i
+
     # Delete all the irrelevant vendor_cfg values (to prevent .invert from having duplicates)
     return nil unless vendor_cfg = @poll_cfg[:oids][@vendor].dup.delete_if { |k,v| k !~ /^mem_/ }
     return nil unless vendor_cfg['mem_util'] || vendor_cfg['mem_free']
@@ -528,11 +578,14 @@ class Device
       @memory[index].update(oids, worker: @worker) if oids && !oids.empty?
     end
 
+    return Time.now.to_i - start
   end
 
 
   # PRIVATE!
   def _poll_cpus(session)
+    start = Time.now.to_i
+
     # Delete all the irrelevant vendor_cfg values (to prevent .invert from having duplicates)
     return nil unless vendor_cfg = @poll_cfg[:oids][@vendor].dup.delete_if { |k,v| k !~ /^cpu_/ }
     return nil unless vendor_cfg['cpu_util']
@@ -581,11 +634,14 @@ class Device
       @cpus[index].update(oids, worker: @worker) if oids && !oids.empty?
     end
 
+    return Time.now.to_i - start
   end
 
 
   # PRIVATE!
   def _poll_psus(session)
+    start = Time.now.to_i
+
     # Delete all the irrelevant vendor_cfg values (to prevent .invert from having duplicates)
     return nil unless vendor_cfg = @poll_cfg[:oids][@vendor].dup.delete_if { |k,v| k !~ /^psu_/ }
     return nil unless vendor_cfg['psu_vendor_status']
@@ -625,11 +681,14 @@ class Device
       @psus[index].update(oids, worker: @worker) if oids && !oids.empty?
     end
 
+    return Time.now.to_i - start
   end
 
 
   # PRIVATE!
   def _poll_fans(session)
+    start = Time.now.to_i
+
     # Delete all the irrelevant vendor_cfg values (to prevent .invert from having duplicates)
     return nil unless vendor_cfg = @poll_cfg[:oids][@vendor].dup.delete_if { |k,v| k !~ /^fan_/ }
     return nil unless vendor_cfg['fan_vendor_status']
@@ -669,11 +728,13 @@ class Device
       @fans[index].update(oids, worker: @worker) if oids && !oids.empty?
     end
 
+    return Time.now.to_i - start
   end
 
 
   # PRIVATE!
   def _process_interfaces
+    start = Time.now.to_i
 
     # If the vendor is Force10, replace interface names:
     if @vendor == 'Force10 S-Series'
@@ -721,6 +782,7 @@ class Device
 
     end
 
+    return Time.now.to_i - start
   end
 
 
@@ -736,12 +798,6 @@ class Device
     status_text = table['Pixel'][status]
 
     return status, status_text
-  end
-
-
-  def write_to_influxdb
-    @interfaces.each { |index, interface| interface.write_to_influxdb }
-    #TODO
   end
 
 

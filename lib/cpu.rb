@@ -53,7 +53,7 @@ class CPU
   end
 
 
-  def write_to_influxdb
+  def write_tsdb
     #TODO
   end
 

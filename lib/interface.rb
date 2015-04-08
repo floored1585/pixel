@@ -36,9 +36,6 @@ class Interface
 
     @speed = speed.to_i
 
-    # Re-calculate utilization, since the speed has changed
-    _calculate_utilization
-
     return self
   end
 
@@ -83,17 +80,17 @@ class Interface
     @errors_out || 0
   end
 
-  def bps_in_util
-    @bps_in_util || 0.0
+  def bps_util_in
+    _calculate_utilization(@bps_in)
   end
-  def bps_out_util
-    @bps_out_util || 0.0
+  def bps_util_out
+    _calculate_utilization(@bps_out)
   end
 
 
   # Returns true unless the interface is name looks logical.  Also returns true if @name is nil.
   def physical?
-    !(@name =~ /Po|ae|bond/)
+    @name !~ /Po|ae|bond/
   end
 
 
@@ -162,8 +159,6 @@ class Interface
     @errors_out = data['errors_out'].to_i_if_numeric
     @pps_in = data['pps_in'].to_i_if_numeric
     @pps_out = data['pps_out'].to_i_if_numeric
-    @bps_in_util = data['bps_in_util'].to_f if data['bps_in_util']
-    @bps_out_util = data['bps_out_util'].to_f if data['bps_in_util']
     @type = data['if_type']
     @worker = data['worker']
 
@@ -256,15 +251,62 @@ class Interface
     @out_errors = new_out_errors
     @worker = new_worker
 
-    _calculate_utilization
-
     return self
 
   end
 
 
-  def write_tsdb
-    #TODO
+  def write_influxdb
+    Influx.post(
+      series: "#{@device}.interface.#{@index}.#{@name}.bps_in",
+      value: bps_in,
+      time: @last_poll,
+    )
+    Influx.post(
+      series: "#{@device}.interface.#{@index}.#{@name}.bps_out",
+      value: bps_out,
+      time: @last_poll,
+    )
+    Influx.post(
+      series: "#{@device}.interface.#{@index}.#{@name}.pps_in",
+      value: pps_in,
+      time: @last_poll,
+    )
+    Influx.post(
+      series: "#{@device}.interface.#{@index}.#{@name}.pps_out",
+      value: pps_out,
+      time: @last_poll,
+    )
+    Influx.post(
+      series: "#{@device}.interface.#{@index}.#{@name}.discards_in",
+      value: discards_in,
+      time: @last_poll,
+    )
+    Influx.post(
+      series: "#{@device}.interface.#{@index}.#{@name}.discards_out",
+      value: discards_out,
+      time: @last_poll,
+    )
+    Influx.post(
+      series: "#{@device}.interface.#{@index}.#{@name}.errors_in",
+      value: errors_in,
+      time: @last_poll,
+    )
+    Influx.post(
+      series: "#{@device}.interface.#{@index}.#{@name}.errors_out",
+      value: errors_out,
+      time: @last_poll,
+    )
+    Influx.post(
+      series: "#{@device}.interface.#{@index}.#{@name}.bps_util_in",
+      value: bps_util_in,
+      time: @last_poll,
+    )
+    Influx.post(
+      series: "#{@device}.interface.#{@index}.#{@name}.bps_util_out",
+      value: bps_util_out,
+      time: @last_poll,
+    )
   end
 
 
@@ -313,8 +355,8 @@ class Interface
         "errors_out" => @errors_out,
         "pps_in" => @pps_in,
         "pps_out" => @pps_out,
-        "bps_in_util" => @bps_in_util,
-        "bps_out_util" => @bps_out_util,
+        "bps_util_in" => bps_util_in,
+        "bps_util_out" => bps_util_out,
         "if_type" => @type,
         "worker" => @worker,
       }
@@ -339,20 +381,16 @@ class Interface
 
 
   # PRIVATE!
-  def _calculate_utilization
-
-    if @speed == nil || @speed == 0
-      @bps_in_util = nil
-      @bps_out_util = nil
+  def _calculate_utilization(bps)
+    if bps && @speed && @speed != 0
+      util = ('%.2f' % (bps.to_f / (@speed) * 100)).to_f
     else
-      @bps_in_util = ('%.2f' % (@bps_in.to_f / (@speed) * 100)).to_f if @bps_in
-      @bps_out_util = ('%.2f' % (@bps_out.to_f / (@speed) * 100)).to_f if @bps_out
+      util = 0.0
     end
 
     # Cap utilization at 100.  Necessary??
-    @bps_in_util = 100.0 if @bps_in_util && @bps_in_util > 100
-    @bps_out_util = 100.0 if @bps_out_util && @bps_out_util > 100
-
+    util = 100.0 if util > 100
+    return util
   end
 
 

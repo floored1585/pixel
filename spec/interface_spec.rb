@@ -30,8 +30,8 @@ describe Interface do
     'errors_out',
     'pps_in',
     'pps_out',
-    'bps_in_util',
-    'bps_out_util',
+    'bps_util_in',
+    'bps_util_out',
     'if_type',
     'worker',
   ]
@@ -47,7 +47,7 @@ describe Interface do
     "if_in_discards" => "0.0", "if_in_errors" => "0.0", "if_out_discards" => "0.0",
     "if_out_errors" => "0.0", "bps_in" => 1349172320,"bps_out" => 1371081672,"discards_in" => 100,
     "errors_in" => 0,"discards_out" => 150,"errors_out" => 0,"pps_in" => 180411,
-    "pps_out" => 262760, "bps_in_util" => 13.49,"bps_out_util" => 13.71, "if_type" => "bb" }
+    "pps_out" => 262760, "bps_util_in" => 13.49,"bps_util_out" => 13.71, "if_type" => "bb" }
   interface_1_update = {
     "if_name" => "xe-0/2/0", "if_hc_in_octets" => "3959713831274390",
     "if_hc_out_octets" => "3281311197965730", "if_hc_in_ucast_pkts" => "4417738539412",
@@ -64,8 +64,8 @@ describe Interface do
     "if_admin_status_time" => 1415142088,"if_oper_status" => 2,"if_oper_status_time" => 1415142088,
     "if_in_discards" => "0.0", "if_in_errors" => "0.0", "if_out_discards" => "0.0",
     "if_out_errors" => "0.0", "bps_in" => 0,"bps_out" => 0,"discards_in" => 0,"errors_in" => 0,
-    "discards_out" => 0,"errors_out" => 0,"pps_in" => 0,"pps_out" => 0,"bps_in_util" => 0.0,
-    "bps_out_util" => 0.0,"if_type" => "acc" }
+    "discards_out" => 0,"errors_out" => 0,"pps_in" => 0,"pps_out" => 0,"bps_util_in" => 0.0,
+    "bps_util_out" => 0.0,"if_type" => "acc" }
   interface_2_update = {
     "if_name"=>"Fa0/40", "if_hc_in_octets"=>"0", "if_hc_out_octets"=>"0",
     "if_hc_in_ucast_pkts"=>"0", "if_hc_out_ucast_pkts"=>"0", "if_high_speed"=>"10",
@@ -82,7 +82,7 @@ describe Interface do
     "if_in_discards" => "0.0", "if_in_errors" => "0.0", "if_out_discards" => "0.0",
     "if_out_errors" => "0.0", "bps_in" => 408764184,"bps_out" => 1172468480,"discards_in" => 0,
     "errors_in" => 300,"discards_out" => 0,"errors_out" => 350,"pps_in" => 104732,
-    "pps_out" => 144934, "bps_in_util" => 2.04,"bps_out_util" => 5.86,"if_type" => "bb" }
+    "pps_out" => 144934, "bps_util_in" => 2.04,"bps_util_out" => 5.86,"if_type" => "bb" }
   interface_3_update = {
     "if_name"=>"ae0", "if_hc_in_octets"=>"493124877631750", "if_hc_out_octets"=>"1135292119081151",
     "if_hc_in_ucast_pkts"=>"895162904912", "if_hc_out_ucast_pkts"=>"1198370633351",
@@ -98,7 +98,7 @@ describe Interface do
     "if_oper_status" => 2,"if_oper_status_time" => 1415142087,"if_in_discards" => "0.0",
     "if_in_errors" => "0.0", "if_out_discards" => "0.0", "if_out_errors" => "0.0", "bps_in" => 0,
     "bps_out" => 0,"discards_in" => 0,"errors_in" => 0,"discards_out" => 0,"errors_out" => 0,
-    "pps_in" => 0,"pps_out" => 0,"bps_in_util" => 0.0,"bps_out_util" => 0.0,
+    "pps_in" => 0,"pps_out" => 0,"bps_util_in" => 0.0,"bps_util_out" => 0.0,
     "if_type" => "unknown" }
   interface_4_update = {
     "if_name"=>"Gi0/19", "if_hc_in_octets"=>"0", "if_hc_out_octets"=>"2628",
@@ -230,11 +230,11 @@ describe Interface do
       specify { expect(@int.errors_out).to eql 0 }
     end
 
-    describe '#bps_in_util' do
-      specify { expect(@int.bps_in_util).to equal 0.0 }
+    describe '#bps_util_in' do
+      specify { expect(@int.bps_util_in).to equal 0.0 }
     end
-    describe '#bps_out_util' do
-      specify { expect(@int.bps_out_util).to equal 0.0 }
+    describe '#bps_util_out' do
+      specify { expect(@int.bps_util_out).to equal 0.0 }
     end
 
     describe '#physical?' do
@@ -273,10 +273,10 @@ describe Interface do
 
     describe '#set_speed' do
       specify { expect(@int1.set_speed('10000000000')).to be_a Interface }
-      specify { expect(@int1.set_speed('10000000000').bps_in_util).to eql 13.49 }
-      specify { expect(@int1.set_speed('100000000000').bps_in_util).to eql 1.35 }
-      specify { expect(@int1.set_speed('1000000000').bps_in_util).to eql 100.0 }
-      specify { expect(@int1.set_speed('0').bps_in_util).to eql 0.0 }
+      specify { expect(@int1.set_speed('10000000000').bps_util_in).to eql 13.49 }
+      specify { expect(@int1.set_speed('100000000000').bps_util_in).to eql 1.35 }
+      specify { expect(@int1.set_speed('1000000000').bps_util_in).to eql 100.0 }
+      specify { expect(@int1.set_speed('0').bps_util_in).to eql 0.0 }
     end
 
     describe '#name' do
@@ -382,18 +382,18 @@ describe Interface do
       specify { expect(@int4.errors_out).to equal 0 }
     end
 
-    describe '#bps_in_util' do
-      specify { expect(@int1.bps_in_util).to equal 13.49 }
-      specify { expect(@int2.bps_in_util).to equal 0.0 }
-      specify { expect(@int3.bps_in_util).to equal 2.04 }
-      specify { expect(@int4.bps_in_util).to equal 0.0 }
+    describe '#bps_util_in' do
+      specify { expect(@int1.bps_util_in).to equal 13.49 }
+      specify { expect(@int2.bps_util_in).to equal 0.0 }
+      specify { expect(@int3.bps_util_in).to equal 2.04 }
+      specify { expect(@int4.bps_util_in).to equal 0.0 }
     end
 
-    describe '#bps_out_util' do
-      specify { expect(@int1.bps_out_util).to equal 13.71 }
-      specify { expect(@int2.bps_out_util).to equal 0.0 }
-      specify { expect(@int3.bps_out_util).to equal 5.86 }
-      specify { expect(@int4.bps_out_util).to equal 0.0 }
+    describe '#bps_util_out' do
+      specify { expect(@int1.bps_util_out).to equal 13.71 }
+      specify { expect(@int2.bps_util_out).to equal 0.0 }
+      specify { expect(@int3.bps_util_out).to equal 5.86 }
+      specify { expect(@int4.bps_util_out).to equal 0.0 }
     end
 
     describe '#physical?' do
@@ -407,17 +407,17 @@ describe Interface do
       # The interface_1 and interface_1_update are specicially crated to give these
       #   outputs, ensuring accurate calcuation of bps and bps_util
       specify { expect(@int1.update(interface_1_update, worker: 'test')).to equal @int1 }
-      specify { expect(@int1.update(interface_1_update, worker: 'test').bps_in_util).to eql 10.0 }
-      specify { expect(@int1.update(interface_1_update, worker: 'test').bps_out_util).to eql 20.0 }
+      specify { expect(@int1.update(interface_1_update, worker: 'test').bps_util_in).to eql 10.0 }
+      specify { expect(@int1.update(interface_1_update, worker: 'test').bps_util_out).to eql 20.0 }
       specify { expect(@int1.update(interface_1_update, worker: 'test').bps_in).to eql 999_999_999 }
       specify { expect(@int1.update(interface_1_update, worker: 'test').bps_out).to eql 1_999_999_999 }
       specify { expect(@int2.update(interface_2_update, worker: 'test')).to equal @int2 }
-      specify { expect(@int2.update(interface_2_update, worker: 'test').bps_in_util).to eql 0.0 }
-      specify { expect(@int2.update(interface_2_update, worker: 'test').bps_out_util).to eql 0.0 }
+      specify { expect(@int2.update(interface_2_update, worker: 'test').bps_util_in).to eql 0.0 }
+      specify { expect(@int2.update(interface_2_update, worker: 'test').bps_util_out).to eql 0.0 }
       specify { expect(@int3.update(interface_3_update, worker: 'test')).to equal @int3 }
       specify { expect(@int4.update(interface_4_update, worker: 'test')).to equal @int4 }
-      specify { expect(@int4.update(interface_4_update, worker: 'test').bps_in_util).to eql 0.0 }
-      specify { expect(@int4.update(interface_4_update, worker: 'test').bps_out_util).to eql 0.0 }
+      specify { expect(@int4.update(interface_4_update, worker: 'test').bps_util_in).to eql 0.0 }
+      specify { expect(@int4.update(interface_4_update, worker: 'test').bps_util_out).to eql 0.0 }
     end
 
     describe '#write_to_influxdb' do

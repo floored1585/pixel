@@ -2,6 +2,7 @@
 require 'logger'
 require 'snmp'
 require_relative 'api'
+require_relative 'influx'
 require_relative 'configfile'
 require_relative 'core_ext/object'
 require_relative 'interface'
@@ -11,7 +12,7 @@ require_relative 'fan'
 require_relative 'psu'
 require_relative 'cpu'
 
-$LOG ||= Logger.new('device.log')
+$LOG ||= Logger.new(STDOUT)
 
 class Device
 
@@ -147,6 +148,8 @@ class Device
 
     rescue RuntimeError, ArgumentError => e
       $LOG.error("POLLER: Error encountered while polling #{@name}: #{e}")
+      @last_poll = Time.now.to_i
+      @next_poll = Time.now.to_i + 100
       @last_poll_result = 1
       @last_poll_text = e.to_s
       send
@@ -286,21 +289,28 @@ class Device
     if API.post('core', '/v2/device', to_json, 'POLLER', 'poll results')
       elapsed = Time.now.to_i - start
       $LOG.info("POLLER: POST successful for #{@name} (#{elapsed} seconds)")
+      return true
     else
       $LOG.error("POLLER: POST failed for #{@name}; Aborting")
+      return false
     end
-
-    return self
   end
 
 
-  def write_tsdb()
-    @interfaces.each { |index, interface| interface.write_tsdb }
-    @memory.each { |index, memory| memory.write_tsdb }
-    @temps.each { |index, temp| temp.write_tsdb }
-    @cpus.each { |index, cpu| cpu.write_tsdb }
-    @psus.each { |index, psu| psu.write_tsdb }
-    @fans.each { |index, fan| fan.write_tsdb }
+  def write_influxdb
+
+    # Device series
+    Influx.post(series: "#{@name}.bps_out", value: bps_out, time: @last_poll)
+    Influx.post(series: "#{@name}.pps_out", value: pps_out, time: @last_poll)
+    Influx.post(series: "#{@name}.discards_out", value: discards_out, time: @last_poll)
+    Influx.post(series: "#{@name}.errors_out", value: errors_out, time: @last_poll)
+
+    # Component series
+    @interfaces.each { |index, interface| interface.write_influxdb }
+    @memory.each { |index, memory| memory.write_influxdb }
+    @temps.each { |index, temp| temp.write_influxdb }
+    @cpus.each { |index, cpu| cpu.write_influxdb }
+
   end
 
 

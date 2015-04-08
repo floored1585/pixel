@@ -53,6 +53,15 @@ class Memory
   end
 
 
+  def write_influxdb
+    Influx.post(
+      series: "#{@device}.memory.#{@index}.#{@description}",
+      value: @util,
+      time: @last_poll,
+    )
+  end
+
+
   def save(db)
     data = JSON.parse(self.to_json)['data']
 

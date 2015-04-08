@@ -3,7 +3,8 @@ require_relative 'configfile'
 
 module Influx
 
-  @settings = Configfile.retrieve
+  poll_cfg = Configfile.retrieve['poller'] || {}
+
   @colors = [ 
     '#b2a470', '#92875a', '#ecb796', '#dc8f70', '#716c49', '#d2ed82',
     '#bbe468', '#a1d05d', '#e7cbe6', '#d8aad6', '#a888c2', '#9dc2d3',
@@ -12,14 +13,18 @@ module Influx
     '#a888c2', '#9dc2d3', '#649eb9',
   ]
 
+  $LOG ||= Logger.new(STDOUT)
   InfluxDB::Logging.logger = $LOG
 
   @influxdb = InfluxDB::Client.new(
-    @settings['poller']['influx_db'],
-    :host => @settings['poller']['influx_ip'],
-    :username => @settings['poller']['influx_user'],
-    :password => @settings['poller']['influx_pass'],
-    :retry => 1)
+    poll_cfg['influx_db'],
+    :host => poll_cfg['influx_ip'],
+    :username => poll_cfg['influx_user'],
+    :password => poll_cfg['influx_pass'],
+    :read_timeout => 5,
+    :open_timeout => 1,
+    :retry => 1,
+  )
 
 
   def self.query(query, attribute, db, format=nil)
@@ -42,9 +47,18 @@ module Influx
   end
 
 
-  def self.post_series(name, object)
-    data_point = { :value => object, :time => Time.now.to_i }
-    @influxdb.write_point(name, data_point)
+  def self.post(series:, value:, time: Time.now.to_i)
+    data_point = { :value => value, :time => time }
+
+    begin # Attempt the connection
+      @influxdb.write_point(series, data_point)
+      return true
+    rescue Timeout::Error, Errno::ETIMEDOUT, Errno::EINVAL, Errno::ECONNRESET,
+      Errno::ECONNREFUSED, EOFError, Net::HTTPBadResponse,
+      Net::HTTPHeaderSyntaxError, Net::ProtocolError, InfluxDB::Error
+      return false
+    end
+
   end
 
 

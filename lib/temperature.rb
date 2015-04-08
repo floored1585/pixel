@@ -65,6 +65,15 @@ class Temperature
   end
 
 
+  def write_influxdb
+    Influx.post(
+      series: "#{@name}.temperature.#{@index}.#{@description}",
+      value: @temperature,
+      time: @last_poll,
+    )
+  end
+
+
   def save(db)
     data = JSON.parse(self.to_json)['data']
 

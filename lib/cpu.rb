@@ -53,8 +53,12 @@ class CPU
   end
 
 
-  def write_tsdb
-    #TODO
+  def write_influxdb
+    Influx.post(
+      series: "#{@device}.cpu.#{@index}.#{@description}",
+      value: @util,
+      time: @last_poll,
+    )
   end
 
 

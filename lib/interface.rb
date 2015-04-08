@@ -260,52 +260,52 @@ class Interface
     Influx.post(
       series: "#{@device}.interface.#{@index}.#{@name}.bps_in",
       value: bps_in,
-      time: @last_poll,
+      time: @last_updated,
     )
     Influx.post(
       series: "#{@device}.interface.#{@index}.#{@name}.bps_out",
       value: bps_out,
-      time: @last_poll,
+      time: @last_updated,
     )
     Influx.post(
       series: "#{@device}.interface.#{@index}.#{@name}.pps_in",
       value: pps_in,
-      time: @last_poll,
+      time: @last_updated,
     )
     Influx.post(
       series: "#{@device}.interface.#{@index}.#{@name}.pps_out",
       value: pps_out,
-      time: @last_poll,
+      time: @last_updated,
     )
     Influx.post(
       series: "#{@device}.interface.#{@index}.#{@name}.discards_in",
       value: discards_in,
-      time: @last_poll,
+      time: @last_updated,
     )
     Influx.post(
       series: "#{@device}.interface.#{@index}.#{@name}.discards_out",
       value: discards_out,
-      time: @last_poll,
+      time: @last_updated,
     )
     Influx.post(
       series: "#{@device}.interface.#{@index}.#{@name}.errors_in",
       value: errors_in,
-      time: @last_poll,
+      time: @last_updated,
     )
     Influx.post(
       series: "#{@device}.interface.#{@index}.#{@name}.errors_out",
       value: errors_out,
-      time: @last_poll,
+      time: @last_updated,
     )
     Influx.post(
       series: "#{@device}.interface.#{@index}.#{@name}.bps_util_in",
       value: bps_util_in,
-      time: @last_poll,
+      time: @last_updated,
     )
     Influx.post(
       series: "#{@device}.interface.#{@index}.#{@name}.bps_util_out",
       value: bps_util_out,
-      time: @last_poll,
+      time: @last_updated,
     )
   end
 

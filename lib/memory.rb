@@ -57,7 +57,7 @@ class Memory
     Influx.post(
       series: "#{@device}.memory.#{@index}.#{@description}",
       value: @util,
-      time: @last_poll,
+      time: @last_updated,
     )
   end
 

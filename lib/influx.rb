@@ -17,10 +17,10 @@ module Influx
   InfluxDB::Logging.logger = $LOG
 
   @influxdb = InfluxDB::Client.new(
-    poll_cfg['influx_db'],
-    :host => poll_cfg['influx_ip'],
-    :username => poll_cfg['influx_user'],
-    :password => poll_cfg['influx_pass'],
+    poll_cfg[:influx_db],
+    :host => poll_cfg[:influx_ip],
+    :username => poll_cfg[:influx_user],
+    :password => poll_cfg[:influx_pass],
     :read_timeout => 5,
     :open_timeout => 1,
     :retry => 1,
@@ -55,7 +55,8 @@ module Influx
       return true
     rescue Timeout::Error, Errno::ETIMEDOUT, Errno::EINVAL, Errno::ECONNRESET,
       Errno::ECONNREFUSED, EOFError, Net::HTTPBadResponse,
-      Net::HTTPHeaderSyntaxError, Net::ProtocolError, InfluxDB::Error
+      Net::HTTPHeaderSyntaxError, Net::ProtocolError, InfluxDB::Error => e
+      $LOG.error("INFLUXDB: #{e}")
       return false
     end
 

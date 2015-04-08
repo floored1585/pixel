@@ -57,7 +57,7 @@ class CPU
     Influx.post(
       series: "#{@device}.cpu.#{@index}.#{@description}",
       value: @util,
-      time: @last_poll,
+      time: @last_updated,
     )
   end
 

@@ -69,7 +69,7 @@ class Temperature
     Influx.post(
       series: "#{@name}.temperature.#{@index}.#{@description}",
       value: @temperature,
-      time: @last_poll,
+      time: @last_updated,
     )
   end
 

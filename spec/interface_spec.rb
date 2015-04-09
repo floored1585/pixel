@@ -237,6 +237,10 @@ describe Interface do
       specify { expect(@int.bps_util_out).to equal 0.0 }
     end
 
+    describe '#last_updated' do
+      specify { expect(@int.last_updated).to eql 0 }
+    end
+
     describe '#physical?' do
       specify { expect(@int.physical?).to equal true }
     end
@@ -394,6 +398,13 @@ describe Interface do
       specify { expect(@int2.bps_util_out).to equal 0.0 }
       specify { expect(@int3.bps_util_out).to equal 5.86 }
       specify { expect(@int4.bps_util_out).to equal 0.0 }
+    end
+
+    describe '#last_updated' do
+      specify { expect(@int1.last_updated).to eql interface_1['last_updated'].to_i }
+      specify { expect(@int2.last_updated).to eql interface_2['last_updated'].to_i }
+      specify { expect(@int3.last_updated).to eql interface_3['last_updated'].to_i }
+      specify { expect(@int4.last_updated).to eql interface_4['last_updated'].to_i }
     end
 
     describe '#physical?' do

@@ -87,6 +87,10 @@ class Interface
     _calculate_utilization(@bps_out)
   end
 
+  def last_updated
+    @last_updated || 0
+  end
+
 
   # Returns true unless the interface is name looks logical.  Also returns true if @name is nil.
   def physical?

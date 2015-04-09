@@ -73,6 +73,15 @@ class PSU
   end
 
 
+  def delete(db)
+    # Delete the psu from the database
+    count = db[:psu].where(:device => @device, :index => @index).delete
+    $LOG.info("Deleted psu #{@index} (#{@description}) on #{@device}. Last poller: #{@worker}")
+
+    return self
+  end
+
+
   def to_json(*a)
     { 
       "json_class" => self.class.name,

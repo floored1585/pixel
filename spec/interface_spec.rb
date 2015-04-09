@@ -1,4 +1,4 @@
-require_relative '../lib/interface'
+require_relative 'rspec'
 
 describe Interface do
 

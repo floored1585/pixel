@@ -1,4 +1,4 @@
-require_relative '../lib/psu'
+require_relative 'rspec'
 
 describe PSU do
 

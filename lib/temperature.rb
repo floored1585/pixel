@@ -88,6 +88,15 @@ class Temperature
   end
 
 
+  def delete(db)
+    # Delete the temperature from the database
+    count = db[:temperature].where(:device => @device, :index => @index).delete
+    $LOG.info("Deleted temperature #{@index} (#{@description}) on #{@device}. Last poller: #{@worker}")
+
+    return self
+  end
+
+
   def to_json(*a)
     {
       "json_class" => self.class.name,

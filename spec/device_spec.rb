@@ -1,4 +1,3 @@
-require_relative '../lib/device'
 require_relative 'device_spec_data'
 
 describe Device do

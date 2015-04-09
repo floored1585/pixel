@@ -73,6 +73,15 @@ class Fan
   end
 
 
+  def delete(db)
+    # Delete the fan from the database
+    count = db[:fan].where(:device => @device, :index => @index).delete
+    $LOG.info("Deleted fan #{@index} (#{@description}) on #{@device}. Last poller: #{@worker}")
+
+    return self
+  end
+
+
   def to_json(*a)
     {
       "json_class" => self.class.name,

@@ -1,0 +1,7 @@
+require_relative '../lib/device'
+require_relative '../lib/interface'
+require_relative '../lib/cpu'
+require_relative '../lib/fan'
+require_relative '../lib/memory'
+require_relative '../lib/psu'
+require_relative '../lib/temperature'

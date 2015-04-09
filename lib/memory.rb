@@ -76,6 +76,15 @@ class Memory
   end
 
 
+  def delete(db)
+    # Delete the memory from the database
+    count = db[:memory].where(:device => @device, :index => @index).delete
+    $LOG.info("Deleted memory #{@index} (#{@description}) on #{@device}. Last poller: #{@worker}")
+
+    return self
+  end
+
+
   def to_json(*a)
     {
       "json_class" => self.class.name,

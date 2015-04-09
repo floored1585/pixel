@@ -1,4 +1,4 @@
-require_relative '../lib/fan'
+require_relative 'rspec'
 
 describe Fan do
 

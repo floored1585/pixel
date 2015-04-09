@@ -76,6 +76,15 @@ class CPU
   end
 
 
+  def delete(db)
+    # Delete the cpu from the database
+    count = db[:cpu].where(:device => @device, :index => @index).delete
+    $LOG.info("Deleted cpu #{@index} (#{@description}) on #{@device}. Last poller: #{@worker}")
+
+    return self
+  end
+
+
   def to_json(*a)
     {
       "json_class" => self.class.name,

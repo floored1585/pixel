@@ -1,4 +1,4 @@
-require_relative '../lib/cpu'
+require_relative 'rspec'
 
 describe CPU do
 

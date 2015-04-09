@@ -326,12 +326,27 @@ class Device
       $LOG.error("Problem updating device table for #{@name}")
     end
 
-    @interfaces.each { |index, interface| interface.save(db) }
-    @memory.each { |index, memory| memory.save(db) }
-    @temps.each { |index, temp| temp.save(db) }
-    @cpus.each { |index, cpu| cpu.save(db) }
-    @psus.each { |index, psu| psu.save(db) }
-    @fans.each { |index, fan| fan.save(db) }
+    expire_time = Time.now.to_i - 300
+
+    # If the interface was just updated, save it.  If not, delete it.
+    @interfaces.each do |index, interface|
+      interface.last_updated > expire_time ? interface.save(db) : interface.delete(db)
+    end
+    @cpus.each do |index, cpu|
+      cpu.last_updated > expire_time ? cpu.save(db) : cpu.delete(db)
+    end
+    @fans.each do |index, fan|
+      fan.last_updated > expire_time ? fan.save(db) : fan.delete(db)
+    end
+    @memory.each do |index, memory|
+      memory.last_updated > expire_time ? memory.save(db) : memory.delete(db)
+    end
+    @psus.each do |index, psu|
+      psu.last_updated > expire_time ? psu.save(db) : psu.delete(db)
+    end
+    @temps.each do |index, temp|
+      temp.last_updated > expire_time ? temp.save(db) : temp.delete(db)
+    end
 
     return self
   end

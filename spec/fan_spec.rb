@@ -72,41 +72,50 @@ describe Fan do
   end
 
 
-  # update
-  describe '#update' do
+  context 'when freshly created' do
 
-    context 'when freshly created' do
-
-      before(:each) do
-        @fan = Fan.new(device: 'gar-test-1', index: '103')
-      end
-
-
-      it 'should return a Fan object' do
-        expect(@fan.update(data1_update_ok, worker: 'test')).to be_a Fan
-      end
-
+    before(:each) do
+      @fan = Fan.new(device: 'gar-test-1', index: '103')
     end
 
 
-    context 'when populated' do
+    # update
+    describe '#update' do
+      specify { expect(@fan.update(data1_update_ok, worker: 'test')).to be_a Fan }
+    end
 
-      before(:each) do
-        @fan = Fan.new(device: 'gar-b11u1-dist', index: '7.1.0.0').populate(data1_base)
-        @fan2 = Fan.new(device: 'gar-k11u1-dist', index: '1').populate(data2_base)
-        @fan3 = Fan.new(device: 'gar-k11u1-dist', index: '1').populate(data3_base)
-      end
-
-
-      it 'should return a Fan object' do
-        expect(@fan.update(data1_update_ok, worker: 'test')).to be_a Fan
-        expect(@fan2.update(data2_update_ok, worker: 'test')).to be_a Fan
-        expect(@fan3.update(data3_update_ok, worker: 'test')).to be_a Fan
-      end
-
+    # last_updated
+    describe '#last_updated' do
+      specify { expect(@fan.last_updated).to eql 0 }
     end
 
   end
+
+
+  context 'when populated' do
+
+    before(:each) do
+      @fan1 = Fan.new(device: 'gar-b11u1-dist', index: '7.1.0.0').populate(data1_base)
+      @fan2 = Fan.new(device: 'gar-k11u1-dist', index: '1').populate(data2_base)
+      @fan3 = Fan.new(device: 'gar-k11u1-dist', index: '1').populate(data3_base)
+    end
+
+    # update
+    describe '#update' do
+      specify { expect(@fan1.update(data1_update_ok, worker: 'test')).to be_a Fan }
+      specify { expect(@fan2.update(data2_update_ok, worker: 'test')).to be_a Fan }
+      specify { expect(@fan3.update(data3_update_ok, worker: 'test')).to be_a Fan }
+    end
+
+    # last_updated
+    describe '#last_updated' do
+      specify { expect(@fan1.last_updated).to eql data1_base['last_updated'].to_i }
+      specify { expect(@fan2.last_updated).to eql data2_base['last_updated'].to_i }
+      specify { expect(@fan3.last_updated).to eql data3_base['last_updated'].to_i }
+    end
+
+  end
+
 
   # to_json
   describe '#to_json and #json_create' do

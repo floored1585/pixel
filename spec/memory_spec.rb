@@ -65,41 +65,51 @@ describe Memory do
   end
 
 
-  # update
-  describe '#update' do
+  context 'when freshly created' do
 
-    context 'when freshly created' do
-
-      before(:each) do
-        @memory = Memory.new(device: 'gar-test-1', index: '103')
-      end
-
-
-      it 'should return a Memory object' do
-        expect(@memory.update(data1_update_ok, worker: 'test')).to be_a Memory
-      end
-
+    before(:each) do
+      @memory = Memory.new(device: 'gar-test-1', index: '103')
     end
 
 
-    context 'when populated' do
+    # update
+    describe '#update' do
+      specify { expect(@memory.update(data1_update_ok, worker: 'test')).to be_a Memory }
+    end
 
-      before(:each) do
-        @memory = Memory.new(device: 'gar-b11u1-dist', index: '7.1.0.0').populate(data1_base)
-        @memory2 = Memory.new(device: 'gar-k11u1-dist', index: '1').populate(data2_base)
-        @memory3 = Memory.new(device: 'gar-k11u1-dist', index: '1').populate(data3_base)
-      end
-
-
-      it 'should return a Memory object' do
-        expect(@memory.update(data1_update_ok, worker: 'test')).to be_a Memory
-        expect(@memory2.update(data2_update_ok, worker: 'test')).to be_a Memory
-        expect(@memory3.update(data3_update_ok, worker: 'test')).to be_a Memory
-      end
-
+    # last_updated
+    describe '#last_updated' do
+      specify { expect(@memory.last_updated).to eql 0 }
     end
 
   end
+
+
+  context 'when populated' do
+
+    before(:each) do
+      @memory1 = Memory.new(device: 'gar-b11u1-dist', index: '7.1.0.0').populate(data1_base)
+      @memory2 = Memory.new(device: 'gar-k11u1-dist', index: '1').populate(data2_base)
+      @memory3 = Memory.new(device: 'gar-k11u1-dist', index: '1').populate(data3_base)
+    end
+
+
+    # update
+    describe '#update' do
+      specify { expect(@memory1.update(data1_update_ok, worker: 'test')).to be_a Memory }
+      specify { expect(@memory2.update(data2_update_ok, worker: 'test')).to be_a Memory }
+      specify { expect(@memory3.update(data3_update_ok, worker: 'test')).to be_a Memory }
+    end
+
+    # last_updated
+    describe '#last_updated' do
+      specify { expect(@memory1.last_updated).to eql data1_base['last_updated'].to_i }
+      specify { expect(@memory2.last_updated).to eql data2_base['last_updated'].to_i }
+      specify { expect(@memory3.last_updated).to eql data3_base['last_updated'].to_i }
+    end
+
+  end
+
 
   # to_json
   describe '#to_json and #json_create' do

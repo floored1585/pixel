@@ -77,39 +77,48 @@ describe Temperature do
   end
 
 
-  # update
-  describe '#update' do
+  context 'when freshly created' do
 
-    context 'when freshly created' do
-
-      before(:each) do
-        @temp = Temperature.new(device: 'gar-test-1', index: '103')
-      end
-
-
-      it 'should return a Temperature object' do
-        expect(@temp.update(data1_update_ok, worker: 'test')).to be_a Temperature
-      end
-
+    before(:each) do
+      @temp = Temperature.new(device: 'gar-test-1', index: '103')
     end
 
 
-    context 'when populated' do
+    # update
+    describe '#update' do
+      specify { expect(@temp.update(data1_update_ok, worker: 'test')).to be_a Temperature }
+    end
 
-      before(:each) do
-        @temp = Temperature.new(device: 'gar-b11u1-dist', index: '7.1.0.0').populate(data1_base)
-        @temp2 = Temperature.new(device: 'gar-k11u1-dist', index: '1').populate(data2_base)
-      end
-
-
-      it 'should return a Temperature object' do
-        expect(@temp.update(data1_update_ok, worker: 'test')).to be_a Temperature
-        expect(@temp2.update(data2_update_ok, worker: 'test')).to be_a Temperature
-      end
-
+    # last_updated
+    describe '#last_updated' do
+      specify { expect(@temp.last_updated).to eql 0 }
     end
 
   end
+
+
+  context 'when populated' do
+
+    before(:each) do
+      @temp1 = Temperature.new(device: 'gar-b11u1-dist', index: '7.1.0.0').populate(data1_base)
+      @temp2 = Temperature.new(device: 'gar-k11u1-dist', index: '1').populate(data2_base)
+    end
+
+
+    # update
+    describe '#update' do
+      specify { expect(@temp1.update(data1_update_ok, worker: 'test')).to be_a Temperature }
+      specify { expect(@temp2.update(data2_update_ok, worker: 'test')).to be_a Temperature }
+    end
+
+    # last_updated
+    describe '#last_updated' do
+      specify { expect(@temp1.last_updated).to eql data1_base['last_updated'] }
+      specify { expect(@temp2.last_updated).to eql data2_base['last_updated'] }
+    end
+
+  end
+
 
   # to_json
   describe '#to_json and #json_create' do

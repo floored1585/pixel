@@ -71,41 +71,51 @@ describe PSU do
   end
 
 
-  # update
-  describe '#update' do
+  context 'when freshly created' do
 
-    context 'when freshly created' do
-
-      before(:each) do
-        @psu = PSU.new(device: 'gar-test-1', index: '103')
-      end
-
-
-      it 'should return a PSU object' do
-        expect(@psu.update(data1_update_ok, worker: 'test')).to be_a PSU
-      end
-
+    before(:each) do
+      @psu = PSU.new(device: 'gar-test-1', index: '103')
     end
 
 
-    context 'when populated' do
+    # update
+    describe '#update' do
+      specify { expect(@psu.update(data1_update_ok, worker: 'test')).to be_a PSU }
+    end
 
-      before(:each) do
-        @psu = PSU.new(device: 'gar-b11u1-dist', index: '7.1.0.0').populate(data1_base)
-        @psu2 = PSU.new(device: 'gar-k11u1-dist', index: '1').populate(data2_base)
-        @psu3 = PSU.new(device: 'gar-k11u1-dist', index: '1').populate(data3_base)
-      end
-
-
-      it 'should return a PSU object' do
-        expect(@psu.update(data1_update_ok, worker: 'test')).to be_a PSU
-        expect(@psu2.update(data2_update_ok, worker: 'test')).to be_a PSU
-        expect(@psu3.update(data3_update_ok, worker: 'test')).to be_a PSU
-      end
-
+    # last_updated
+    describe '#last_updated' do
+      specify { expect(@psu.last_updated).to eql 0 }
     end
 
   end
+
+
+  context 'when populated' do
+
+    before(:each) do
+      @psu1 = PSU.new(device: 'gar-b11u1-dist', index: '7.1.0.0').populate(data1_base)
+      @psu2 = PSU.new(device: 'gar-k11u1-dist', index: '1').populate(data2_base)
+      @psu3 = PSU.new(device: 'gar-k11u1-dist', index: '1').populate(data3_base)
+    end
+
+
+    # update
+    describe '#update' do
+      specify { expect(@psu1.update(data1_update_ok, worker: 'test')).to be_a PSU }
+      specify { expect(@psu2.update(data2_update_ok, worker: 'test')).to be_a PSU }
+      specify { expect(@psu3.update(data3_update_ok, worker: 'test')).to be_a PSU }
+    end
+
+    # last_updated
+    describe '#last_updated' do
+      specify { expect(@psu1.last_updated).to eql data1_base['last_updated'] }
+      specify { expect(@psu2.last_updated).to eql data2_base['last_updated'] }
+      specify { expect(@psu3.last_updated).to eql data3_base['last_updated'] }
+    end
+
+  end
+
 
   # to_json
   describe '#to_json and #json_create' do

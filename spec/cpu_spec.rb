@@ -65,41 +65,51 @@ describe CPU do
   end
 
 
-  # update
-  describe '#update' do
+  context 'when freshly created' do
 
-    context 'when freshly created' do
-
-      before(:each) do
-        @cpu = CPU.new(device: 'gar-test-1', index: '103')
-      end
-
-
-      it 'should return a CPU object' do
-        expect(@cpu.update(data1_update_ok, worker: 'test')).to be_a CPU
-      end
-
+    before(:each) do
+      @cpu = CPU.new(device: 'gar-test-1', index: '103')
     end
 
 
-    context 'when populated' do
-
-      before(:each) do
-        @cpu = CPU.new(device: 'gar-b11u1-dist', index: '7.1.0.0').populate(data1_base)
-        @cpu2 = CPU.new(device: 'gar-k11u1-dist', index: '1').populate(data2_base)
-        @cpu3 = CPU.new(device: 'gar-k11u1-dist', index: '1').populate(data3_base)
-      end
-
-
-      it 'should return a CPU object' do
-        expect(@cpu.update(data1_update_ok, worker: 'test')).to be_a CPU
-        expect(@cpu2.update(data2_update_ok, worker: 'test')).to be_a CPU
-        expect(@cpu3.update(data3_update_ok, worker: 'test')).to be_a CPU
-      end
-
+    # update
+    describe '#update' do
+      specify { expect(@cpu.update(data1_update_ok, worker: 'test')).to be_a CPU }
+    end
+    
+    # last_updated
+    describe '#last_updated' do
+      specify { expect(@cpu.last_updated).to eql 0 }
     end
 
   end
+
+
+  context 'when populated' do
+
+    before(:each) do
+      @cpu1 = CPU.new(device: 'gar-b11u1-dist', index: '7.1.0.0').populate(data1_base)
+      @cpu2 = CPU.new(device: 'gar-k11u1-dist', index: '1').populate(data2_base)
+      @cpu3 = CPU.new(device: 'gar-k11u1-dist', index: '1').populate(data3_base)
+    end
+
+
+    # update
+    describe '#update' do
+      specify { expect(@cpu1.update(data1_update_ok, worker: 'test')).to be_a CPU }
+      specify { expect(@cpu2.update(data2_update_ok, worker: 'test')).to be_a CPU }
+      specify { expect(@cpu3.update(data3_update_ok, worker: 'test')).to be_a CPU }
+    end
+
+    # last_updated
+    describe '#last_updated' do
+      specify { expect(@cpu1.last_updated).to eql data1_base['last_updated'].to_i }
+      specify { expect(@cpu2.last_updated).to eql data2_base['last_updated'].to_i }
+      specify { expect(@cpu3.last_updated).to eql data3_base['last_updated'].to_i }
+    end
+
+  end
+
 
   # to_json
   describe '#to_json and #json_create' do

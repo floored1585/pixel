@@ -18,6 +18,11 @@ class Fan
   end
   
 
+  def last_updated
+    @last_updated || 0
+  end
+
+
   def populate(data=nil)
 
     # If we weren't passed data, look ourselves up

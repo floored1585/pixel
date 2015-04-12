@@ -1,10 +1,5 @@
 require 'socket'
-require 'influxdb'
 require 'snmp'
-require 'net/http'
-require 'json'
-require 'uri'
-require_relative 'core_ext/hash'
 
 module Poller
 
@@ -45,24 +40,10 @@ module Poller
         $LOG.error("POLLER: Poll failed for #{device_name}")
       end
 
-      # TODO: Need to use stale_indexes to delete stuff
-      stale_indexes, last_values = _get_last_values(device, if_table)
-      _delete_interfaces(stale_indexes) if stale_indexes[device][:interface].length > 0
-
     end # End fork
+
     Process.detach(pid)
     $LOG.info("POLLER: Forked PID #{pid} (#{device})")
-  end
-
-
-  def self._delete_interfaces(data)
-    device = data.keys[0]
-    count = data[device][:interface].length
-    if API.post('core', '/v1/devices/delete/components', data, 'POLLER', 'interfaces to delete')
-      $LOG.warn("POLLER: DELETE successful for #{device} (#{count} interfaces removed)")
-    else
-      $LOG.error("POLLER: POST failed for #{devices.keys[0]} interface removal")
-    end
   end
 
 

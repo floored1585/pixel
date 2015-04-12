@@ -1,5 +1,4 @@
 require_relative '../lib/sq'
-
 require_relative '../lib/device'
 require_relative '../lib/interface'
 require_relative '../lib/cpu'

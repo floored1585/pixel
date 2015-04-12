@@ -333,47 +333,50 @@ class Interface
     count = db[:interface].where(:device => @device, :index => @index).delete
     $LOG.info("Deleted interface #{@index} (#{@name}) on #{@device}. Last poller: #{@worker}")
 
-    return self
+    return count
   end
 
 
   def to_json(*a)
-    {
+    hash = {
       "json_class" => self.class.name,
       "data" => {
         "device" => @device,
         "index" => @index,
-        "last_updated" => @last_updated,
-        "if_alias" => @alias,
-        "if_name" => @name,
-        "if_hc_in_octets" => @hc_in_octets,
-        "if_hc_out_octets" => @hc_out_octets,
-        "if_hc_in_ucast_pkts" => @hc_in_ucast_pkts,
-        "if_hc_out_ucast_pkts" => @hc_out_ucast_pkts,
-        "if_speed" => @speed,
-        "if_mtu" => @mtu,
-        "if_admin_status" => @admin_status,
-        "if_admin_status_time" => @admin_status_time,
-        "if_oper_status" => @oper_status,
-        "if_oper_status_time" => @oper_status_time,
-        "if_in_discards" => @in_discards,
-        "if_in_errors" => @in_errors,
-        "if_out_discards" => @out_discards,
-        "if_out_errors" => @out_errors,
-        "bps_in" => @bps_in,
-        "bps_out" => @bps_out,
-        "discards_in" => @discards_in,
-        "errors_in" => @errors_in,
-        "discards_out" => @discards_out,
-        "errors_out" => @errors_out,
-        "pps_in" => @pps_in,
-        "pps_out" => @pps_out,
-        "bps_util_in" => bps_util_in,
-        "bps_util_out" => bps_util_out,
-        "if_type" => @type,
-        "worker" => @worker,
       }
-    }.to_json(*a)
+    }
+
+    hash['data']["last_updated"] = @last_updated if @last_updated
+    hash['data']["if_alias"] = @alias if @alias
+    hash['data']["if_name"] = @name if @name
+    hash['data']["if_hc_in_octets"] = @hc_in_octets if @hc_in_octets
+    hash['data']["if_hc_out_octets"] = @hc_out_octets if @hc_out_octets
+    hash['data']["if_hc_in_ucast_pkts"] = @hc_in_ucast_pkts if @hc_in_ucast_pkts
+    hash['data']["if_hc_out_ucast_pkts"] = @hc_out_ucast_pkts if @hc_out_ucast_pkts
+    hash['data']["if_speed"] = @speed if @speed
+    hash['data']["if_mtu"] = @mtu if @mtu
+    hash['data']["if_admin_status"] = @admin_status if @admin_status
+    hash['data']["if_admin_status_time"] = @admin_status_time if @admin_status_time
+    hash['data']["if_oper_status"] = @oper_status if @oper_status
+    hash['data']["if_oper_status_time"] = @oper_status_time if @oper_status_time
+    hash['data']["if_in_discards"] = @in_discards if @in_discards
+    hash['data']["if_in_errors"] = @in_errors if @in_errors
+    hash['data']["if_out_discards"] = @out_discards if @out_discards
+    hash['data']["if_out_errors"] = @out_errors if @out_errors
+    hash['data']["bps_in"] = @bps_in if @bps_in
+    hash['data']["bps_out"] = @bps_out if @bps_out
+    hash['data']["discards_in"] = @discards_in if @discards_in
+    hash['data']["errors_in"] = @errors_in if @errors_in
+    hash['data']["discards_out"] = @discards_out if @discards_out
+    hash['data']["errors_out"] = @errors_out if @errors_out
+    hash['data']["pps_in"] = @pps_in if @pps_in
+    hash['data']["pps_out"] = @pps_out if @pps_out
+    hash['data']["bps_util_in"] = bps_util_in
+    hash['data']["bps_util_out"] = bps_util_out
+    hash['data']["if_type"] = @type if @type
+    hash['data']["worker"] = @worker if @worker
+
+    hash.to_json(*a)
   end
 
 

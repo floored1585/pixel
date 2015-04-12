@@ -323,7 +323,8 @@ class Device
     # Update the device table
     existing = db[:device].where(:device => @name)
     if existing.update(data) != 1
-      $LOG.error("Problem updating device table for #{@name}")
+      db[:device].insert(data)
+      $LOG.info("Created device #{@name}")
     end
 
     expire_time = Time.now.to_i - 300
@@ -352,39 +353,65 @@ class Device
   end
 
 
+  def delete(db)
+    int_count = 0
+    cpu_count = 0
+    fan_count = 0
+    mem_count = 0
+    psu_count = 0
+    temp_count = 0
+
+    @interfaces.values.each { |int| int_count += int.delete(db) }
+    @cpus.values.each { |cpu| cpu_count += cpu.delete(db) }
+    @fans.values.each { |fan| fan_count += fan.delete(db) }
+    @memory.values.each { |mem| mem_count += mem.delete(db) }
+    @psus.values.each { |psu| psu_count += psu.delete(db) }
+    @temps.values.each { |temp| temp_count += temp.delete(db) }
+
+    dev_count = db[:device].where(:device => @name).delete
+
+    $LOG.info("Deleted device #{@name}") if dev_count == 1
+
+    return dev_count + int_count + cpu_count + fan_count + mem_count + psu_count + temp_count
+  end
+
+
   def to_json(*a)
-    {
+    hash = {
       'json_class' => self.class.name,
       'data' => {
         'device' => @name,
-        'ip' => @poll_ip,
-        'last_poll' => @last_poll,
-        'next_poll' => @next_poll,
-        'last_poll_duration' => @last_poll_duration,
-        'last_poll_result' => @last_poll_result,
-        'last_poll_text' => @last_poll_text,
-        'currently_polling' => @currently_polling,
-        'worker' => @worker,
-        'pps_out' => pps_out,
-        'bps_out' => bps_out,
-        'discards_out' => discards_out,
-        'errors_out' => errors_out,
-        'sys_descr' => @sys_descr,
-        'vendor' => @vendor,
-        'sw_descr' => @sw_descr,
-        'sw_version' => @sw_version,
-        'hw_model' => @hw_model,
-        'uptime' => @uptime,
-        'yellow_alarm' => @yellow_alarm,
-        'red_alarm' => @red_alarm,
-        'interfaces' => @interfaces,
-        'memory' => @memory,
-        'temps' => @temps,
-        'cpus' => @cpus,
-        'psus' => @psus,
-        'fans' => @fans,
       }
-    }.to_json(*a)
+    }
+
+    hash['data']['ip'] = @poll_ip if @poll_ip
+    hash['data']['last_poll'] = @last_poll if @last_poll
+    hash['data']['next_poll'] = @next_poll if @next_poll
+    hash['data']['last_poll_duration'] = @last_poll_duration if @last_poll_duration
+    hash['data']['last_poll_result'] = @last_poll_result if @last_poll_result
+    hash['data']['last_poll_text'] = @last_poll_text if @last_poll_text
+    hash['data']['currently_polling'] = @currently_polling if @currently_polling
+    hash['data']['worker'] = @worker if @worker
+    hash['data']['pps_out'] = pps_out
+    hash['data']['bps_out'] = bps_out
+    hash['data']['discards_out'] = discards_out
+    hash['data']['errors_out'] = errors_out
+    hash['data']['sys_descr'] = @sys_descr if @sys_descr
+    hash['data']['vendor'] = @vendor if @vendor
+    hash['data']['sw_descr'] = @sw_descr if @sw_descr
+    hash['data']['sw_version'] = @sw_version if @sw_version
+    hash['data']['hw_model'] = @hw_model if @hw_model
+    hash['data']['uptime'] = @uptime if @uptime
+    hash['data']['yellow_alarm'] = @yellow_alarm if @yellow_alarm
+    hash['data']['red_alarm'] = @red_alarm if @red_alarm
+    hash['data']['interfaces'] = @interfaces if @interfaces
+    hash['data']['memory'] = @memory if @memory
+    hash['data']['temps'] = @temps if @temps
+    hash['data']['cpus'] = @cpus if @cpus
+    hash['data']['psus'] = @psus if @psus
+    hash['data']['fans'] = @fans if @fans
+
+    hash.to_json(*a)
   end
 
 

@@ -86,22 +86,25 @@ class Memory
     count = db[:memory].where(:device => @device, :index => @index).delete
     $LOG.info("Deleted memory #{@index} (#{@description}) on #{@device}. Last poller: #{@worker}")
 
-    return self
+    return count
   end
 
 
   def to_json(*a)
-    {
+    hash = {
       "json_class" => self.class.name,
       "data" => {
         "device" => @device,
         "index" => @index,
-        "util" => @util,
-        "description" => @description,
-        "last_updated" => @last_updated,
-        "worker" => @worker,
       }
-    }.to_json(*a)
+    }
+
+    hash['data']["util"] = @util if @util
+    hash['data']["description"] = @description if @description
+    hash['data']["last_updated"] = @last_updated if @last_updated
+    hash['data']["worker"] = @worker if @worker
+    
+    hash.to_json(*a)
   end
 
 

@@ -4,9 +4,15 @@ describe Memory do
 
   json_keys = [ 'device', 'index', 'util', 'description', 'last_updated', 'worker' ]
 
-  data1_base = { "device" => "irv-i1u1-dist", "index" => "1", "util" => 8.0, "description" => "Linecard(slot 1)", "last_updated" => 1427224290 }
-  data2_base = { "device" => "gar-b11u1-dist", "index" => "7.2.0.0", "util" => 54.0, "description" => "FPC: EX4300-48T @ 1/*/*", "last_updated" => 1427224144 }
-  data3_base = { "device" => "aon-cumulus-3", "index" => "768", "util" => 20.0, "description" => "Memory 768", "last_updated" => 1427224306 }
+  data1_base = {
+    "device" => "irv-i1u1-dist", "index" => "1", "util" => 8.0, "worker" => "test123",
+    "description" => "Linecard(slot 1)", "last_updated" => 1427224290 }
+  data2_base = {
+    "device" => "gar-b11u1-dist", "index" => "7.2.0.0", "util" => 54.0, "worker" => "test123",
+    "description" => "FPC: EX4300-48T @ 1/*/*", "last_updated" => 1427224144 }
+  data3_base = {
+    "device" => "aon-cumulus-3", "index" => "768", "util" => 20.0, "description" => "Memory 768", 
+    "worker" => "test123", "last_updated" => 1427224306 }
 
   data1_update_ok = {
     "device" => "irv-i1u1-dist",
@@ -151,6 +157,33 @@ describe Memory do
       JSON.load(DEV2_JSON).memory['1'].save(DB)
       mem = Memory.new(device: 'test-v11u1-acc-y', index: '1').populate
       expect(mem.to_json).to eql JSON.load(DEV2_JSON).memory['1'].to_json
+    end
+
+  end
+
+
+  # delete
+  describe '#delete' do
+
+    before :each do
+      # Insert our bare bones device, just name and IP
+      DB[:device].insert(:device => 'test-v11u1-acc-y', :ip => '1.2.3.4')
+    end
+    after :each do
+      # Clean up DB
+      DB[:device].where(:device => 'test-v11u1-acc-y').delete
+    end
+
+
+    it 'should return 1 if it exists' do
+      JSON.load(DEV2_JSON).memory['1'].save(DB)
+      object = Memory.new(device: 'test-v11u1-acc-y', index: '1')
+      expect(object.delete(DB)).to eql 1
+    end
+
+    it "should return 0 if nonexistant" do
+      object = Memory.new(device: 'test-v11u1-acc-y', index: '1')
+      expect(object.delete(DB)).to eql 0
     end
 
   end

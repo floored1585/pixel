@@ -5,9 +5,17 @@ describe PSU do
   json_keys = [ 'device', 'index', 'description', 'last_updated',
                 'status', 'vendor_status', 'status_text', 'worker' ]
 
-  data1_base = {"device" => "gar-b11u1-dist", "index" => "4.1.1.1", "description" => "PSU 0 @ 0/0/0", "last_updated" => 1427164532, "status" => 1, "vendor_status" => 2, "status_text" => "OK"}
-  data2_base = {"device" => "gar-b11u17-acc-g", "index" => "1004", "description" => "Switch#1,  PSU#1", "last_updated" => 1427164623, "status" => 1, "vendor_status" => 1, "status_text" => "OK"}
-  data3_base = {"device" => "iad1-trn-1", "index" => "1.1", "description" => "PSU 1.1", "last_updated" => 1427164801, "status" => 1, "vendor_status" => 1, "status_text" => "OK"}
+  data1_base = {
+    "device" => "gar-b11u1-dist", "index" => "4.1.1.1", "description" => "PSU 0 @ 0/0/0",
+    "worker" => "test123", "last_updated" => 1427164532, "status" => 1, "vendor_status" => 2,
+    "status_text" => "OK" }
+  data2_base = {
+    "device" => "gar-b11u17-acc-g", "index" => "1004", "description" => "Switch#1,  PSU#1",
+    "worker" => "test123", "last_updated" => 1427164623, "status" => 1, "vendor_status" => 1,
+    "status_text" => "OK" }
+  data3_base = {
+    "device" => "iad1-trn-1", "index" => "1.1", "description" => "PSU 1.1", "worker" => "test123",
+    "last_updated" => 1427164801, "status" => 1, "vendor_status" => 1, "status_text" => "OK" }
 
   data1_update_ok = {
     "device" => "gar-b11u1-dist",
@@ -157,6 +165,33 @@ describe PSU do
       JSON.load(DEV2_JSON).psus['1003'].save(DB)
       psu = PSU.new(device: 'test-v11u1-acc-y', index: '1003').populate
       expect(psu.to_json).to eql JSON.load(DEV2_JSON).psus['1003'].to_json
+    end
+
+  end
+
+
+  # delete
+  describe '#delete' do
+
+    before :each do
+      # Insert our bare bones device, just name and IP
+      DB[:device].insert(:device => 'test-v11u1-acc-y', :ip => '1.2.3.4')
+    end
+    after :each do
+      # Clean up DB
+      DB[:device].where(:device => 'test-v11u1-acc-y').delete
+    end
+
+
+    it 'should return 1 if it exists' do
+      JSON.load(DEV2_JSON).psus['1003'].save(DB)
+      object = PSU.new(device: 'test-v11u1-acc-y', index: '1003')
+      expect(object.delete(DB)).to eql 1
+    end
+
+    it "should return 0 if nonexistant" do
+      object = PSU.new(device: 'test-v11u1-acc-y', index: '1003')
+      expect(object.delete(DB)).to eql 0
     end
 
   end

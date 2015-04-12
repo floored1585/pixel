@@ -98,26 +98,29 @@ class Temperature
     count = db[:temperature].where(:device => @device, :index => @index).delete
     $LOG.info("Deleted temperature #{@index} (#{@description}) on #{@device}. Last poller: #{@worker}")
 
-    return self
+    return count
   end
 
 
   def to_json(*a)
-    {
+    hash = {
       "json_class" => self.class.name,
       "data" => {
         "device" => @device,
         "index" => @index,
-        "temperature" => @temperature,
-        "last_updated" => @last_updated,
-        "description" => @description,
-        "status" => @status,
-        "threshold" => @threshold,
-        "vendor_status" => @vendor_status,
-        "status_text" => @status_text,
-        "worker" => @worker,
       }
-    }.to_json(*a)
+    }
+
+    hash['data']["temperature"] = @temperature if @temperature
+    hash['data']["last_updated"] = @last_updated if @last_updated
+    hash['data']["description"] = @description if @description
+    hash['data']["status"] = @status if @status
+    hash['data']["threshold"] = @threshold if @threshold
+    hash['data']["vendor_status"] = @vendor_status if @vendor_status
+    hash['data']["status_text"] = @status_text if @status_text
+    hash['data']["worker"] = @worker if @worker
+
+    hash.to_json(*a)
   end
 
 

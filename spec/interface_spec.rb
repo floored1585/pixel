@@ -39,7 +39,7 @@ describe Interface do
   # Up/Up
   interface_1 = {
     "device" => "gar-b11u1-dist", "index" => 604,"last_updated" => 1424752121,
-    "if_alias" => "bb__gar-crmx-1__xe-1/0/3", "if_name" => "xe-0/2/0",
+    "if_alias" => "bb__gar-crmx-1__xe-1/0/3", "if_name" => "xe-0/2/0", "worker" => "test123",
     "if_hc_in_octets" => "0.3959706331274391E16", "if_hc_out_octets" => "0.3281296197965732E16",
     "if_hc_in_ucast_pkts" => "0.4388140890014E13", "if_hc_out_ucast_pkts" => "0.3813525530792E13",
     "if_speed" => 10000000000,"if_mtu" => 1522,"if_admin_status" => 1,
@@ -58,7 +58,7 @@ describe Interface do
   # Up/Down
   interface_2 = {
     "device" => "gar-b11u17-acc-g", "index" => 10040,"last_updated" => 1424752718,
-    "if_alias" => "acc__", "if_name" => "Fa0/40", "if_hc_in_octets" => "0.0",
+    "if_alias" => "acc__", "if_name" => "Fa0/40", "if_hc_in_octets" => "0.0", "worker": "test123",
     "if_hc_out_octets" => "0.0", "if_hc_in_ucast_pkts" => "0.0", "if_hc_out_ucast_pkts" => "0.0",
     "if_speed" => 10000000,"if_mtu" => 1500,"if_admin_status" => 1,
     "if_admin_status_time" => 1415142088,"if_oper_status" => 2,"if_oper_status_time" => 1415142088,
@@ -74,7 +74,7 @@ describe Interface do
   # Up/Up, AE
   interface_3 = {
     "device" => "gar-p1u1-dist", "index" => 656,"last_updated" => 1424752472,
-    "if_alias" => "bb__gar-cr-1__ae3", "if_name" => "ae0",
+    "if_alias" => "bb__gar-cr-1__ae3", "if_name" => "ae0", "worker" => "test123",
     "if_hc_in_octets" => "0.484779762679182E15", "if_hc_out_octets" => "0.1111644194120525E16",
     "if_hc_in_ucast_pkts" => "0.878552042051E12", "if_hc_out_ucast_pkts" => "0.1174804345552E13",
     "if_speed" => 20000000000,"if_mtu" => 1514,"if_admin_status" => 1,
@@ -94,7 +94,7 @@ describe Interface do
     "device" => "irv-a3u2-acc-g", "index" => 10119,"last_updated" => 1424752571,"if_alias" => "",
     "if_name" => "Gi0/19", "if_hc_in_octets" => "0.0", "if_hc_out_octets" => "0.2628E4",
     "if_hc_in_ucast_pkts" => "0.0", "if_hc_out_ucast_pkts" => "0.2E1", "if_speed" => 1000000000,
-    "if_mtu" => 1500,"if_admin_status" => 2,"if_admin_status_time" => 1415142087,
+    "if_mtu" => 1500,"if_admin_status" => 2,"if_admin_status_time" => 1415142087, "worker" => "te",
     "if_oper_status" => 2,"if_oper_status_time" => 1415142087,"if_in_discards" => "0.0",
     "if_in_errors" => "0.0", "if_out_discards" => "0.0", "if_out_errors" => "0.0", "bps_in" => 0,
     "bps_out" => 0,"discards_in" => 0,"errors_in" => 0,"discards_out" => 0,"errors_out" => 0,
@@ -478,6 +478,33 @@ describe Interface do
       JSON.load(DEV2_JSON).interfaces[10139].save(DB)
       int = Interface.new(device: 'test-v11u1-acc-y', index: 10139).populate
       expect(int.to_json).to eql JSON.load(DEV2_JSON).interfaces[10139].to_json
+    end
+
+  end
+
+
+  # delete
+  describe '#delete' do
+
+    before :each do
+      # Insert our bare bones device, just name and IP
+      DB[:device].insert(:device => 'test-v11u1-acc-y', :ip => '1.2.3.4')
+    end
+    after :each do
+      # Clean up DB
+      DB[:device].where(:device => 'test-v11u1-acc-y').delete
+    end
+
+
+    it 'should return 1 if it exists' do
+      JSON.load(DEV2_JSON).interfaces[10139].save(DB)
+      object = Interface.new(device: 'test-v11u1-acc-y', index: 10139)
+      expect(object.delete(DB)).to eql 1
+    end
+
+    it "should return 0 if nonexistant" do
+      object = Interface.new(device: 'test-v11u1-acc-y', index: 10139)
+      expect(object.delete(DB)).to eql 0
     end
 
   end

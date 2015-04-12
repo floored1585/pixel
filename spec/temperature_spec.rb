@@ -5,12 +5,14 @@ describe Temperature do
   json_keys = [ 'device', 'index', 'temperature', 'last_updated', 'description',
                 'status', 'threshold', 'vendor_status', 'status_text', 'worker' ]
 
-  data1_base = {"device"=>"gar-b11u1-dist","index"=>"7.1.0.0","temperature"=>52,
-                "last_updated"=>1426657712,"description"=>"FPC=> EX4300-48T @ 0/*/*","status"=>0,
-                "threshold"=>nil,"vendor_status"=>nil,"status_text"=>"Unknown"}
-  data2_base = {"device"=>"gar-k11u1-dist","index"=>"1","temperature"=>38,
-                "last_updated"=>1426657935,"description"=>"Chassis Temperature Sensor","status"=>1,
-                "threshold"=>95,"vendor_status"=>1,"status_text"=>"OK"}
+  data1_base = {
+    "device" => "gar-b11u1-dist", "index" => "7.1.0.0", "temperature" => 52, "worker" => "test123",
+    "last_updated" => 1426657712,"description" => "FPC=> EX4300-48T @ 0/*/*", "status" => 0,
+    "threshold" => nil,"vendor_status" => nil,"status_text" => "Unknown" }
+  data2_base = {
+    "device" => "gar-k11u1-dist", "index" => "1", "temperature" => 38, "worker" => "test123",
+    "last_updated" => 1426657935,"description" => "Chassis Temperature Sensor", "status" => 1,
+    "threshold" => 95,"vendor_status" => 1,"status_text" => "OK" }
 
   data1_decimal = {
     "description"=>"FPC: EX4300-48T @ 0/*/*",
@@ -71,7 +73,7 @@ describe Temperature do
     end
 
     it 'should fill up the object' do
-      expect(JSON.parse(@good_temp.populate(data1_base).to_json)['data'].keys).to eql json_keys
+      expect(JSON.parse(@good_temp.populate(data2_base).to_json)['data'].keys).to eql json_keys
     end
 
   end
@@ -160,6 +162,33 @@ describe Temperature do
       JSON.load(DEV2_JSON).temps['1005'].save(DB)
       temp = Temperature.new(device: 'test-v11u1-acc-y', index: '1005').populate
       expect(temp.to_json).to eql JSON.load(DEV2_JSON).temps['1005'].to_json
+    end
+
+  end
+
+
+  # delete
+  describe '#delete' do
+
+    before :each do
+      # Insert our bare bones device, just name and IP
+      DB[:device].insert(:device => 'test-v11u1-acc-y', :ip => '1.2.3.4')
+    end
+    after :each do
+      # Clean up DB
+      DB[:device].where(:device => 'test-v11u1-acc-y').delete
+    end
+
+
+    it 'should return 1 if it exists' do
+      JSON.load(DEV2_JSON).temps['1005'].save(DB)
+      object = Temperature.new(device: 'test-v11u1-acc-y', index: '1005')
+      expect(object.delete(DB)).to eql 1
+    end
+
+    it "should return 0 if nonexistant" do
+      object = Temperature.new(device: 'test-v11u1-acc-y', index: '1005')
+      expect(object.delete(DB)).to eql 0
     end
 
   end

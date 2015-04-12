@@ -223,6 +223,95 @@ describe Device do
 
   end
 
+
+  # save
+  describe '#save' do
+
+    after :each do
+      # Clean up DB
+      DB[:device].where(:device => 'test-v11u1-acc-y').delete
+    end
+
+
+    it 'should not exist before saving' do
+      expect(Device.new('test-v11u1-acc-y').populate).to eql nil
+    end
+
+    it 'should raise exception if no poll IP' do
+      dev = Device.new('test-v11u1-acc-y')
+      expect{dev.save(DB)}.to raise_error Sequel::NotNullConstraintViolation
+    end
+
+    it 'should save OK w/ name and IP' do
+      dev = Device.new('test-v11u1-acc-y', poll_ip: '1.2.3.4')
+      expect(dev.save(DB)).to be_a Device
+    end
+
+    it 'should exist after being saved' do
+      JSON.load(DEV2_JSON).save(DB)
+      dev = Device.new('test-v11u1-acc-y').populate
+      expect(dev).to be_a Device
+    end
+
+    it 'should update without error' do
+      JSON.load(DEV2_JSON).save(DB)
+      JSON.load(DEV2_JSON).save(DB)
+      dev = Device.new('test-v11u1-acc-y').populate
+      expect(dev).to be_a Device
+    end
+
+    it 'should be identical before and after' do
+      JSON.load(DEV2_JSON).save(DB)
+      dev = Device.new('test-v11u1-acc-y').populate(:all => true)
+      expect(JSON.parse(dev.to_json)).to eql JSON.parse(JSON.load(DEV2_JSON).to_json)
+    end
+
+    it 'should delete outdated components' do
+      # Future dated last_updated times
+      JSON.load(DEV2_JSON).save(DB)
+      # Past dated last_updated times (this should delete everything except the device)
+      JSON.load(DEV3_JSON).save(DB)
+      dev = Device.new('test-v11u1-acc-y').populate(:all => true)
+      expect(dev.interfaces).to be_empty
+      expect(dev.cpus).to be_empty
+      expect(dev.fans).to be_empty
+      expect(dev.memory).to be_empty
+      expect(dev.psus).to be_empty
+      expect(dev.temps).to be_empty
+    end
+
+  end
+
+
+  # delete
+  describe '#delete' do
+
+    after :each do
+      # Clean up DB
+      DB[:device].where(:device => 'test-v11u1-acc-y').delete
+    end
+
+
+    it 'should return 1 if device exists and is empty' do
+      object = Device.new('test-v11u1-acc-y', poll_ip: '1.2.3.4')
+      object.save(DB)
+      expect(object.delete(DB)).to eql 1
+    end
+
+    it 'should return the number of deleted objects' do
+      JSON.load(DEV2_JSON).save(DB)
+      object = Device.new('test-v11u1-acc-y').populate(:all => true)
+      expect(object.delete(DB)).to eql 61
+    end
+
+    it "should return 0 if nonexistant" do
+      object = Device.new('test-v11u1-acc-y')
+      expect(object.delete(DB)).to eql 0
+    end
+
+  end
+
+
   # to_json
   describe '#to_json and #json_create' do
 

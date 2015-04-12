@@ -57,7 +57,7 @@ class Pixel < Sinatra::Base
   end
 
   get '/v2/device/*' do |device|
-    JSON.generate( get_device_v2(@@settings, @@db, device) )
+    JSON.generate( get_device(@@settings, @@db, device) )
   end
 
   get '/v1/devices/populate' do
@@ -96,12 +96,6 @@ class Pixel < Sinatra::Base
     request.body.rewind
     devices = JSON.parse(request.body.read)
     add_devices(@@settings, @@db, devices, false)
-  end
-
-  post '/v1/devices/delete/components' do
-    request.body.rewind
-    devices = JSON.parse(request.body.read)
-    delete_devices(@@settings, @@db, devices, true)
   end
 
   post '/v1/devices/delete' do

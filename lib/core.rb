@@ -201,7 +201,6 @@ module Core
     rescue Sequel::PoolTimeout => e
       $LOG.error("CORE: SQL error! \n#{e}")
     end
-
     return 200
   end
 

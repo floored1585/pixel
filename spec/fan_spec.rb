@@ -117,6 +117,51 @@ describe Fan do
   end
 
 
+  # save
+  describe '#save' do
+
+    before :each do
+      # Insert our bare bones device, just name and IP
+      DB[:device].insert(:device => 'test-v11u1-acc-y', :ip => '1.2.3.4')
+    end
+    after :each do
+      # Clean up DB
+      DB[:device].where(:device => 'test-v11u1-acc-y').delete
+    end
+
+
+    it 'should not exist before saving' do
+      fan = Fan.new(device: 'test-v11u1-acc-y', index: '1004').populate
+      expect(fan).to eql nil
+    end
+
+    it 'should error out if empty' do
+      fan = Fan.new(device: 'test-v11u1-acc-y', index: '1004')
+      expect{fan.save(DB)}.to raise_error Sequel::NotNullConstraintViolation
+    end
+
+    it 'should exist after being saved' do
+      JSON.load(DEV2_JSON).fans['1004'].save(DB)
+      fan = Fan.new(device: 'test-v11u1-acc-y', index: '1004').populate
+      expect(fan).to be_a Fan
+    end
+
+    it 'should update without error' do
+      JSON.load(DEV2_JSON).fans['1004'].save(DB)
+      JSON.load(DEV2_JSON).fans['1004'].save(DB)
+      fan = Fan.new(device: 'test-v11u1-acc-y', index: '1004').populate
+      expect(fan).to be_a Fan
+    end
+
+    it 'should be identical before and after' do
+      JSON.load(DEV2_JSON).fans['1004'].save(DB)
+      fan = Fan.new(device: 'test-v11u1-acc-y', index: '1004').populate
+      expect(fan.to_json).to eql JSON.load(DEV2_JSON).fans['1004'].to_json
+    end
+
+  end
+
+
   # to_json
   describe '#to_json and #json_create' do
 

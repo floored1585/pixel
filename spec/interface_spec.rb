@@ -437,6 +437,52 @@ describe Interface do
 
   end
 
+
+  # save
+  describe '#save' do
+
+    before :each do
+      # Insert our bare bones device, just name and IP
+      DB[:device].insert(:device => 'test-v11u1-acc-y', :ip => '1.2.3.4')
+    end
+    after :each do
+      # Clean up DB
+      DB[:device].where(:device => 'test-v11u1-acc-y').delete
+    end
+
+
+    it 'should not exist before saving' do
+      int = Interface.new(device: 'test-v11u1-acc-y', index: 10139).populate
+      expect(int).to eql nil
+    end
+
+    it 'should error out if empty' do
+      int = Interface.new(device: 'test-v11u1-acc-y', index: 10139)
+      expect{int.save(DB)}.to raise_error Sequel::NotNullConstraintViolation
+    end
+
+    it 'should exist after being saved' do
+      JSON.load(DEV2_JSON).interfaces[10139].save(DB)
+      int = Interface.new(device: 'test-v11u1-acc-y', index: 10139).populate
+      expect(int).to be_a Interface
+    end
+
+    it 'should update without error' do
+      JSON.load(DEV2_JSON).interfaces[10139].save(DB)
+      JSON.load(DEV2_JSON).interfaces[10139].save(DB)
+      int = Interface.new(device: 'test-v11u1-acc-y', index: 10139).populate
+      expect(int).to be_a Interface
+    end
+
+    it 'should be identical before and after' do
+      JSON.load(DEV2_JSON).interfaces[10139].save(DB)
+      int = Interface.new(device: 'test-v11u1-acc-y', index: 10139).populate
+      expect(int.to_json).to eql JSON.load(DEV2_JSON).interfaces[10139].to_json
+    end
+
+  end
+
+
   # to_json
   describe '#to_json and #json_create' do
 
@@ -462,24 +508,20 @@ describe Interface do
 
     context 'when populated' do
 
-      before(:each) do
-        @int1 = Interface.new(device: 'gar-b11u1-dist', index: 604).populate
-        @int2 = Interface.new(device: 'gar-b11u17-acc-g', index: 10040).populate
-        @int3 = Interface.new(device: 'gar-bdr-1', index: 541).populate
-        @int4 = Interface.new(device: 'aon-cumulus-2', index: 15).populate
-      end
+      int1 = Interface.new(device: 'gar-b11u1-dist', index: 604).populate
+      int2 = Interface.new(device: 'gar-b11u17-acc-g', index: 10040).populate
+      int3 = Interface.new(device: 'gar-bdr-1', index: 541).populate
+      int4 = Interface.new(device: 'aon-cumulus-2', index: 15).populate
 
+      json1 = int1.to_json
+      json2 = int2.to_json
+      json3 = int3.to_json
+      json4 = int4.to_json
 
-      it 'should serialize and deserialize properly' do
-        json1 = @int1.to_json
-        json2 = @int2.to_json
-        json3 = @int3.to_json
-        json4 = @int4.to_json
-        expect(JSON.load(json1).to_json).to eql json1
-        expect(JSON.load(json2).to_json).to eql json2
-        expect(JSON.load(json3).to_json).to eql json3
-        expect(JSON.load(json4).to_json).to eql json4
-      end
+      specify { expect(JSON.load(json1).to_json).to eql json1 }
+      specify { expect(JSON.load(json2).to_json).to eql json2 }
+      specify { expect(JSON.load(json3).to_json).to eql json3 }
+      specify { expect(JSON.load(json4).to_json).to eql json4 }
 
     end
 

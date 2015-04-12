@@ -34,3 +34,5 @@ config/deploy/
 public/assets/
 
 spec/rspec.log
+
+test.rb

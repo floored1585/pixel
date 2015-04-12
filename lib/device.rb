@@ -38,37 +38,37 @@ class Device
   
   # Return an array containing all Interface objects in the device
   def interfaces
-    @interfaces.values
+    @interfaces
   end
 
 
   # Return an array containing all Temperature objects in the device
   def temps
-    @temps.values
+    @temps
   end
 
 
   # Return an array containing all Fan objects in the device
   def fans
-    @fans.values
+    @fans
   end
 
 
   # Return an array containing all PSU objects in the device
   def psus
-    @psus.values
+    @psus
   end
 
 
   # Return an array containing all CPU objects in the device
   def cpus
-    @cpus.values
+    @cpus
   end
 
 
   # Return an array containing all Memory objects in the device
   def memory
-    @memory.values
+    @memory
   end
 
 

@@ -117,6 +117,51 @@ describe PSU do
   end
 
 
+  # save
+  describe '#save' do
+
+    before :each do
+      # Insert our bare bones device, just name and IP
+      DB[:device].insert(:device => 'test-v11u1-acc-y', :ip => '1.2.3.4')
+    end
+    after :each do
+      # Clean up DB
+      DB[:device].where(:device => 'test-v11u1-acc-y').delete
+    end
+
+
+    it 'should not exist before saving' do
+      psu = PSU.new(device: 'test-v11u1-acc-y', index: '1003').populate
+      expect(psu).to eql nil
+    end
+
+    it 'should error out if empty' do
+      psu = PSU.new(device: 'test-v11u1-acc-y', index: '1003')
+      expect{psu.save(DB)}.to raise_error Sequel::NotNullConstraintViolation
+    end
+
+    it 'should exist after being saved' do
+      JSON.load(DEV2_JSON).psus['1003'].save(DB)
+      psu = PSU.new(device: 'test-v11u1-acc-y', index: '1003').populate
+      expect(psu).to be_a PSU
+    end
+
+    it 'should update without error' do
+      JSON.load(DEV2_JSON).psus['1003'].save(DB)
+      JSON.load(DEV2_JSON).psus['1003'].save(DB)
+      psu = PSU.new(device: 'test-v11u1-acc-y', index: '1003').populate
+      expect(psu).to be_a PSU
+    end
+
+    it 'should be identical before and after' do
+      JSON.load(DEV2_JSON).psus['1003'].save(DB)
+      psu = PSU.new(device: 'test-v11u1-acc-y', index: '1003').populate
+      expect(psu.to_json).to eql JSON.load(DEV2_JSON).psus['1003'].to_json
+    end
+
+  end
+
+
   # to_json
   describe '#to_json and #json_create' do
 

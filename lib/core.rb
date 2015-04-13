@@ -170,7 +170,7 @@ module Core
     # Don't return more work if this poller is maxed out
     return {} if count < 1
 
-    devices = {}
+    devices = []
     # Fetch some devices and mark them as polling
     db.transaction do
       rows = db[:device].filter{ next_poll < Time.now.to_i }
@@ -179,7 +179,7 @@ module Core
       rows = rows.limit(count).for_update
 
       rows.each do |row|
-        devices[row[:device]] = row[:ip]
+        devices.push(row[:device])
         $LOG.warn("CORE: Overriding currently_polling for #{row[:device]} (#{poller})") if row[:currently_polling] == 1
         device_row = db[:device].where(:device => row[:device])
         device_row.update(

@@ -107,7 +107,7 @@ module Core
 
 
   def get_device(settings, db, device)
-    db[:device].where(:device => device).all[0]
+    db[:device].where(:device => device).all[0] || {}
   end
 
 
@@ -159,10 +159,10 @@ module Core
   end
 
 
-  def get_devices_poller(settings, db, count, poller_name)
+  def fetch_poll(settings, db, count, poller)
     db.disconnect
     currently_polling = db[:device].filter{Sequel.&(
-      {:currently_polling => 1, :worker => poller_name},
+      {:currently_polling => 1, :worker => poller},
       last_poll > Time.now.to_i - 1000,
     )}.count
     count = count - currently_polling
@@ -180,11 +180,11 @@ module Core
 
       rows.each do |row|
         devices[row[:device]] = row[:ip]
-        $LOG.warn("CORE: Overriding currently_polling for #{row[:device]} (#{poller_name})") if row[:currently_polling] == 1
+        $LOG.warn("CORE: Overriding currently_polling for #{row[:device]} (#{poller})") if row[:currently_polling] == 1
         device_row = db[:device].where(:device => row[:device])
         device_row.update(
           :currently_polling => 1,
-          :worker => poller_name,
+          :worker => poller,
           :last_poll => Time.now.to_i,
         )
       end

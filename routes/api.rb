@@ -8,10 +8,8 @@ class Pixel < Sinatra::Base
     return 200
   end
 
-  get '/v1/devices/fetch_poll' do
-    count = params[:count] || 10
-    poller_name = params[:hostname] || 'unknown'
-    JSON.generate( get_devices_poller(@@settings, @@db, count.to_i, poller_name) )
+  get '/v2/fetch_poll/*/*' do |poller, count|
+    JSON.generate( fetch_poll(@@settings, @@db, count.to_i, poller) )
   end
 
   get '/v2/device/*/interface/*' do |device, index|
@@ -80,7 +78,7 @@ class Pixel < Sinatra::Base
   end
 
   get '/v1/poller/poke' do
-    Poller.check_for_work(@@settings, @@db)
+    Poller.check_for_work(@@settings)
   end
 
   #

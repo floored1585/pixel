@@ -4,7 +4,7 @@ class Pixel < Sinatra::Base
   #
   # GETS
   #
-  get '/v1/wakeup' do
+  get '/v2/wakeup' do
     return 200
   end
 
@@ -58,11 +58,11 @@ class Pixel < Sinatra::Base
     JSON.generate( get_device(@@settings, @@db, device) )
   end
 
-  get '/v1/devices/populate' do
+  get '/v2/devices/populate' do
     populate_device_table(@@settings, @@db)
   end
 
-  get '/v1/devices/list' do
+  get '/v2/devices' do
     JSON.generate( list_devices(@@settings, @@db) )
   end
 
@@ -72,35 +72,35 @@ class Pixel < Sinatra::Base
     JSON.generate( Influx.query(query, attribute, @@db, :rickshaw) )
   end
 
-  get '/v1/series' do
-    query = params[:query]
-    JSON.generate( Influx.query(query) )
-  end
+  #get '/v1/series' do
+  #  query = params[:query]
+  #  JSON.generate( Influx.query(query) )
+  #end
 
-  get '/v1/poller/poke' do
+  get '/v2/poller/poke' do
     Poller.check_for_work(@@settings)
   end
 
   #
   # POSTS
   #
-  post '/v1/devices/replace' do
+  post '/v2/devices/replace' do
     request.body.rewind
     devices = JSON.parse(request.body.read)
-    add_devices(@@settings, @@db, devices, true)
+    add_devices(@@settings, @@db, devices, replace: true)
   end
 
-  post '/v1/devices/add' do
+  post '/v2/devices/add' do
     request.body.rewind
     devices = JSON.parse(request.body.read)
-    add_devices(@@settings, @@db, devices, false)
+    add_devices(@@settings, @@db, devices)
   end
 
-  post '/v1/devices/delete' do
-    request.body.rewind
-    devices = JSON.parse(request.body.read)
-    delete_devices(@@settings, @@db, devices, false)
-  end
+  #post '/v1/devices/delete' do
+  #  request.body.rewind
+  #  devices = JSON.parse(request.body.read)
+  #  delete_devices(@@settings, @@db, devices, false)
+  #end
 
   post '/v2/device' do
     request.body.rewind

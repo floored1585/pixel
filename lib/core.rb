@@ -286,52 +286,27 @@ module Core
       $LOG.info("CORE: Importing #{devices.size} devices from file: #{device_file}")
     end
 
-    API.post('core', '/v1/devices/replace', devices, 'CORE', 'new devices')
+    API.post('core', '/v2/devices/replace', devices, 'CORE', 'new devices')
   end
 
 
-  def add_devices(settings, db, devices, replace)
+  def add_devices(settings, db, new_devices, replace: false)
     db.disconnect
-    devices.each do |device, ip|
-      existing = db[:device].where(:device => device)
-      if existing.update(:ip => ip) != 1
-        $LOG.info("CORE: Adding new device: #{device}")
-        db[:device].insert(:device => device, :ip => ip)
-      end
+
+    new_devices.each do |device, ip|
+      Device.new(device, poll_ip: ip).save
+      $LOG.warn("CORE: Added device #{device}: #{ip}")
     end
+
     if replace
       # Delete any devices that weren't provided
       existing = db[:device].select(:device, :ip).to_hash(:device).keys
-      to_delete = existing - devices.keys
-      to_delete.each do |device|
-        $LOG.warn("CORE: Deleting device #{device}; not in new device set")
-        db[:device].filter(:device => device).delete
+      (existing - new_devices.keys).each do |device|
+        Device.new(device).delete
+        $LOG.warn("CORE: Deleted device #{device}; not in new device set")
       end
     end
     # need error detection
-    return true
-  end
-
-
-  def delete_devices(settings, db, devices, partial)
-    db.disconnect
-    # If partial is true, we're going to delete individual things
-    # Otherwise, delete the whole device
-    if partial
-      devices.each do |device, components|
-        components.each do |component, indexes|
-          indexes.each do |index|
-            $LOG.warn("CORE: Removing interface ID #{index} on #{device} from database")
-            db[component.to_sym].filter(:index => index).delete
-          end
-        end
-      end
-    else
-      devices.keys.each do |device|
-        $LOG.warn("CORE: Removing device #{device} from database")
-        db[:device].filter(:device => device).delete
-      end
-    end
     return true
   end
 
@@ -446,183 +421,6 @@ module Core
         oids[:if_oper_status] == 1 ? oids[:link_up] = true : oids[:link_up] = false
       end
     end
-  end
-
-
-  def _validate_devices_post!(devices)
-    if devices.class == Hash
-      devices.each do |device, data|
-        if data.class == Hash
-          data.symbolize!
-          # Validata metadata
-          if data[:metadata].class == Hash
-            data[:metadata].symbolize!
-          else
-            $LOG.warn("Invalid or missing metadata received for #{device}")
-            data[:metadata] = {}
-          end
-          # Validate interfaces
-          if data[:interfaces].class == Hash
-            # Validate OIDs
-            data[:interfaces].each do |index, oids|
-              if oids.class == Hash
-                oids.symbolize!
-              else
-                $LOG.warn("Invalid or missing interface data for #{device}: index #{index}")
-                data[:interfaces].delete(index)
-              end
-              required_data = [:device, :index, :last_updated, :if_name, :if_mtu, :if_type,
-                               :if_hc_in_octets, :if_hc_out_octets, :if_hc_in_ucast_pkts,
-                               :if_hc_out_ucast_pkts, :if_high_speed, :if_admin_status,
-                               :if_admin_status_time, :if_oper_status, :if_oper_status_time,
-                               :if_in_discards, :if_in_errors, :if_out_discards, :if_out_errors]
-              unless (required_data - oids.keys).empty?
-                $LOG.warn("CORE: Incomplete OIDs for #{device}: #{oids[:if_name]} (#{index}). Missing: #{required_data - oids.keys}")
-                data[:interfaces].delete(index)
-              end
-              required_data.each do |oid|
-                if oids[oid].to_s.empty?
-                  $LOG.warn("CORE: Missing #{oid} for #{device}: #{oids[:if_name]} (#{index})")
-                  data[:interfaces].delete(index)
-                end
-              end
-              unless (oids[:if_hc_in_octets] =~ /^[0-9]+$/)
-                $LOG.warn("CORE: Invalid octet value for interface #{oids[:if_name]} on device #{device}: index #{index}.")
-                data[:interfaces].delete(index)
-              end
-            end
-          else
-            $LOG.warn("Invalid or missing interfaces received for #{device}")
-            data[:interfaces] = {}
-          end
-          # Validate CPUs
-          if data[:cpus].class == Hash
-            # Validate CPU data
-            data[:cpus].each do |index, cpu_data|
-              if cpu_data.class == Hash
-                cpu_data.symbolize!
-              else
-                $LOG.warn("Invalid CPU data for #{device}: index #{index}")
-                data[:cpus].delete(index)
-              end
-              # Convert utilization to numeric
-              cpu_data[:util] = cpu_data[:util].to_i_if_numeric if cpu_data[:util]
-              required_data = [:device, :index, :util, :description, :last_updated]
-              unless (required_data - cpu_data.keys).empty?
-                $LOG.warn("Invalid CPU for #{device}: index #{index}. Missing: #{required_data - cpu_data.keys}")
-                data[:cpus].delete(index)
-              end
-              unless cpu_data[:util] && cpu_data[:util].is_a?(Numeric)
-                $LOG.warn("Invalid or missing CPU utilization for #{device}: index #{index}")
-                data[:cpus].delete(index)
-              end
-            end
-          else
-            $LOG.warn("Invalid or missing CPU received for #{device}")
-            data[:cpus] = {}
-          end
-          # Validate Memory
-          if data[:memory].class == Hash
-            # Validate Memory data
-            data[:memory].each do |index, mem_data|
-              if mem_data.class == Hash
-                mem_data.symbolize!
-              else
-                $LOG.warn("Invalid Memory data for #{device}: index #{index}")
-                data[:memory].delete(index)
-              end
-              # Convert utilization to numeric
-              mem_data[:util] = mem_data[:util].to_i_if_numeric if mem_data[:util]
-              required_data = [:device, :index, :util, :description, :last_updated]
-              unless (required_data - mem_data.keys).empty?
-                $LOG.warn("Invalid Memory data for #{device}: index #{index}. Missing: #{required_data - mem_data.keys}")
-                data[:memory].delete(index)
-              end
-              unless mem_data[:util] && mem_data[:util].is_a?(Numeric)
-                $LOG.warn("Invalid or missing Memory utilization for #{device}: index #{index}")
-                data[:memory].delete(index)
-              end
-            end
-          else
-            $LOG.warn("Invalid or missing Memory data received for #{device}")
-            data[:memory] = {}
-          end
-          # Validate Temperature
-          if data[:temperature].class == Hash
-            # Validate Temperature data
-            data[:temperature].each do |index, temp_data|
-              if temp_data.class == Hash
-                temp_data.symbolize!
-              else
-                $LOG.warn("Invalid Temperature data for #{device}: index #{index}")
-                data[:temperature].delete(index)
-              end
-              # Convert utilization to numeric
-              temp_data[:temperature] = temp_data[:temperature].to_i_if_numeric if temp_data[:temperature]
-              required_data = [:device, :index, :temperature, :description, :last_updated, :status, :status_text]
-              unless (required_data - temp_data.keys).empty?
-                $LOG.warn("Invalid Temperature data for #{device}: index #{index}. Missing: #{required_data - temp_data.keys}")
-                data[:temperature].delete(index)
-              end
-              unless temp_data[:temperature] && temp_data[:temperature].is_a?(Numeric)
-                $LOG.warn("Invalid or missing Temperature for #{device}: index #{index}")
-                data[:temperature].delete(index)
-              end
-            end
-          else
-            $LOG.warn("Invalid or missing Temperature data received for #{device}")
-            data[:temperature] = {}
-          end
-          # Validate PSUs
-          if data[:psu].class == Hash
-            # Validate PSU data
-            data[:psu].each do |index, psu_data|
-              if psu_data.class == Hash
-                psu_data.symbolize!
-              else
-                $LOG.warn("Invalid PSU data for #{device}: index #{index}")
-                data[:psu].delete(index)
-              end
-              required_data = [:device, :index, :description, :last_updated, :status, :status_text]
-              unless (required_data - psu_data.keys).empty?
-                $LOG.warn("Invalid PSUs data for #{device}: index #{index}. Missing: #{required_data - psu_data.keys}")
-                data[:psu].delete(index)
-              end
-            end
-          else
-            $LOG.warn("Invalid or missing PSUs data received for #{device}")
-            data[:psu] = {}
-          end
-          # Validate Fans
-          if data[:fan].class == Hash
-            # Validate Fan data
-            data[:fan].each do |index, fan_data|
-              if fan_data.class == Hash
-                fan_data.symbolize!
-              else
-                $LOG.warn("Invalid Fan data for #{device}: index #{index}")
-                data[:fan].delete(index)
-              end
-              required_data = [:device, :index, :description, :last_updated, :status, :status_text]
-              unless (required_data - fan_data.keys).empty?
-                $LOG.warn("Invalid Fan data for #{device}: index #{index}. Missing: #{required_data - fan_data.keys}")
-                data[:fan].delete(index)
-              end
-            end
-          else
-            $LOG.warn("Invalid or missing Fans data received for #{device}")
-            data[:fan] = {}
-          end
-        else
-          $LOG.error("Invalid or missing data received for #{device}")
-          devices[device] = {}
-        end
-      end
-    else
-      $LOG.error("Invalid devices received")
-      devices = {}
-    end
-    return devices
   end
 
 

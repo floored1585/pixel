@@ -204,7 +204,7 @@ typeahead = ->
     queryTokenizer: Bloodhound.tokenizers.whitespace,
     limit: 10,
     prefetch: {
-      url: '/v1/devices/list',
+      url: '/v2/devices',
       filter: (list) ->
         $.map(list, (device) -> { value: device })
         # the json file contains an array of strings, but the Bloodhound

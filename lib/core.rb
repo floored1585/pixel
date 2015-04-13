@@ -294,7 +294,7 @@ module Core
     db.disconnect
 
     new_devices.each do |device, ip|
-      Device.new(device, poll_ip: ip).save
+      Device.new(device, poll_ip: ip).save(db)
       $LOG.warn("CORE: Added device #{device}: #{ip}")
     end
 
@@ -302,7 +302,7 @@ module Core
       # Delete any devices that weren't provided
       existing = db[:device].select(:device, :ip).to_hash(:device).keys
       (existing - new_devices.keys).each do |device|
-        Device.new(device).delete
+        Device.new(device).delete(db)
         $LOG.warn("CORE: Deleted device #{device}; not in new device set")
       end
     end

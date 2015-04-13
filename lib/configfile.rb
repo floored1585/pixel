@@ -46,11 +46,11 @@ module Configfile
         'cpu_index_regex' => /([0-9]+\.?){4}$/,
         'cpu_description' => '1.3.6.1.4.1.2636.3.1.13.1.5',
         'cpu_util'        => '1.3.6.1.4.1.2636.3.1.13.1.8',
-        'cpu_list_regex'  => /[97](\.\d){3}$/,
+        'cpu_list_regex'  => /[97](\.\d+){3}$/,
         'mem_index_regex' => /([0-9]+\.?){4}$/,
         'mem_description' => '1.3.6.1.4.1.2636.3.1.13.1.5',
         'mem_util'        => '1.3.6.1.4.1.2636.3.1.13.1.11',
-        'mem_list_regex'  => /[97](\.\d){3}$/,
+        'mem_list_regex'  => /[97](\.\d+){3}$/,
         'temp_index_regex'=> /([0-9]+\.?){4}$/,
         'temp_description'=> '1.3.6.1.4.1.2636.3.1.13.1.5',
         'temp_temperature'=> '1.3.6.1.4.1.2636.3.1.13.1.7',
@@ -141,7 +141,7 @@ module Configfile
     config['poller'][:interesting_names] = {
       'Cisco'       => /^(Po|Te|Gi|Fa)/,
       'Juniper'     => /^(ae|xe|ge|fe)[^.]*$/,
-      'Force10 S-Series' => /^(Po|Fo|Te|Gi|Fa|Ma)/,
+      'Force10 S-Series' => /^(Po|forty|Te|Gi|Fa|Ma)/,
       'Linux'       => /^(swp|eth|bond)[^.]*$/,
     }
 

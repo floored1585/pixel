@@ -515,6 +515,9 @@ class Device
         oids['if_alias'] =~ @poll_cfg[:interesting_alias] ||
         oids['if_name'] =~ @poll_cfg[:interesting_names][@vendor]
       )
+      # Don't create the interface if we weren't able to poll the octet information
+      next unless oids['if_hc_in_octets'].to_s =~ /[0-9]+/
+
       @interfaces[index] ||= Interface.new(device: @name, index: index)
       @interfaces[index].update(oids, worker: @worker) if oids && !oids.empty?
     end

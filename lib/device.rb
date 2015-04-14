@@ -324,7 +324,7 @@ class Device
     existing = db[:device].where(:device => @name)
     if existing.update(data) != 1
       db[:device].insert(data)
-      $LOG.info("Created device #{@name}")
+      $LOG.info("DEVICE: Created device #{@name}")
     end
 
     expire_time = Time.now.to_i - 300

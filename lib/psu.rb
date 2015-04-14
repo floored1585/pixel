@@ -71,7 +71,7 @@ class PSU
     existing = db[:psu].where(:device => @device, :index => @index)
     if existing.update(data) != 1
       db[:psu].insert(data)
-      $LOG.info("Adding new psu #{@index} on #{@device} from #{@worker}")
+      $LOG.info("PSU: Adding new psu #{@index} on #{@device} from #{@worker}")
     end
 
     return self
@@ -81,7 +81,7 @@ class PSU
   def delete(db)
     # Delete the psu from the database
     count = db[:psu].where(:device => @device, :index => @index).delete
-    $LOG.info("Deleted psu #{@index} (#{@description}) on #{@device}. Last poller: #{@worker}")
+    $LOG.info("PSU: Deleted psu #{@index} (#{@description}) on #{@device}. Last poller: #{@worker}")
 
     return count
   end

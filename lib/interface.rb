@@ -321,7 +321,7 @@ class Interface
     existing = db[:interface].where(:device => @device, :index => @index)
     if existing.update(data) != 1
       db[:interface].insert(data)
-      $LOG.info("Adding new interface #{@index} (#{@name}) on #{@device}. Last poller: #{@worker}")
+      $LOG.info("INTERFACE: Adding new interface #{@index} (#{@name}) on #{@device}. Last poller: #{@worker}")
     end
 
     return self
@@ -331,7 +331,7 @@ class Interface
   def delete(db)
     # Delete the interface from the database
     count = db[:interface].where(:device => @device, :index => @index).delete
-    $LOG.info("Deleted interface #{@index} (#{@name}) on #{@device}. Last poller: #{@worker}")
+    $LOG.info("INTERFACE: Deleted interface #{@index} (#{@name}) on #{@device}. Last poller: #{@worker}")
 
     return count
   end

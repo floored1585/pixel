@@ -74,7 +74,7 @@ class Memory
     existing = db[:memory].where(:device => @device, :index => @index)
     if existing.update(data) != 1
       db[:memory].insert(data)
-      $LOG.info("Adding new memory #{@index} on #{@device} from #{@worker}")
+      $LOG.info("MEMORY: Adding new memory #{@index} on #{@device} from #{@worker}")
     end
 
     return self
@@ -84,7 +84,7 @@ class Memory
   def delete(db)
     # Delete the memory from the database
     count = db[:memory].where(:device => @device, :index => @index).delete
-    $LOG.info("Deleted memory #{@index} (#{@description}) on #{@device}. Last poller: #{@worker}")
+    $LOG.info("MEMORY: Deleted memory #{@index} (#{@description}) on #{@device}. Last poller: #{@worker}")
 
     return count
   end

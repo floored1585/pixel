@@ -74,7 +74,7 @@ class CPU
     existing = db[:cpu].where(:device => @device, :index => @index)
     if existing.update(data) != 1
       db[:cpu].insert(data)
-      $LOG.info("Adding new cpu #{@index} on #{@device} from #{@worker}")
+      $LOG.info("CPU: Adding new cpu #{@index} on #{@device} from #{@worker}")
     end
 
     return self
@@ -84,7 +84,7 @@ class CPU
   def delete(db)
     # Delete the cpu from the database
     count = db[:cpu].where(:device => @device, :index => @index).delete
-    $LOG.info("Deleted cpu #{@index} (#{@description}) on #{@device}. Last poller: #{@worker}")
+    $LOG.info("CPU: Deleted cpu #{@index} (#{@description}) on #{@device}. Last poller: #{@worker}")
 
     return count
   end

@@ -71,7 +71,7 @@ class Fan
     existing = db[:fan].where(:device => @device, :index => @index)
     if existing.update(data) != 1
       db[:fan].insert(data)
-      $LOG.info("Adding new fan #{@index} on #{@device} from #{@worker}")
+      $LOG.info("FAN: Adding new fan #{@index} on #{@device} from #{@worker}")
     end
 
     return self
@@ -81,7 +81,7 @@ class Fan
   def delete(db)
     # Delete the fan from the database
     count = db[:fan].where(:device => @device, :index => @index).delete
-    $LOG.info("Deleted fan #{@index} (#{@description}) on #{@device}. Last poller: #{@worker}")
+    $LOG.info("FAN: Deleted fan #{@index} (#{@description}) on #{@device}. Last poller: #{@worker}")
 
     return count
   end

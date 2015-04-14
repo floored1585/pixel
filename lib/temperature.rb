@@ -86,7 +86,7 @@ class Temperature
     existing = db[:temperature].where(:device => @device, :index => @index)
     if existing.update(data) != 1
       db[:temperature].insert(data)
-      $LOG.info("Adding new temperature #{@index} on #{@device} from #{@worker}")
+      $LOG.info("TEMPERATURE: Adding new temperature #{@index} on #{@device} from #{@worker}")
     end
 
     return self
@@ -96,7 +96,7 @@ class Temperature
   def delete(db)
     # Delete the temperature from the database
     count = db[:temperature].where(:device => @device, :index => @index).delete
-    $LOG.info("Deleted temperature #{@index} (#{@description}) on #{@device}. Last poller: #{@worker}")
+    $LOG.info("TEMPERATURE: Deleted temperature #{@index} (#{@description}) on #{@device}. Last poller: #{@worker}")
 
     return count
   end

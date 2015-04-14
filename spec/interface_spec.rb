@@ -105,6 +105,16 @@ describe Interface do
     "if_hc_in_ucast_pkts"=>"0", "if_hc_out_ucast_pkts"=>"2", "if_high_speed"=>"1000",
     "if_alias"=>"", "if_mtu"=>"1500", "if_admin_status"=>"2", "if_oper_status"=>"2",
     "if_in_discards"=>"0", "if_in_errors"=>"0", "if_out_discards"=>"0", "if_out_errors"=>"0" }
+  imaginary_int = {
+    "device" => "test-test-test-g", "index" => 10119,"last_updated" => 1424752571,"if_alias" => "",
+    "if_name" => "Gi0/19", "if_hc_in_octets" => "0.0", "if_hc_out_octets" => "0.2628E4",
+    "if_hc_in_ucast_pkts" => "0.0", "if_hc_out_ucast_pkts" => "0.2E1", "if_speed" => 1000000000,
+    "if_mtu" => 1500,"if_admin_status" => 2,"if_admin_status_time" => 1415142087, "worker" => "te",
+    "if_oper_status" => 2,"if_oper_status_time" => 1415142087,"if_in_discards" => "0.0",
+    "if_in_errors" => "0.0", "if_out_discards" => "0.0", "if_out_errors" => "0.0", "bps_in" => 0,
+    "bps_out" => 0,"discards_in" => 0,"errors_in" => 0,"discards_out" => 0,"errors_out" => 0,
+    "pps_in" => 0,"pps_out" => 0,"bps_util_in" => 0.0,"bps_util_out" => 0.0,
+    "if_type" => "unknown" }
 
   interfaces = [ interface_1, interface_2, interface_3, interface_4 ]
 
@@ -456,9 +466,14 @@ describe Interface do
       expect(int).to eql nil
     end
 
-    it 'should error out if empty' do
+    it 'should fail if empty' do
       int = Interface.new(device: 'test-v11u1-acc-y', index: 10139)
       expect{int.save(DB)}.to raise_error Sequel::NotNullConstraintViolation
+    end
+
+    it 'should fail if devices does not exist' do
+      int = Interface.new(device: 'test-test-acc-y', index: 10139).populate(imaginary_int)
+      expect{int.save(DB)}.to raise_error Sequel::ForeignKeyConstraintViolation
     end
 
     it 'should exist after being saved' do

@@ -7,6 +7,7 @@ describe CPU do
   data1_base = { "device" => "irv-i1u1-dist", "index" => "1", "util" => 8.0, "description" => "Linecard(slot 1)", "last_updated" => 1427224290, "worker" => "test" }
   data2_base = { "device" => "gar-b11u1-dist", "index" => "7.2.0.0", "util" => 54.0, "description" => "FPC: EX4300-48T @ 1/*/*", "last_updated" => 1427224144, "worker" => "test" }
   data3_base = { "device" => "aon-cumulus-3", "index" => "768", "util" => 20.0, "description" => "CPU 768", "last_updated" => 1427224306, "worker" => "test" }
+  imaginary_data = { "device" => "test-test", "index" => "768", "util" => 20.0, "description" => "CPU 768", "last_updated" => 1427224306, "worker" => "test" }
 
   data1_update_ok = {
     "device" => "irv-i1u1-dist",
@@ -129,9 +130,14 @@ describe CPU do
       expect(cpu).to eql nil
     end
 
-    it 'should error out if empty' do
+    it 'should fail if empty' do
       cpu = CPU.new(device: 'test-v11u1-acc-y', index: '1')
       expect{cpu.save(DB)}.to raise_error Sequel::NotNullConstraintViolation
+    end
+
+    it 'should fail if device does not exist' do
+      cpu = CPU.new(device: 'test-test-acc-y', index: '1').populate(imaginary_data)
+      expect{cpu.save(DB)}.to raise_error Sequel::ForeignKeyConstraintViolation
     end
 
     it 'should exist after being saved' do

@@ -13,6 +13,10 @@ describe Temperature do
     "device" => "gar-k11u1-dist", "index" => "1", "temperature" => 38, "worker" => "test123",
     "last_updated" => 1426657935,"description" => "Chassis Temperature Sensor", "status" => 1,
     "threshold" => 95,"vendor_status" => 1,"status_text" => "OK" }
+  imaginary_data = {
+    "device" => "test-test-1", "index" => "1", "temperature" => 38, "worker" => "test123",
+    "last_updated" => 1426657935,"description" => "Chassis Temperature Sensor", "status" => 1,
+    "threshold" => 95,"vendor_status" => 1,"status_text" => "OK" }
 
   data1_decimal = {
     "description"=>"FPC: EX4300-48T @ 0/*/*",
@@ -140,9 +144,14 @@ describe Temperature do
       expect(temp).to eql nil
     end
 
-    it 'should error out if empty' do
+    it 'should fail if empty' do
       temp = Temperature.new(device: 'test-v11u1-acc-y', index: '1005')
       expect{temp.save(DB)}.to raise_error Sequel::NotNullConstraintViolation
+    end
+
+    it 'should fail if device does not exist' do
+      temp = Temperature.new(device: 'test-test-y', index: '1005').populate(imaginary_data)
+      expect{temp.save(DB)}.to raise_error Sequel::ForeignKeyConstraintViolation
     end
 
     it 'should exist after being saved' do

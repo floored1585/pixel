@@ -6,7 +6,7 @@ describe Fan do
                 'status', 'vendor_status', 'status_text', 'worker' ]
 
   data1_base = {
-    "device" => "gar-b11u1-dist", "index" => "4.1.1.1", "description" => "FAN 0 @ 0/0/0",
+    "device" => "gar-b11u1-dist", "index" => "1.1.1", "description" => "FAN 0 @ 0/0/0",
     "worker" => "test123", "last_updated" => 1427164532, "status" => 1, "vendor_status" => 2,
     "status_text" => "OK" }
   data2_base = {
@@ -15,6 +15,9 @@ describe Fan do
     "status_text" => "OK"}
   data3_base = {
     "device" => "iad1-trn-1", "index" => "1.1", "description" => "PSU 1.1", "worker" => "test123",
+    "last_updated" => 1427164801, "status" => 1, "vendor_status" => 1, "status_text" => "OK" }
+  imaginary_data = {
+    "device" => "test-test-test-1", "index" => "1.1", "description" => "PSU 1.1", "worker" => "test123",
     "last_updated" => 1427164801, "status" => 1, "vendor_status" => 1, "status_text" => "OK" }
 
   data1_update_ok = {
@@ -60,7 +63,7 @@ describe Fan do
 
     before :each do
       @bad_fan = Fan.new(device: 'gar-test-1', index: 'test')
-      @good_fan = Fan.new(device: 'iad1-bdr-1', index: '4.1.4.0')
+      @good_fan = Fan.new(device: 'iad1-bdr-1', index: '1.4.0')
     end
 
 
@@ -143,9 +146,14 @@ describe Fan do
       expect(fan).to eql nil
     end
 
-    it 'should error out if empty' do
+    it 'should fail if empty' do
       fan = Fan.new(device: 'test-v11u1-acc-y', index: '1004')
       expect{fan.save(DB)}.to raise_error Sequel::NotNullConstraintViolation
+    end
+
+    it 'should fail if device does not exist' do
+      fan = Fan.new(device: 'test-test-test-y', index: '1004').populate(imaginary_data)
+      expect{fan.save(DB)}.to raise_error Sequel::ForeignKeyConstraintViolation
     end
 
     it 'should exist after being saved' do

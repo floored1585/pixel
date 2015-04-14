@@ -16,6 +16,9 @@ describe PSU do
   data3_base = {
     "device" => "iad1-trn-1", "index" => "1.1", "description" => "PSU 1.1", "worker" => "test123",
     "last_updated" => 1427164801, "status" => 1, "vendor_status" => 1, "status_text" => "OK" }
+  imaginary_data = {
+    "device" => "test-test-1", "index" => "1.1", "description" => "PSU 1.1", "worker" => "test123",
+    "last_updated" => 1427164801, "status" => 1, "vendor_status" => 1, "status_text" => "OK" }
 
   data1_update_ok = {
     "device" => "gar-b11u1-dist",
@@ -143,9 +146,14 @@ describe PSU do
       expect(psu).to eql nil
     end
 
-    it 'should error out if empty' do
+    it 'should fail if empty' do
       psu = PSU.new(device: 'test-v11u1-acc-y', index: '1003')
       expect{psu.save(DB)}.to raise_error Sequel::NotNullConstraintViolation
+    end
+
+    it 'should fail if device does not exist' do
+      psu = PSU.new(device: 'test-test-y', index: '1003').populate(imaginary_data)
+      expect{psu.save(DB)}.to raise_error Sequel::ForeignKeyConstraintViolation
     end
 
     it 'should exist after being saved' do

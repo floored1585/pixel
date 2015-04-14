@@ -13,6 +13,9 @@ describe Memory do
   data3_base = {
     "device" => "aon-cumulus-3", "index" => "768", "util" => 20.0, "description" => "Memory 768", 
     "worker" => "test123", "last_updated" => 1427224306 }
+  imaginary_data = {
+    "device" => "test-test-3", "index" => "768", "util" => 20.0, "description" => "Memory 768", 
+    "worker" => "test123", "last_updated" => 1427224306 }
 
   data1_update_ok = {
     "device" => "irv-i1u1-dist",
@@ -135,9 +138,14 @@ describe Memory do
       expect(mem).to eql nil
     end
 
-    it 'should error out if empty' do
+    it 'should fail if empty' do
       memory = Memory.new(device: 'test-v11u1-acc-y', index: '1')
       expect{memory.save(DB)}.to raise_error Sequel::NotNullConstraintViolation
+    end
+
+    it 'should fail if device does not exist' do
+      memory = Memory.new(device: 'test-test-acc-y', index: '1').populate(imaginary_data)
+      expect{memory.save(DB)}.to raise_error Sequel::ForeignKeyConstraintViolation
     end
 
     it 'should exist after being saved' do

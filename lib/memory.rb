@@ -27,14 +27,16 @@ class Memory
 
     # If we weren't passed data, look ourselves up
     data ||= API.get('core', "/v2/device/#{@device}/memory/#{@index}", 'Memory', 'memory data')
+    data = data.symbolize
+
     # Return nil if we didn't find any data
     # TODO: Raise an exception instead?
     return nil if data.empty?
 
-    @util = data['util'].to_i_if_numeric
-    @description = data['description']
-    @last_updated = data['last_updated'].to_i_if_numeric
-    @worker = data['worker']
+    @util = data[:util].to_i_if_numeric
+    @description = data[:description]
+    @last_updated = data[:last_updated].to_i_if_numeric
+    @worker = data[:worker]
 
     return self
   end

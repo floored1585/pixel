@@ -27,6 +27,7 @@ module Poller
 
       # Poll the device; send data back to core
       if device.poll(worker: Socket.gethostname)
+        device.write_influxdb
         device.send
       else
         $LOG.error("POLLER: Poll failed for #{device_name}")

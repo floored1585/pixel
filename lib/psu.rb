@@ -27,16 +27,18 @@ class PSU
 
     # If we weren't passed data, look ourselves up
     data ||= API.get('core', "/v2/device/#{@device}/psu/#{@index}", 'PSU', 'psu data')
+    data = data.symbolize
+
     # Return nil if we didn't find any data
     # TODO: Raise an exception instead?
     return nil if data.empty?
 
-    @description = data['description']
-    @last_updated = data['last_updated'].to_i_if_numeric
-    @status = data['status'].to_i_if_numeric
-    @vendor_status = data['vendor_status'].to_i_if_numeric
-    @status_text = data['status_text']
-    @worker = data['worker']
+    @description = data[:description]
+    @last_updated = data[:last_updated].to_i_if_numeric
+    @status = data[:status].to_i_if_numeric
+    @vendor_status = data[:vendor_status].to_i_if_numeric
+    @status_text = data[:status_text]
+    @worker = data[:worker]
 
     return self
   end

@@ -27,18 +27,20 @@ class Temperature
 
     # If we weren't passed data, look ourselves up
     data ||= API.get('core', "/v2/device/#{@device}/temperature/#{@index}", 'Temperature', 'temperature data')
+    data = data.symbolize
+
     # Return nil if we didn't find any data
     # TODO: Raise an exception instead?
     return nil if data.empty?
 
-    @temperature = data['temperature'].to_i_if_numeric
-    @last_updated = data['last_updated'].to_i_if_numeric
-    @description = data['description']
-    @status = data['status'].to_i_if_numeric
-    @threshold = data['threshold'].to_i_if_numeric
-    @vendor_status = data['vendor_status'].to_i_if_numeric
-    @status_text = data['status_text']
-    @worker = data['worker']
+    @temperature = data[:temperature].to_i_if_numeric
+    @last_updated = data[:last_updated].to_i_if_numeric
+    @description = data[:description]
+    @status = data[:status].to_i_if_numeric
+    @threshold = data[:threshold].to_i_if_numeric
+    @vendor_status = data[:vendor_status].to_i_if_numeric
+    @status_text = data[:status_text]
+    @worker = data[:worker]
 
     return self
   end

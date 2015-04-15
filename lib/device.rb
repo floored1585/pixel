@@ -176,37 +176,38 @@ class Device
 
     # First get device metadata from pixel API & update instance variables
     data ||= API.get('core', "/v2/device/#{@name}", 'Device', 'device data')
+    data = data.symbolize
 
     # These will all be nil unless data was passed into populate via opts
-    @interfaces = data['interfaces'] || {}
+    @interfaces = data[:interfaces] || {}
     # Convert keys to integers for @interface
     @interfaces = Hash[@interfaces.map{|key,int|[ key.to_i, int ]}]
-    @memory = data['memory'] || {}
-    @temps = data['temps'] || {}
-    @cpus = data['cpus'] || {}
-    @psus = data['psus'] || {}
-    @fans = data['fans'] || {}
+    @memory = data[:memory] || {}
+    @temps = data[:temps] || {}
+    @cpus = data[:cpus] || {}
+    @psus = data[:psus] || {}
+    @fans = data[:fans] || {}
 
     # Return if the device wasn't found
-    return nil unless data['device']
+    return nil unless data[:device]
 
     # Update instance variables
-    @poll_ip = data['ip']
-    @last_poll = data['last_poll'].to_i_if_numeric
-    @next_poll = data['next_poll'].to_i_if_numeric
-    @last_poll_duration = data['last_poll_duration'].to_i_if_numeric
-    @last_poll_result = data['last_poll_result'].to_i_if_numeric
-    @last_poll_text = data['last_poll_text']
-    @currently_polling = data['currently_polling'].to_i_if_numeric
-    @worker = data['worker']
-    @sys_descr = data['sys_descr']
-    @vendor = data['vendor']
-    @sw_descr = data['sw_descr']
-    @sw_version = data['sw_version']
-    @hw_model = data['hw_model']
-    @uptime = data['uptime'].to_i_if_numeric
-    @yellow_alarm = data['yellow_alarm'].to_i_if_numeric
-    @red_alarm = data['red_alarm'].to_i_if_numeric
+    @poll_ip = data[:ip]
+    @last_poll = data[:last_poll].to_i_if_numeric
+    @next_poll = data[:next_poll].to_i_if_numeric
+    @last_poll_duration = data[:last_poll_duration].to_i_if_numeric
+    @last_poll_result = data[:last_poll_result].to_i_if_numeric
+    @last_poll_text = data[:last_poll_text]
+    @currently_polling = data[:currently_polling].to_i_if_numeric
+    @worker = data[:worker]
+    @sys_descr = data[:sys_descr]
+    @vendor = data[:vendor]
+    @sw_descr = data[:sw_descr]
+    @sw_version = data[:sw_version]
+    @hw_model = data[:hw_model]
+    @uptime = data[:uptime].to_i_if_numeric
+    @yellow_alarm = data[:yellow_alarm].to_i_if_numeric
+    @red_alarm = data[:red_alarm].to_i_if_numeric
 
     # Fill in interfaces
     if get_data && (opts[:interfaces] || opts[:all])
@@ -370,7 +371,7 @@ class Device
 
     dev_count = db[:device].where(:device => @name).delete
 
-    $LOG.info("Deleted device #{@name}") if dev_count == 1
+    $LOG.info("DEVICE: Deleted device #{@name}") if dev_count == 1
 
     return dev_count + int_count + cpu_count + fan_count + mem_count + psu_count + temp_count
   end
@@ -500,23 +501,20 @@ class Device
     session.walk(@poll_cfg[:oids][:general].keys) do |row|
       row.each do |vb|
         oid_text = @poll_cfg[:oids][:general][vb.name.to_str.gsub(/\.[0-9]+$/,'')]
-        if_index = vb.name.to_str[/[0-9]+$/].to_i
-        if_table[if_index] ||= {}
-        if_table[if_index][oid_text] = vb.value.to_s
-        # The following line removes ' characters from the beginning
-        #   and end of aliases (Linux does this)
-        #if_table[if_index][oid_text].gsub!(/^'|'$/,'') if oid_text == 'if_alias'
+        index = vb.name.to_str[/[0-9]+$/].to_i
+        if_table[index] ||= {}
+        if_table[index][oid_text] = vb.value.to_s
       end
     end
 
     if_table.each do |index, oids|
       # Don't create the interface unless it has an interesting alias or an interesting name
       next unless (
-        oids['if_alias'] =~ @poll_cfg[:interesting_alias] ||
-        oids['if_name'] =~ @poll_cfg[:interesting_names][@vendor]
+        oids['alias'] =~ @poll_cfg[:interesting_alias] ||
+        oids['name'] =~ @poll_cfg[:interesting_names][@vendor]
       )
       # Don't create the interface if we weren't able to poll the octet information
-      next unless oids['if_hc_in_octets'].to_s =~ /[0-9]+/
+      next unless oids['hc_in_octets'].to_s =~ /[0-9]+/
 
       @interfaces[index] ||= Interface.new(device: @name, index: index)
       @interfaces[index].update(oids, worker: @worker) if oids && !oids.empty?

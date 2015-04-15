@@ -10,22 +10,31 @@ module Core
 
 
   def get_ints_down(settings, db)
-    interfaces = db[:interface].filter(Sequel.like(:if_alias, 'sub%') | Sequel.like(:if_alias, 'bb%'))
-    interfaces = interfaces.exclude(:if_oper_status => 1).exclude(:if_type => 'acc')
+    ints = []
+    interface_data = db[:interface].filter(
+      Sequel.like(:alias, 'sub%') |
+      Sequel.like(:alias, 'bb%')
+    )
+    interface_data = interface_data.exclude(:oper_status => 1).exclude(:type => 'acc')
+    interface_data.each do |row|
+      int = Interface.new(device: row[:device], index: row[:index]).populate(row)
+      pp int
+    end
 
-    (devices, name_to_index) = _device_map(:interfaces => interfaces)
-    _fill_metadata!(devices, settings, name_to_index)
+    #(devices, name_to_index) = _device_map(:interfaces => interfaces)
+    #_fill_metadata!(devices, settings, name_to_index)
 
     # Delete the interface from the hash if its parent is present, to reduce clutter
-    devices.each do |device,components|
-      ints = components[:interfaces]
-      ints.delete_if { |index,oids| oids[:my_parent] && ints[oids[:my_parent]] }
-    end
-    return devices
+    #devices.each do |device,components|
+    #  ints = components[:interfaces]
+    #  ints.delete_if { |index,oids| oids[:my_parent] && ints[oids[:my_parent]] }
+    #end
+    return ints
   end
 
 
   def get_ints_saturated(settings, db)
+    return {}
     interfaces = db[:interface].filter{ (bps_in_util > 90) | (bps_out_util > 90) }
 
     (devices, name_to_index) = _device_map(:interfaces => interfaces)
@@ -35,11 +44,12 @@ module Core
 
 
   def get_ints_discarding(settings, db)
+    return {}
     interfaces = db[:interface].filter{Sequel.|(
       Sequel.&(
         pps_out > 0, # Prevent div by zero
         discards_out > 20,
-        ~Sequel.like(:if_alias, 'sub%'), # Don't look at sub-interfaces
+        ~Sequel.like(:alias, 'sub%'), # Don't look at sub-interfaces
         discards_out / (discards_out + pps_out).cast(:float) >= 0.01 # Filter out anything discarding <= 1%
       ),
       discards_out > 500 # Also include anything discarding over 500pps
@@ -112,6 +122,7 @@ module Core
 
 
   def get_cpus_high(settings, db)
+    return {}
     cpus = db[:cpu].filter{ util > 85 }
 
     (devices, name_to_index) = _device_map(:cpus => cpus)
@@ -120,6 +131,7 @@ module Core
 
 
   def get_memory_high(settings, db)
+    return {}
     memory = db[:memory].filter{ util > 90 }
 
     (devices, name_to_index) = _device_map(:memory => memory)
@@ -128,6 +140,7 @@ module Core
 
 
   def get_hw_problems(settings, db)
+    return {}
     temperatures = db[:temperature].filter(:status => 2)
     psus = db[:psu].filter(:status => [2,3])
     fans = db[:fan].filter(:status => [2,3])
@@ -141,6 +154,7 @@ module Core
 
 
   def get_alarms(settings, db)
+    return {}
     devicedata = db[:device].exclude(
       (Sequel.expr(:yellow_alarm => 2) | Sequel.expr(:yellow_alarm => nil)) &
       (Sequel.expr(:red_alarm => 2) | Sequel.expr(:red_alarm => nil))
@@ -152,6 +166,7 @@ module Core
 
 
   def get_poller_failures(settings, db)
+    return {}
     failures = db[:device].filter(:last_poll_result => 1)
 
     (devices, name_to_index) = _device_map(:devicedata => failures)
@@ -335,7 +350,7 @@ module Core
       name_to_index[device] ||= {}
 
       devices[device][:interfaces][index] = row
-      name_to_index[device][row[:if_name].downcase] = index
+      name_to_index[device][row[:name].downcase] = index
     end
     data[:cpus].each do |row|
       index = row[:index]
@@ -387,7 +402,7 @@ module Core
       interfaces = data[:interfaces] || {}
       interfaces.each do |index,oids|
         # Populate 'neighbor' value
-        oids[:if_alias].to_s.match(/__[a-zA-Z0-9\-_]+__/) do |neighbor|
+        oids[:alias].to_s.match(/__[a-zA-Z0-9\-_]+__/) do |neighbor|
           interfaces[index][:neighbor] = neighbor.to_s.gsub('__','')
         end
 
@@ -399,7 +414,7 @@ module Core
         end
 
         # Populate 'link_type' value (Backbone, Access, etc...)
-        if type = oids[:if_alias].match(/^([a-z]+)(__|\[)/)
+        if type = oids[:alias].match(/^([a-z]+)(__|\[)/)
           type = type[1]
         else
           type = 'unknown'
@@ -408,7 +423,7 @@ module Core
         if type == 'sub'
           oids[:is_child] = true
           # This will return po1 from sub[po1]__gar-k11u1-dist__g1/47
-          parent = oids[:if_alias][/\[[a-zA-Z0-9\/-]+\]/].gsub(/(\[|\])/, '')
+          parent = oids[:alias][/\[[a-zA-Z0-9\/-]+\]/].gsub(/(\[|\])/, '')
           if parent && parent_index = name_to_index[device][parent.downcase]
             interfaces[parent_index][:is_parent] = true
             interfaces[parent_index][:children] ||= []
@@ -418,7 +433,7 @@ module Core
           oids[:my_parent_name] = parent.gsub('po','Po')
         end
 
-        oids[:if_oper_status] == 1 ? oids[:link_up] = true : oids[:link_up] = false
+        oids[:oper_status] == 1 ? oids[:link_up] = true : oids[:link_up] = false
       end
     end
   end

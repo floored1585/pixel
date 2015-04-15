@@ -134,37 +134,39 @@ class Interface
 
     # If we weren't passed data, look ourselves up
     data ||= API.get('core', "/v2/device/#{@device}/interface/#{@index}", 'Interface', 'interface data')
+    data = data.symbolize
+
     # Return nil if we didn't find any data
     # TODO: Raise an exception instead?
     return nil if data.empty?
 
-    @last_updated = data['last_updated'].to_i_if_numeric
-    @alias = data['if_alias']
-    @name = data['if_name']
-    @hc_in_octets = data['if_hc_in_octets'].to_i_if_numeric
-    @hc_out_octets = data['if_hc_out_octets'].to_i_if_numeric
-    @hc_in_ucast_pkts = data['if_hc_in_ucast_pkts'].to_i_if_numeric
-    @hc_out_ucast_pkts = data['if_hc_out_ucast_pkts'].to_i_if_numeric
-    @speed = data['if_speed'].to_i_if_numeric
-    @mtu = data['if_mtu'].to_i_if_numeric
-    @admin_status = data['if_admin_status'].to_i_if_numeric
-    @admin_status_time = data['if_admin_status_time'].to_i_if_numeric
-    @oper_status = data['if_oper_status'].to_i_if_numeric
-    @oper_status_time = data['if_oper_status_time'].to_i_if_numeric
-    @in_discards = data['if_in_discards'].to_i_if_numeric
-    @in_errors = data['if_in_errors'].to_i_if_numeric
-    @out_discards = data['if_out_discards'].to_i_if_numeric
-    @out_errors = data['if_out_errors'].to_i_if_numeric
-    @bps_in = data['bps_in'].to_i_if_numeric
-    @bps_out = data['bps_out'].to_i_if_numeric
-    @discards_in = data['discards_in'].to_i_if_numeric
-    @errors_in = data['errors_in'].to_i_if_numeric
-    @discards_out = data['discards_out'].to_i_if_numeric
-    @errors_out = data['errors_out'].to_i_if_numeric
-    @pps_in = data['pps_in'].to_i_if_numeric
-    @pps_out = data['pps_out'].to_i_if_numeric
-    @type = data['if_type']
-    @worker = data['worker']
+    @last_updated = data[:last_updated].to_i_if_numeric
+    @alias = data[:alias]
+    @name = data[:name]
+    @hc_in_octets = data[:hc_in_octets].to_i_if_numeric
+    @hc_out_octets = data[:hc_out_octets].to_i_if_numeric
+    @hc_in_ucast_pkts = data[:hc_in_ucast_pkts].to_i_if_numeric
+    @hc_out_ucast_pkts = data[:hc_out_ucast_pkts].to_i_if_numeric
+    @speed = data[:speed].to_i_if_numeric
+    @mtu = data[:mtu].to_i_if_numeric
+    @admin_status = data[:admin_status].to_i_if_numeric
+    @admin_status_time = data[:admin_status_time].to_i_if_numeric
+    @oper_status = data[:oper_status].to_i_if_numeric
+    @oper_status_time = data[:oper_status_time].to_i_if_numeric
+    @in_discards = data[:in_discards].to_i_if_numeric
+    @in_errors = data[:in_errors].to_i_if_numeric
+    @out_discards = data[:out_discards].to_i_if_numeric
+    @out_errors = data[:out_errors].to_i_if_numeric
+    @bps_in = data[:bps_in].to_i_if_numeric
+    @bps_out = data[:bps_out].to_i_if_numeric
+    @discards_in = data[:discards_in].to_i_if_numeric
+    @errors_in = data[:errors_in].to_i_if_numeric
+    @discards_out = data[:discards_out].to_i_if_numeric
+    @errors_out = data[:errors_out].to_i_if_numeric
+    @pps_in = data[:pps_in].to_i_if_numeric
+    @pps_out = data[:pps_out].to_i_if_numeric
+    @type = data[:type]
+    @worker = data[:worker]
 
     return self
 
@@ -174,20 +176,20 @@ class Interface
   def update(data, worker:)
     # Save the data we need for deltas as new variables
     current_time = Time.now.to_i
-    new_name = data['if_name']
-    new_hc_in_octets = data['if_hc_in_octets'].to_i_if_numeric
-    new_hc_out_octets = data['if_hc_out_octets'].to_i_if_numeric
-    new_hc_in_ucast_pkts = data['if_hc_in_ucast_pkts'].to_i_if_numeric
-    new_hc_out_ucast_pkts = data['if_hc_out_ucast_pkts'].to_i_if_numeric
-    new_speed = data['if_high_speed'].to_i_if_numeric * 1000000
-    new_alias = data['if_alias']
-    new_mtu = data['if_mtu'].to_i_if_numeric
-    new_admin_status = data['if_admin_status'].to_i_if_numeric
-    new_oper_status = data['if_oper_status'].to_i_if_numeric
-    new_in_discards = data['if_in_discards'].to_i_if_numeric
-    new_in_errors = data['if_in_errors'].to_i_if_numeric
-    new_out_discards = data['if_out_discards'].to_i_if_numeric
-    new_out_errors = data['if_out_errors'].to_i_if_numeric
+    new_name = data['name']
+    new_hc_in_octets = data['hc_in_octets'].to_i_if_numeric
+    new_hc_out_octets = data['hc_out_octets'].to_i_if_numeric
+    new_hc_in_ucast_pkts = data['hc_in_ucast_pkts'].to_i_if_numeric
+    new_hc_out_ucast_pkts = data['hc_out_ucast_pkts'].to_i_if_numeric
+    new_speed = data['high_speed'].to_i_if_numeric * 1000000
+    new_alias = data['alias']
+    new_mtu = data['mtu'].to_i_if_numeric
+    new_admin_status = data['admin_status'].to_i_if_numeric
+    new_oper_status = data['oper_status'].to_i_if_numeric
+    new_in_discards = data['in_discards'].to_i_if_numeric
+    new_in_errors = data['in_errors'].to_i_if_numeric
+    new_out_discards = data['out_discards'].to_i_if_numeric
+    new_out_errors = data['out_errors'].to_i_if_numeric
     new_worker = worker
 
     # Determine interface type, by capturing the part of the alias before __ or [
@@ -216,11 +218,11 @@ class Interface
         new_time: current_time, new_value: new_hc_out_ucast_pkts
       )
       @discards_in = _calculate_average(
-        old_time: @last_updated, old_value: @hc_in_discards,
+        old_time: @last_updated, old_value: @in_discards,
         new_time: current_time, new_value: new_in_discards
       )
       @discards_out = _calculate_average(
-        old_time: @last_updated, old_value: @hc_out_discards,
+        old_time: @last_updated, old_value: @out_discards,
         new_time: current_time, new_value: new_out_discards
       )
       @errors_in = _calculate_average(
@@ -347,22 +349,22 @@ class Interface
     }
 
     hash['data']["last_updated"] = @last_updated if @last_updated
-    hash['data']["if_alias"] = @alias if @alias
-    hash['data']["if_name"] = @name if @name
-    hash['data']["if_hc_in_octets"] = @hc_in_octets if @hc_in_octets
-    hash['data']["if_hc_out_octets"] = @hc_out_octets if @hc_out_octets
-    hash['data']["if_hc_in_ucast_pkts"] = @hc_in_ucast_pkts if @hc_in_ucast_pkts
-    hash['data']["if_hc_out_ucast_pkts"] = @hc_out_ucast_pkts if @hc_out_ucast_pkts
-    hash['data']["if_speed"] = @speed if @speed
-    hash['data']["if_mtu"] = @mtu if @mtu
-    hash['data']["if_admin_status"] = @admin_status if @admin_status
-    hash['data']["if_admin_status_time"] = @admin_status_time if @admin_status_time
-    hash['data']["if_oper_status"] = @oper_status if @oper_status
-    hash['data']["if_oper_status_time"] = @oper_status_time if @oper_status_time
-    hash['data']["if_in_discards"] = @in_discards if @in_discards
-    hash['data']["if_in_errors"] = @in_errors if @in_errors
-    hash['data']["if_out_discards"] = @out_discards if @out_discards
-    hash['data']["if_out_errors"] = @out_errors if @out_errors
+    hash['data']["alias"] = @alias if @alias
+    hash['data']["name"] = @name if @name
+    hash['data']["hc_in_octets"] = @hc_in_octets if @hc_in_octets
+    hash['data']["hc_out_octets"] = @hc_out_octets if @hc_out_octets
+    hash['data']["hc_in_ucast_pkts"] = @hc_in_ucast_pkts if @hc_in_ucast_pkts
+    hash['data']["hc_out_ucast_pkts"] = @hc_out_ucast_pkts if @hc_out_ucast_pkts
+    hash['data']["speed"] = @speed if @speed
+    hash['data']["mtu"] = @mtu if @mtu
+    hash['data']["admin_status"] = @admin_status if @admin_status
+    hash['data']["admin_status_time"] = @admin_status_time if @admin_status_time
+    hash['data']["oper_status"] = @oper_status if @oper_status
+    hash['data']["oper_status_time"] = @oper_status_time if @oper_status_time
+    hash['data']["in_discards"] = @in_discards if @in_discards
+    hash['data']["in_errors"] = @in_errors if @in_errors
+    hash['data']["out_discards"] = @out_discards if @out_discards
+    hash['data']["out_errors"] = @out_errors if @out_errors
     hash['data']["bps_in"] = @bps_in if @bps_in
     hash['data']["bps_out"] = @bps_out if @bps_out
     hash['data']["discards_in"] = @discards_in if @discards_in
@@ -373,7 +375,7 @@ class Interface
     hash['data']["pps_out"] = @pps_out if @pps_out
     hash['data']["bps_util_in"] = bps_util_in
     hash['data']["bps_util_out"] = bps_util_out
-    hash['data']["if_type"] = @type if @type
+    hash['data']["type"] = @type if @type
     hash['data']["worker"] = @worker if @worker
 
     hash.to_json(*a)

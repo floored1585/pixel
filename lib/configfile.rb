@@ -27,20 +27,20 @@ module Configfile
     # These are the OIDs that will get pulled/stored for our interfaces.
     config['poller'][:oids] = {
       :general => {
-        '1.3.6.1.2.1.31.1.1.1.1'  => 'if_name',
-        '1.3.6.1.2.1.31.1.1.1.6'  => 'if_hc_in_octets',
-        '1.3.6.1.2.1.31.1.1.1.10' => 'if_hc_out_octets',
-        '1.3.6.1.2.1.31.1.1.1.7'  => 'if_hc_in_ucast_pkts',
-        '1.3.6.1.2.1.31.1.1.1.11' => 'if_hc_out_ucast_pkts',
-        '1.3.6.1.2.1.31.1.1.1.15' => 'if_high_speed',
-        '1.3.6.1.2.1.31.1.1.1.18' => 'if_alias',
-        '1.3.6.1.2.1.2.2.1.4'     => 'if_mtu',
-        '1.3.6.1.2.1.2.2.1.7'     => 'if_admin_status',
-        '1.3.6.1.2.1.2.2.1.8'     => 'if_oper_status',
-        '1.3.6.1.2.1.2.2.1.13'    => 'if_in_discards',
-        '1.3.6.1.2.1.2.2.1.14'    => 'if_in_errors',
-        '1.3.6.1.2.1.2.2.1.19'    => 'if_out_discards',
-        '1.3.6.1.2.1.2.2.1.20'    => 'if_out_errors',
+        '1.3.6.1.2.1.31.1.1.1.1'  => 'name',
+        '1.3.6.1.2.1.31.1.1.1.6'  => 'hc_in_octets',
+        '1.3.6.1.2.1.31.1.1.1.10' => 'hc_out_octets',
+        '1.3.6.1.2.1.31.1.1.1.7'  => 'hc_in_ucast_pkts',
+        '1.3.6.1.2.1.31.1.1.1.11' => 'hc_out_ucast_pkts',
+        '1.3.6.1.2.1.31.1.1.1.15' => 'high_speed',
+        '1.3.6.1.2.1.31.1.1.1.18' => 'alias',
+        '1.3.6.1.2.1.2.2.1.4'     => 'mtu',
+        '1.3.6.1.2.1.2.2.1.7'     => 'admin_status',
+        '1.3.6.1.2.1.2.2.1.8'     => 'oper_status',
+        '1.3.6.1.2.1.2.2.1.13'    => 'in_discards',
+        '1.3.6.1.2.1.2.2.1.14'    => 'in_errors',
+        '1.3.6.1.2.1.2.2.1.19'    => 'out_discards',
+        '1.3.6.1.2.1.2.2.1.20'    => 'out_errors',
       },
       'Juniper' => {
         'cpu_index_regex' => /([0-9]+\.?){4}$/,
@@ -128,14 +128,14 @@ module Configfile
 
     # This is where we define what the averages will be named
     config['poller'][:avg_names] = Hash[
-      'if_hc_in_octets'     => 'bps_in',
-      'if_hc_out_octets'    => 'bps_out',
-      'if_in_discards'      => 'discards_in',
-      'if_in_errors'        => 'errors_in',
-      'if_out_discards'     => 'discards_out',
-      'if_out_errors'       => 'errors_out',
-      'if_hc_in_ucast_pkts' => 'pps_in',
-      'if_hc_out_ucast_pkts'=> 'pps_out',
+      'hc_in_octets'     => 'bps_in',
+      'hc_out_octets'    => 'bps_out',
+      'in_discards'      => 'discards_in',
+      'in_errors'        => 'errors_in',
+      'out_discards'     => 'discards_out',
+      'out_errors'       => 'errors_out',
+      'hc_in_ucast_pkts' => 'pps_in',
+      'hc_out_ucast_pkts'=> 'pps_out',
     ]
 
     config['poller'][:interesting_names] = {

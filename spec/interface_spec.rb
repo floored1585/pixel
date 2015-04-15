@@ -48,11 +48,11 @@ describe Interface do
     "out_errors" => "0.0", "bps_in" => 1349172320,"bps_out" => 1371081672,"discards_in" => 100,
     "errors_in" => 0,"discards_out" => 150,"errors_out" => 0,"pps_in" => 180411,
     "pps_out" => 262760, "bps_util_in" => 13.49,"bps_util_out" => 13.71, "type" => "bb" }
-  interface_1_update = {
+  int1_update = {
     "name" => "xe-0/2/0", "hc_in_octets" => "3959713831274390",
     "hc_out_octets" => "3281311197965730", "hc_in_ucast_pkts" => "4417738539412",
     "hc_out_ucast_pkts" => "3848146448961", "high_speed" => "10000",
-    "alias" => "bb__gar-crmx-1__xe-1/0/3", "mtu" => "1522", "admin_status" => "1",
+    "alias" => "acc__gar-crmx-2__xe-16/0/3", "mtu" => "1522", "admin_status" => "1",
     "oper_status" => "1", "in_discards" => "0", "in_errors" => "0",
     "out_discards" => "0", "out_errors" => "0" }
   # Up/Down
@@ -66,7 +66,7 @@ describe Interface do
     "out_errors" => "0.0", "bps_in" => 0,"bps_out" => 0,"discards_in" => 0,"errors_in" => 0,
     "discards_out" => 0,"errors_out" => 0,"pps_in" => 0,"pps_out" => 0,"bps_util_in" => 0.0,
     "bps_util_out" => 0.0,"type" => "acc" }
-  interface_2_update = {
+  int2_update = {
     "name"=>"Fa0/40", "hc_in_octets"=>"0", "hc_out_octets"=>"0",
     "hc_in_ucast_pkts"=>"0", "hc_out_ucast_pkts"=>"0", "high_speed"=>"10",
     "alias"=>"acc__", "mtu"=>"1500", "admin_status"=>"1", "oper_status"=>"2",
@@ -83,7 +83,7 @@ describe Interface do
     "out_errors" => "0.0", "bps_in" => 408764184,"bps_out" => 1172468480,"discards_in" => 0,
     "errors_in" => 300,"discards_out" => 0,"errors_out" => 350,"pps_in" => 104732,
     "pps_out" => 144934, "bps_util_in" => 2.04,"bps_util_out" => 5.86,"type" => "bb" }
-  interface_3_update = {
+  int3_update = {
     "name"=>"ae0", "hc_in_octets"=>"493124877631750", "hc_out_octets"=>"1135292119081151",
     "hc_in_ucast_pkts"=>"895162904912", "hc_out_ucast_pkts"=>"1198370633351",
     "high_speed"=>"20000", "alias"=>"bb__gar-cr-1__ae3", "mtu"=>"1514",
@@ -100,7 +100,7 @@ describe Interface do
     "bps_out" => 0,"discards_in" => 0,"errors_in" => 0,"discards_out" => 0,"errors_out" => 0,
     "pps_in" => 0,"pps_out" => 0,"bps_util_in" => 0.0,"bps_util_out" => 0.0,
     "type" => "unknown" }
-  interface_4_update = {
+  int4_update = {
     "name"=>"Gi0/19", "hc_in_octets"=>"0", "hc_out_octets"=>"2628",
     "hc_in_ucast_pkts"=>"0", "hc_out_ucast_pkts"=>"2", "high_speed"=>"1000",
     "alias"=>"", "mtu"=>"1500", "admin_status"=>"2", "oper_status"=>"2",
@@ -200,7 +200,7 @@ describe Interface do
       specify { expect(@int.type).to eql nil }
     end
 
-    describe '#type' do
+    describe '#oper_status_time' do
       specify { expect(@int.oper_status_time).to eql nil }
     end
 
@@ -219,6 +219,7 @@ describe Interface do
     describe '#bps_in' do
       specify { expect(@int.bps_in).to eql 0 }
     end
+
     describe '#bps_out' do
       specify { expect(@int.bps_out).to eql 0 }
     end
@@ -226,6 +227,7 @@ describe Interface do
     describe '#pps_in' do
       specify { expect(@int.pps_in).to eql 0 }
     end
+
     describe '#pps_out' do
       specify { expect(@int.pps_out).to eql 0 }
     end
@@ -233,6 +235,7 @@ describe Interface do
     describe '#discards_in' do
       specify { expect(@int.discards_in).to eql 0 }
     end
+
     describe '#discards_out' do
       specify { expect(@int.discards_out).to eql 0 }
     end
@@ -240,6 +243,7 @@ describe Interface do
     describe '#errors_in' do
       specify { expect(@int.errors_in).to eql 0 }
     end
+
     describe '#errors_out' do
       specify { expect(@int.errors_out).to eql 0 }
     end
@@ -247,6 +251,7 @@ describe Interface do
     describe '#bps_util_in' do
       specify { expect(@int.bps_util_in).to equal 0.0 }
     end
+
     describe '#bps_util_out' do
       specify { expect(@int.bps_util_out).to equal 0.0 }
     end
@@ -259,9 +264,21 @@ describe Interface do
       specify { expect(@int.physical?).to equal true }
     end
 
+    describe '#neighbor' do
+      specify { expect(@int.neighbor).to eql nil }
+    end
+
+    describe '#neighbor_port' do
+      specify { expect(@int.neighbor_port).to eql nil }
+    end
+
     describe '#update' do
-      specify { expect(@int.update(interface_1_update, worker: 'test')).to equal @int }
-      specify { expect(@int.update(interface_1_update, worker: 'test').device).to eql 'gar-test-1' }
+      specify { expect(@int.update(int1_update, worker: 'test')).to equal @int }
+      specify { expect(@int.update(int1_update, worker: 'test').device).to eql 'gar-test-1' }
+      specify { expect(@int.update(int1_update, worker: 'test').alias).to eql 'acc__gar-crmx-2__xe-16/0/3' }
+      specify { expect(@int.update(int1_update, worker: 'test').neighbor).to eql 'gar-crmx-2' }
+      specify { expect(@int.update(int1_update, worker: 'test').neighbor_port).to eql 'xe-16/0/3' }
+      specify { expect(@int.update(int1_update, worker: 'test').type).to eql 'acc' }
     end
 
     describe '#write_to_influxdb' do
@@ -436,23 +453,41 @@ describe Interface do
       specify { expect(@int4.physical?).to equal true }
     end
 
+    describe '#neighbor' do
+      specify { expect(@int1.neighbor).to eql 'gar-crmx-1' }
+      specify { expect(@int2.neighbor).to eql nil }
+      specify { expect(@int3.neighbor).to eql 'gar-cr-1' }
+      specify { expect(@int4.neighbor).to eql nil }
+    end
+
+    describe '#neighbor_port' do
+      specify { expect(@int1.neighbor_port).to eql 'xe-1/0/3' }
+      specify { expect(@int2.neighbor_port).to eql nil }
+      specify { expect(@int3.neighbor_port).to eql 'ae3' }
+      specify { expect(@int4.neighbor_port).to eql nil }
+    end
+
     describe '#update' do
-      # The interface_1 and interface_1_update are specicially crated to give these
+      # The interface_1 and int1_update are specicially crated to give these
       #   outputs, ensuring accurate calcuation of bps and bps_util
-      specify { expect(@int1.update(interface_1_update, worker: 'test')).to equal @int1 }
-      specify { expect(@int1.update(interface_1_update, worker: 'test').bps_util_in).to eql 10.0 }
-      specify { expect(@int1.update(interface_1_update, worker: 'test').bps_util_out).to eql 20.0 }
-      specify { expect(@int1.update(interface_1_update, worker: 'test').bps_in).to eql 999_999_999 }
-      specify { expect(@int1.update(interface_1_update, worker: 'test').bps_out).to eql 1_999_999_999 }
-      specify { expect(@int2.update(interface_2_update, worker: 'test')).to equal @int2 }
-      specify { expect(@int2.update(interface_2_update, worker: 'test').bps_util_in).to eql 0.0 }
-      specify { expect(@int2.update(interface_2_update, worker: 'test').bps_util_out).to eql 0.0 }
-      specify { expect(@int3.update(interface_3_update, worker: 'test')).to equal @int3 }
-      specify { expect(@int4.update(interface_4_update, worker: 'test')).to equal @int4 }
-      specify { expect(@int4.update(interface_4_update, worker: 'test').bps_util_in).to eql 0.0 }
-      specify { expect(@int4.update(interface_4_update, worker: 'test').bps_util_out).to eql 0.0 }
-      specify { expect(@int1.update(interface_1_update, worker: 'test').oper_status_time).to equal interface_1['oper_status_time'].to_i }
-      specify { expect(@int1.update(interface_1_update, worker: 'test').device).to eql interface_1['device'] }
+      specify { expect(@int1.update(int1_update, worker: 'test')).to equal @int1 }
+      specify { expect(@int1.update(int1_update, worker: 'test').bps_util_in).to eql 10.0 }
+      specify { expect(@int1.update(int1_update, worker: 'test').bps_util_out).to eql 20.0 }
+      specify { expect(@int1.update(int1_update, worker: 'test').bps_in).to eql 999_999_999 }
+      specify { expect(@int1.update(int1_update, worker: 'test').bps_out).to eql 1_999_999_999 }
+      specify { expect(@int2.update(int2_update, worker: 'test')).to equal @int2 }
+      specify { expect(@int2.update(int2_update, worker: 'test').bps_util_in).to eql 0.0 }
+      specify { expect(@int2.update(int2_update, worker: 'test').bps_util_out).to eql 0.0 }
+      specify { expect(@int3.update(int3_update, worker: 'test')).to equal @int3 }
+      specify { expect(@int4.update(int4_update, worker: 'test')).to equal @int4 }
+      specify { expect(@int4.update(int4_update, worker: 'test').bps_util_in).to eql 0.0 }
+      specify { expect(@int4.update(int4_update, worker: 'test').bps_util_out).to eql 0.0 }
+      specify { expect(@int1.update(int1_update, worker: 'test').oper_status_time).to equal interface_1['oper_status_time'].to_i }
+      specify { expect(@int1.update(int1_update, worker: 'test').device).to eql interface_1['device'] }
+      specify { expect(@int1.update(int1_update, worker: 'test').alias).to eql 'acc__gar-crmx-2__xe-16/0/3' }
+      specify { expect(@int1.update(int1_update, worker: 'test').neighbor).to eql 'gar-crmx-2' }
+      specify { expect(@int1.update(int1_update, worker: 'test').neighbor_port).to eql 'xe-16/0/3' }
+      specify { expect(@int1.update(int1_update, worker: 'test').type).to eql 'acc' }
     end
 
     describe '#write_to_influxdb' do

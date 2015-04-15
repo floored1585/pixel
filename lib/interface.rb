@@ -44,56 +44,76 @@ class Interface
     @device
   end
 
+
   def name
     @name
   end
+
 
   def alias
     @alias
   end
 
+
   def type
     @type
   end
+
 
   def oper_status_time
     @oper_status_time
   end
 
+
   def bps_in
     @bps_in || 0
   end
+
+
   def bps_out
     @bps_out || 0
   end
 
+
   def pps_in
     @pps_in || 0
   end
+
+
   def pps_out
     @pps_out || 0
   end
 
+
   def discards_in
     @discards_in || 0
   end
+
+
   def discards_out
     @discards_out || 0
   end
 
+
   def errors_in
     @errors_in || 0
   end
+
+
   def errors_out
     @errors_out || 0
   end
 
+
   def bps_util_in
     _calculate_utilization(@bps_in)
   end
+
+
   def bps_util_out
     _calculate_utilization(@bps_out)
   end
+
 
   def last_updated
     @last_updated || 0
@@ -103,6 +123,18 @@ class Interface
   # Returns true unless the interface is name looks logical.  Also returns true if @name is nil.
   def physical?
     @name !~ /Po|ae|bond/
+  end
+
+
+  def neighbor
+    @alias.match(/__([a-zA-Z0-9\-_]+)__/) { |match| return match[1] } if @alias
+    return nil
+  end
+
+
+  def neighbor_port
+    @alias.match(/__([0-9a-zA-Z\-.: \/]+)$/) { |match| return match[1] } if @alias
+    return nil
   end
 
 

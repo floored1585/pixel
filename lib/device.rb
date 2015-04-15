@@ -444,7 +444,7 @@ class Device
       else
         # If we don't know what type of device this is:
         $LOG.warn("POLLER: Unknown device at #{ip}: #{@new_sys_descr}")
-                  @new_vendor = 'Unknown'
+        @new_vendor = 'Unknown'
       end
 
       # Check for the existence of a regex for extracting sw/version info

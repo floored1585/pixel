@@ -40,6 +40,10 @@ class Interface
   end
 
 
+  def device
+    @device
+  end
+
   def name
     @name
   end

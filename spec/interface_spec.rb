@@ -261,6 +261,7 @@ describe Interface do
 
     describe '#update' do
       specify { expect(@int.update(interface_1_update, worker: 'test')).to equal @int }
+      specify { expect(@int.update(interface_1_update, worker: 'test').device).to eql 'gar-test-1' }
     end
 
     describe '#write_to_influxdb' do
@@ -451,6 +452,7 @@ describe Interface do
       specify { expect(@int4.update(interface_4_update, worker: 'test').bps_util_in).to eql 0.0 }
       specify { expect(@int4.update(interface_4_update, worker: 'test').bps_util_out).to eql 0.0 }
       specify { expect(@int1.update(interface_1_update, worker: 'test').oper_status_time).to equal interface_1['oper_status_time'].to_i }
+      specify { expect(@int1.update(interface_1_update, worker: 'test').device).to eql interface_1['device'] }
     end
 
     describe '#write_to_influxdb' do

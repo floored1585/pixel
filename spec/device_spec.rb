@@ -134,6 +134,14 @@ describe Device do
       specify { expect(@dev_name.memory.values.first).to eql nil }
     end
 
+    describe '#red_alarm' do
+      specify { expect(@dev_name.red_alarm).to eql false }
+    end
+
+    describe '#yellow_alarm' do
+      specify { expect(@dev_name.yellow_alarm).to eql false }
+    end
+
     describe '#get_interface' do
       specify { expect(@dev_name.get_interface(name: 'Fa0/1')).to eql nil }
       specify { expect(@dev_name.get_interface(index: '10001')).to eql nil }
@@ -149,6 +157,10 @@ describe Device do
 
     dev1 = Device.new('gar-b11u17-acc-g').populate(:all => true)
     dev2 = Device.new('irv-i1u1-dist').populate(:all => true)
+    alarm_none = JSON.load(P1U1_JSON_1)
+    alarm_yellow = JSON.load(P1U1_JSON_2)
+    alarm_red = JSON.load(P1U1_JSON_3)
+    alarm_both = JSON.load(P1U1_JSON_4)
 
     describe '#interfaces' do
       specify { expect(dev1.interfaces).to be_a Hash }
@@ -180,6 +192,22 @@ describe Device do
       specify { expect(dev2.memory.values.first).to be_a Memory }
     end
 
+    describe '#red_alarm' do
+      specify { expect(alarm_none.red_alarm).to eql false }
+      specify { expect(dev1.red_alarm).to eql false }
+      specify { expect(alarm_yellow.red_alarm).to eql false }
+      specify { expect(alarm_red.red_alarm).to eql true }
+      specify { expect(alarm_both.red_alarm).to eql true }
+    end
+
+    describe '#yellow_alarm' do
+      specify { expect(alarm_none.yellow_alarm).to eql false }
+      specify { expect(dev1.yellow_alarm).to eql false }
+      specify { expect(alarm_yellow.yellow_alarm).to eql true }
+      specify { expect(alarm_red.yellow_alarm).to eql false }
+      specify { expect(alarm_both.yellow_alarm).to eql true }
+    end
+
     describe '#get_interface' do
       specify { expect(dev1.get_interface(name: 'Fa0/1').name).to eql 'Fa0/1' }
       specify { expect(dev1.get_interface(name: 'fa0/1').name).to eql 'Fa0/1' }
@@ -201,9 +229,13 @@ describe Device do
 
       specify { expect(dev).to be_a Device }
 
+      #bps_out
       specify { expect(dev.bps_out).to eql 0 }
+      #pps_out
       specify { expect(dev.pps_out).to eql 0 }
+      #discards_out
       specify { expect(dev.discards_out).to eql 0 }
+      #errors_out
       specify { expect(dev.errors_out).to eql 0 }
 
     end
@@ -214,9 +246,13 @@ describe Device do
 
       specify { expect(dev).to be_a Device }
 
+      #bps_out
       specify { expect(dev.bps_out).to eql 3365960688 }
+      #pps_out_out
       specify { expect(dev.pps_out).to eql 465065 }
+      #discards_out
       specify { expect(dev.discards_out).to eql 5131 }
+      #errors_out
       specify { expect(dev.errors_out).to eql 500 }
 
     end

@@ -75,29 +75,50 @@ class Device
   def name
     @name
   end
+
+
   def worker
     @worker
   end
+
 
   def bps_out
     bps_out = 0
     @interfaces.each { |index,int| bps_out += int.bps_out if int.physical? }
     return bps_out
   end
+
+
   def pps_out
     pps_out = 0
     @interfaces.each { |index,int| pps_out += int.pps_out if int.physical? }
     return pps_out
   end
+
+
   def discards_out
     discards_out = 0
     @interfaces.each { |index,int| discards_out += int.discards_out if int.physical? }
     return discards_out
   end
+
+
   def errors_out
     errors_out = 0
     @interfaces.each { |index,int| errors_out += int.errors_out if int.physical? }
     return errors_out
+  end
+
+
+  def red_alarm
+    return true if @red_alarm && @red_alarm != 2
+    return false
+  end
+
+
+  def yellow_alarm
+    return true if @yellow_alarm && @yellow_alarm != 2
+    return false
   end
 
 

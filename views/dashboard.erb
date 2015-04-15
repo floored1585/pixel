@@ -6,20 +6,18 @@
     <div class='col-md-2'></div>
     <div class='col-md-8'>
       <ul class='list-group'>
-        <% ints_down.each do |device,data| %>
-          <% data[:interfaces].each do |index,oids| %>
-            <li class='center list-group-item list-group-item-danger'>
-            <%= device_link(oids) + ' PORT ' + interface_link(settings, oids) %> 
-            TO <%= neighbor_link(oids) %> is <b>DOWN!</b>
-            <span class='badge' style='float: left;'>&nbsp;
-              <span class='glyphicon glyphicon-warning-sign'></span>
-              Link Down&nbsp;&nbsp;
-            </span>
-            <span class='badge'>
-              <%= humanize_time(Time.now.to_i - oids[:if_oper_status_time]) %>
-            </span>
-            </li>
-          <% end %>
+        <% ints_down.each do |int| %>
+          <li class='center list-group-item list-group-item-danger'>
+          <%= device_link(int.device) + ' PORT ' + interface_link(settings, int) %> 
+          TO <%= neighbor_link(int) %> is <b>DOWN!</b>
+          <span class='badge' style='float: left;'>&nbsp;
+            <span class='glyphicon glyphicon-warning-sign'></span>
+            Link Down&nbsp;&nbsp;
+          </span>
+          <span class='badge'>
+            <%= humanize_time(Time.now.to_i - int.oper_status_time) %>
+          </span>
+          </li>
         <% end %>
       </ul>
     </div>
@@ -42,7 +40,7 @@
             <i class="fa fa-clock-o fa-2x"></i>
           </div>
           <div class="col-xs-9 text-right">
-            <span class="huge"><%= count = count_children(alarms) %></span>
+            <span class="huge"><%= count = alarms.count %></span>
             <span>&nbsp;Device<%= 's' if count != 1 %> with alarms</span>
           </div>
         </div>
@@ -56,10 +54,10 @@
             </tr>
           </thead>
           <tbody>
-          <% alarms.each do |device,data| %>
+          <% alarms.each do |device| %>
             <tr>
-            <td><%= device_link(data[:devicedata]) %></td>
-            <td><b><%= alarm_type_text(data[:devicedata]) %></b></td>
+            <td><%= device_link(device.name) %></td>
+            <td><b><%= alarm_type_text(device) %></b></td>
           </tr>
         <% end %>
           </tbody>

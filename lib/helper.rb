@@ -1,5 +1,6 @@
 module Helper
 
+
   def humanize_time secs
     [[60, :seconds], [60, :minutes], [24, :hours], [10000, :days]].map{ |count, name|
       if secs > 0
@@ -13,6 +14,7 @@ module Helper
     }.compact[-1]
   end
 
+
   def full_title(page_title)
     base_title = "Pixel"
     if page_title.empty?
@@ -21,6 +23,7 @@ module Helper
       "#{base_title} | #{page_title}"
     end
   end
+
 
   def tr_attributes(oids, opts={})
     attributes = [
@@ -42,6 +45,7 @@ module Helper
     attributes.join(' ') + " class='#{classes.join(' ')}'"
   end
 
+
   def bps_cell(direction, oids, opts={:pct_precision => 2})
     pct_precision = opts[:pct_precision]
     units = :bps
@@ -57,6 +61,7 @@ module Helper
     return util if opts[:pct_only]
     return "#{util} (#{traffic})"
   end
+
 
   def total_bps_cell(interfaces, oids)
     # If interface is child, set total to just under parent total,
@@ -77,48 +82,56 @@ module Helper
     oids[:bps_in] + oids[:bps_out] if oids[:bps_in] && oids[:bps_out]
   end
 
+
   def speed_cell(oids)
     return '' unless oids[:link_up]
     speed_in_bps = oids[:if_high_speed] * 1000000
     number_to_human(speed_in_bps, :bps, true, '%.0f')
   end
 
-  def neighbor_link(oids, opts={})
-    if oids[:neighbor]
-      neighbor = oids[:neighbor] ? "<a href='/device/#{oids[:neighbor]}'>#{oids[:neighbor]}</a>" : oids[:neighbor]
-      port = oids[:if_alias][/__[0-9a-zA-Z\-.: \/]+$/] || ''
-      port.empty? || opts[:device_only] ? neighbor : "#{neighbor} (#{port.gsub('__','')})"
-    elsif oids[:if_type] == 'unknown'
-      oids[:if_alias]
+
+  def neighbor_link(int, opts={})
+    if int.neighbor
+      neighbor = "<a href='/device/#{int.neighbor}'>#{int.neighbor}</a>"
+      port = int.neighbor_port || ''
+      port.empty? || opts[:device_only] ? neighbor : "#{neighbor} (#{port})"
+    elsif int.type == 'unknown'
+      int.alias || ''
     else
       ''
     end
   end
+
 
   def device_link_graph(settings, device, text)
     "<a href='#{settings['grafana_dev_dash']}?device=#{device}" +
     "' target='_blank'>#{text}</a>"
   end
 
-  def interface_link(settings, oids)
+
+  def interface_link(settings, int)
     "<a href='#{settings['grafana_if_dash']}" +
-      "?title=#{oids[:device]}%20::%20#{CGI::escape(oids[:if_name])}" +
-    "&name=#{oids[:device]}.#{oids[:index]}" +
-    "&ifSpeedBps=#{oids[:if_high_speed].to_i * 1000000 }" +
-    "&ifMaxBps=#{[ oids[:bps_in].to_i, oids[:bps_out].to_i ].max}" + 
-                   "' target='_blank'>" + oids[:if_name] + '</a>'
+    "?title=#{int.device}%20::%20#{CGI::escape(int.name)}" +
+    "&name=#{int.device}.#{int.index}" +
+    "&ifSpeedBps=#{int.speed}" +
+    "&ifMaxBps=#{[ int.bps_in, int.bps_out ].max}" +
+    "' target='_blank'>#{int.name}</a>"
   end
 
-  def alarm_type_text(data)
+
+  def alarm_type_text(device)
     text = ''
-    text << "<span class='text-danger'>RED</span> " if data[:red_alarm] && data[:red_alarm] != 2
-    text << "and " if data[:red_alarm] && data[:red_alarm] != 2 && data[:yellow_alarm] && data[:yellow_alarm] != 2
-    text << "<span class='text-warning'>YELLOW</span> " if data[:yellow_alarm] && data[:yellow_alarm] != 2
+    text << "<span class='text-danger'>RED</span> " if device.red_alarm
+    text << "and " if device.red_alarm && device.yellow_alarm
+    text << "<span class='text-warning'>YELLOW</span>" if device.yellow_alarm
+    return text
   end
 
-  def device_link(data)
-    "<a href='/device/#{data[:device]}'>#{data[:device]}</a>"
+
+  def device_link(name)
+    "<a href='/device/#{name}'>#{name}</a>"
   end
+
 
   def link_status_color(interfaces,oids)
     return 'grey' if oids[:stale]
@@ -134,6 +147,7 @@ module Helper
     end
     return 'green'
   end
+
 
   def link_status_tooltip(interfaces,oids)
     shutdown = oids[:if_admin_status] == 2 ? "Shutdown\n" : ''
@@ -204,7 +218,7 @@ module Helper
 
 
   def devicedata_to_human(oid, value, opts={})
-    oids_to_modify = [ :bps_out, :pps_out, :discards_out, :uptime, :last_poll_duration, 
+    oids_to_modify = [ :bps_out, :pps_out, :discards_out, :uptime, :last_poll_duration,
                        :last_poll, :next_poll, :currently_polling, :last_poll_result,
                        :yellow_alarm, :red_alarm ]
     # abort on empty or non-existant values

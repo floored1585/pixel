@@ -15,20 +15,10 @@ module Core
       Sequel.like(:alias, 'sub%') |
       Sequel.like(:alias, 'bb%')
     )
-    interface_data = interface_data.exclude(:oper_status => 1).exclude(:type => 'acc')
-    interface_data.each do |row|
-      int = Interface.new(device: row[:device], index: row[:index]).populate(row)
-      pp int
+    interface_data.exclude(:oper_status => 1).exclude(:type => 'acc').each do |row|
+      ints.push Interface.new(device: row[:device], index: row[:index]).populate(row)
     end
 
-    #(devices, name_to_index) = _device_map(:interfaces => interfaces)
-    #_fill_metadata!(devices, settings, name_to_index)
-
-    # Delete the interface from the hash if its parent is present, to reduce clutter
-    #devices.each do |device,components|
-    #  ints = components[:interfaces]
-    #  ints.delete_if { |index,oids| oids[:my_parent] && ints[oids[:my_parent]] }
-    #end
     return ints
   end
 
@@ -58,6 +48,61 @@ module Core
 
     (devices, name_to_index) = _device_map(:interfaces => interfaces)
     _fill_metadata!(devices, settings, name_to_index)
+    return devices
+  end
+
+
+  def get_cpus_high(settings, db)
+    return {}
+    cpus = db[:cpu].filter{ util > 85 }
+
+    (devices, name_to_index) = _device_map(:cpus => cpus)
+    return devices
+  end
+
+
+  def get_memory_high(settings, db)
+    return {}
+    memory = db[:memory].filter{ util > 90 }
+
+    (devices, name_to_index) = _device_map(:memory => memory)
+    return devices
+  end
+
+
+  def get_hw_problems(settings, db)
+    return {}
+    temperatures = db[:temperature].filter(:status => 2)
+    psus = db[:psu].filter(:status => [2,3])
+    fans = db[:fan].filter(:status => [2,3])
+
+    (devices, name_to_index) = _device_map(:temperatures => temperatures,
+                                           :psus => psus,
+                                           :fans => fans,
+                                          )
+    return devices
+  end
+
+
+  def get_alarms(settings, db)
+    devices = []
+    device_data = db[:device].exclude(
+      (Sequel.expr(:yellow_alarm => 2) | Sequel.expr(:yellow_alarm => nil)) &
+      (Sequel.expr(:red_alarm => 2) | Sequel.expr(:red_alarm => nil))
+    )
+    device_data.select_all.each do |row|
+      devices.push(Device.new(row[:device]).populate(row))
+    end
+
+    return devices
+  end
+
+
+  def get_poller_failures(settings, db)
+    return {}
+    failures = db[:device].filter(:last_poll_result => 1)
+
+    (devices, name_to_index) = _device_map(:devicedata => failures)
     return devices
   end
 
@@ -118,59 +163,6 @@ module Core
 
   def get_device(settings, db, device)
     db[:device].where(:device => device).all[0] || {}
-  end
-
-
-  def get_cpus_high(settings, db)
-    return {}
-    cpus = db[:cpu].filter{ util > 85 }
-
-    (devices, name_to_index) = _device_map(:cpus => cpus)
-    return devices
-  end
-
-
-  def get_memory_high(settings, db)
-    return {}
-    memory = db[:memory].filter{ util > 90 }
-
-    (devices, name_to_index) = _device_map(:memory => memory)
-    return devices
-  end
-
-
-  def get_hw_problems(settings, db)
-    return {}
-    temperatures = db[:temperature].filter(:status => 2)
-    psus = db[:psu].filter(:status => [2,3])
-    fans = db[:fan].filter(:status => [2,3])
-
-    (devices, name_to_index) = _device_map(:temperatures => temperatures,
-                                           :psus => psus,
-                                           :fans => fans,
-                                          )
-    return devices
-  end
-
-
-  def get_alarms(settings, db)
-    return {}
-    devicedata = db[:device].exclude(
-      (Sequel.expr(:yellow_alarm => 2) | Sequel.expr(:yellow_alarm => nil)) &
-      (Sequel.expr(:red_alarm => 2) | Sequel.expr(:red_alarm => nil))
-    )
-
-    (devices, name_to_index) = _device_map(:devicedata => devicedata)
-    return devices
-  end
-
-
-  def get_poller_failures(settings, db)
-    return {}
-    failures = db[:device].filter(:last_poll_result => 1)
-
-    (devices, name_to_index) = _device_map(:devicedata => failures)
-    return devices
   end
 
 

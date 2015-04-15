@@ -168,9 +168,17 @@ describe Interface do
 
     before(:each) do
       # Create our empty interface
-      @int = Interface.new(device: 'gar-test-1', index: 103)
+      @int = Interface.new(device: 'gar-test-1', index: '103')
     end
 
+
+    describe '#device' do
+      specify { expect(@int.device).to eql 'gar-test-1' }
+    end
+
+    describe '#index' do
+      specify { expect(@int.index).to eql 103 }
+    end
 
     describe '#speed' do
       specify { expect(@int.speed).to eql nil }
@@ -299,6 +307,20 @@ describe Interface do
       @ints = [ @int1, @int2, @int3, @int4 ]
     end
 
+
+    describe '#device' do
+      specify { expect(@int1.device).to eql 'gar-b11u1-dist' }
+      specify { expect(@int2.device).to eql 'gar-b11u17-acc-g' }
+      specify { expect(@int3.device).to eql 'gar-p1u1-dist' }
+      specify { expect(@int4.device).to eql 'irv-a3u2-acc-g' }
+    end
+
+    describe '#index' do
+      specify { expect(@int1.index).to eql 604 }
+      specify { expect(@int2.index).to eql 10040 }
+      specify { expect(@int3.index).to eql 656 }
+      specify { expect(@int4.index).to eql 10119 }
+    end
 
     describe '#speed' do
       specify { expect(@int1.speed).to eql 10000000000 }
@@ -484,6 +506,7 @@ describe Interface do
       specify { expect(@int4.update(int4_update, worker: 'test').bps_util_out).to eql 0.0 }
       specify { expect(@int1.update(int1_update, worker: 'test').oper_status_time).to equal interface_1['oper_status_time'].to_i }
       specify { expect(@int1.update(int1_update, worker: 'test').device).to eql interface_1['device'] }
+      specify { expect(@int1.update(int1_update, worker: 'test').index).to eql 604 }
       specify { expect(@int1.update(int1_update, worker: 'test').alias).to eql 'acc__gar-crmx-2__xe-16/0/3' }
       specify { expect(@int1.update(int1_update, worker: 'test').neighbor).to eql 'gar-crmx-2' }
       specify { expect(@int1.update(int1_update, worker: 'test').neighbor_port).to eql 'xe-16/0/3' }

@@ -45,6 +45,11 @@ class Interface
   end
 
 
+  def index
+    @index
+  end
+
+
   def name
     @name
   end

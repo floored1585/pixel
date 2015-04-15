@@ -200,6 +200,10 @@ describe Interface do
       specify { expect(@int.type).to eql nil }
     end
 
+    describe '#type' do
+      specify { expect(@int.oper_status_time).to eql nil }
+    end
+
     describe '#clone_type' do
       # This interface has type 'unknown'
       unknown = Interface.new(device: 'irv-a3u2-acc-g', index: 10119).populate(interface_4)
@@ -322,6 +326,13 @@ describe Interface do
       specify { expect(@int4.type).to eql 'unknown' }
     end
 
+    describe '#oper_status_time' do
+      specify { expect(@int1.oper_status_time).to eql 1409786067 }
+      specify { expect(@int2.oper_status_time).to eql 1415142088 }
+      specify { expect(@int3.oper_status_time).to eql 1416350411 }
+      specify { expect(@int4.oper_status_time).to eql 1415142087 }
+    end
+
     describe '#clone_type' do
       specify { expect(@int1.clone_type(@int2).type).to eql 'acc' }
       specify { expect(@int2.clone_type(@int1).type).to eql 'bb' }
@@ -439,6 +450,7 @@ describe Interface do
       specify { expect(@int4.update(interface_4_update, worker: 'test')).to equal @int4 }
       specify { expect(@int4.update(interface_4_update, worker: 'test').bps_util_in).to eql 0.0 }
       specify { expect(@int4.update(interface_4_update, worker: 'test').bps_util_out).to eql 0.0 }
+      specify { expect(@int1.update(interface_1_update, worker: 'test').oper_status_time).to equal interface_1['oper_status_time'].to_i }
     end
 
     describe '#write_to_influxdb' do

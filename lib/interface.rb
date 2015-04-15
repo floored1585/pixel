@@ -52,6 +52,10 @@ class Interface
     @type
   end
 
+  def oper_status_time
+    @oper_status_time
+  end
+
   def bps_in
     @bps_in || 0
   end

@@ -139,15 +139,21 @@ class Interface
   end
 
 
+  def parent_name
+    return nil unless (@alias && type == 'sub')
+    @alias.match(/sub\[([a-zA-Z0-9\/-]+)\]/) { |match| return match[1] }
+  end
+
+
   def neighbor
-    @alias.match(/__([a-zA-Z0-9\-_]+)__/) { |match| return match[1] } if @alias
-    return nil
+    return nil unless @alias
+    @alias.match(/__([a-zA-Z0-9\-_]+)__/) { |match| return match[1] }
   end
 
 
   def neighbor_port
-    @alias.match(/__([0-9a-zA-Z\-.: \/]+)$/) { |match| return match[1] } if @alias
-    return nil
+    return nil unless @alias
+    @alias.match(/__([0-9a-zA-Z\-.: \/]+)$/) { |match| return match[1] }
   end
 
 

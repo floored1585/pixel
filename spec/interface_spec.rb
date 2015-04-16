@@ -74,7 +74,7 @@ describe Interface do
   # Up/Up, AE
   interface_3 = {
     "device" => "gar-p1u1-dist", "index" => 656,"last_updated" => 1424752472,
-    "alias" => "bb__gar-cr-1__ae3", "name" => "ae0", "worker" => "test123",
+    "alias" => "sub[ae12]__gar-cr-1__ae3", "name" => "ae0", "worker" => "test123",
     "hc_in_octets" => "0.484779762679182E15", "hc_out_octets" => "0.1111644194120525E16",
     "hc_in_ucast_pkts" => "0.878552042051E12", "hc_out_ucast_pkts" => "0.1174804345552E13",
     "speed" => 20000000000,"mtu" => 1514,"admin_status" => 1,
@@ -82,7 +82,7 @@ describe Interface do
     "in_discards" => "0.0", "in_errors" => "0.0", "out_discards" => "0.0",
     "out_errors" => "0.0", "bps_in" => 408764184,"bps_out" => 1172468480,"discards_in" => 0,
     "errors_in" => 300,"discards_out" => 0,"errors_out" => 350,"pps_in" => 104732,
-    "pps_out" => 144934, "bps_util_in" => 2.04,"bps_util_out" => 5.86,"type" => "bb" }
+    "pps_out" => 144934, "bps_util_in" => 2.04,"bps_util_out" => 5.86,"type" => "sub" }
   int3_update = {
     "name"=>"ae0", "hc_in_octets"=>"493124877631750", "hc_out_octets"=>"1135292119081151",
     "hc_in_ucast_pkts"=>"895162904912", "hc_out_ucast_pkts"=>"1198370633351",
@@ -284,6 +284,10 @@ describe Interface do
       specify { expect(@int.physical?).to equal true }
     end
 
+    describe '#parent_name' do
+      specify { expect(@int.parent_name).to equal nil }
+    end
+
     describe '#neighbor' do
       specify { expect(@int.neighbor).to eql nil }
     end
@@ -367,14 +371,14 @@ describe Interface do
     describe '#alias' do
       specify { expect(@int1.alias).to eql 'bb__gar-crmx-1__xe-1/0/3' }
       specify { expect(@int2.alias).to eql 'acc__' }
-      specify { expect(@int3.alias).to eql 'bb__gar-cr-1__ae3' }
+      specify { expect(@int3.alias).to eql 'sub[ae12]__gar-cr-1__ae3' }
       specify { expect(@int4.alias).to eql '' }
     end
 
     describe '#type' do
       specify { expect(@int1.type).to eql 'bb' }
       specify { expect(@int2.type).to eql 'acc' }
-      specify { expect(@int3.type).to eql 'bb' }
+      specify { expect(@int3.type).to eql 'sub' }
       specify { expect(@int4.type).to eql 'unknown' }
     end
 
@@ -509,6 +513,13 @@ describe Interface do
       specify { expect(@int4.physical?).to equal true }
     end
 
+    describe '#parent_name' do
+      specify { expect(@int1.parent_name).to eql nil }
+      specify { expect(@int2.parent_name).to eql nil }
+      specify { expect(@int3.parent_name).to eql 'ae12' }
+      specify { expect(@int4.parent_name).to eql nil }
+    end
+
     describe '#neighbor' do
       specify { expect(@int1.neighbor).to eql 'gar-crmx-1' }
       specify { expect(@int2.neighbor).to eql nil }
@@ -545,6 +556,7 @@ describe Interface do
       specify { expect(@int1.update(int1_update, worker: 'test').neighbor).to eql 'gar-crmx-2' }
       specify { expect(@int1.update(int1_update, worker: 'test').neighbor_port).to eql 'xe-16/0/3' }
       specify { expect(@int1.update(int1_update, worker: 'test').type).to eql 'acc' }
+      specify { expect(@int3.update(int3_update, worker: 'test').type).to eql 'bb' }
     end
 
     describe '#write_to_influxdb' do

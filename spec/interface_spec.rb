@@ -46,7 +46,7 @@ describe Interface do
     "admin_status_time" => 1409786067,"oper_status" => 1,"oper_status_time" => 1409786067,
     "in_discards" => "0.0", "in_errors" => "0.0", "out_discards" => "0.0",
     "out_errors" => "0.0", "bps_in" => 1349172320,"bps_out" => 1371081672,"discards_in" => 100,
-    "errors_in" => 0,"discards_out" => 150,"errors_out" => 0,"pps_in" => 180411,
+    "errors_in" => 0,"discards_out" => 15000,"errors_out" => 0,"pps_in" => 180411,
     "pps_out" => 262760, "bps_util_in" => 13.49,"bps_util_out" => 13.71, "type" => "bb" }
   int1_update = {
     "name" => "xe-0/2/0", "hc_in_octets" => "3959713831274390",
@@ -224,6 +224,14 @@ describe Interface do
       specify { expect(@int.status).to eql "Down" }
     end
 
+    describe '#up?' do
+      specify { expect(@int.up?).to eql false }
+    end
+
+    describe '#down?' do
+      specify { expect(@int.down?).to eql true }
+    end
+
     describe '#bps_in' do
       specify { expect(@int.bps_in).to eql 0 }
     end
@@ -246,6 +254,10 @@ describe Interface do
 
     describe '#discards_out' do
       specify { expect(@int.discards_out).to eql 0 }
+    end
+
+    describe '#discards_out_pct' do
+      specify { expect(@int.discards_out_pct).to eql 0.0 }
     end
 
     describe '#errors_in' do
@@ -395,6 +407,20 @@ describe Interface do
       specify { expect(@int4.status(:admin)).to eql 'Down' }
     end
 
+    describe '#down?' do
+      specify { expect(@int1.down?).to eql false }
+      specify { expect(@int2.down?).to eql true }
+      specify { expect(@int3.down?).to eql false }
+      specify { expect(@int4.down?).to eql true }
+    end
+
+    describe '#up?' do
+      specify { expect(@int1.up?).to eql true }
+      specify { expect(@int2.up?).to eql false }
+      specify { expect(@int3.up?).to eql true }
+      specify { expect(@int4.up?).to eql false }
+    end
+
     describe '#bps_in' do
       specify { expect(@int1.bps_in).to equal 1349172320 }
       specify { expect(@int2.bps_in).to equal 0 }
@@ -427,11 +453,19 @@ describe Interface do
       specify { expect(@int3.discards_in).to equal 0 }
       specify { expect(@int4.discards_in).to equal 0 }
     end
+
     describe '#discards_out' do
-      specify { expect(@int1.discards_out).to equal 150 }
+      specify { expect(@int1.discards_out).to equal 15000 }
       specify { expect(@int2.discards_out).to equal 0 }
       specify { expect(@int3.discards_out).to equal 0 }
       specify { expect(@int4.discards_out).to equal 0 }
+    end
+
+    describe '#discards_out_pct' do
+      specify { expect(@int1.discards_out_pct).to eql 5.4 }
+      specify { expect(@int2.discards_out_pct).to eql 0.0 }
+      specify { expect(@int3.discards_out_pct).to eql 0.0 }
+      specify { expect(@int4.discards_out_pct).to eql 0.0 }
     end
 
     describe '#errors_in' do

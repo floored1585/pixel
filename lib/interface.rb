@@ -31,7 +31,7 @@ class Interface
   def set_speed(speed)
     # If speed doesn't look like an integer, raise an exception.
     unless speed.to_s =~ /^[0-9]+$/
-      raise TypeError.new("speed (#{speed}) must look like an Integer!") 
+      raise TypeError.new("speed (#{speed}) must look like an Integer!")
     end
 
     @speed = speed.to_i
@@ -100,6 +100,14 @@ class Interface
   end
 
 
+  def discards_out_pct
+    if discards_out && pps_out && discards_out > 0
+      return ('%.2f' % (discards_out.to_f / (pps_out + discards_out) * 100)).to_f
+    end
+    return 0.0
+  end
+
+
   def errors_in
     @errors_in || 0
   end
@@ -143,7 +151,7 @@ class Interface
   end
 
 
-  # Returns a text representation of the up/down interface status (by default, the 
+  # Returns a text representation of the up/down interface status (by default, the
   #   operating status, but you can pass in a symbol if you want to get the admin status)
   def status(status_type = :oper)
     if status_type == :oper
@@ -153,6 +161,16 @@ class Interface
     else
       nil
     end
+  end
+
+
+  def up?
+    status == 'Up'
+  end
+
+
+  def down?
+    status == 'Down'
   end
 
 

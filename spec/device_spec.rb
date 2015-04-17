@@ -128,6 +128,16 @@ describe Device do
     end
 
 
+    describe '#name' do
+      specify { expect(@dev_name.name).to eql 'gar-b11u17-acc-g' }
+    end
+
+    describe '#poll_ip' do
+      dev_ip = Device.new('gar-b11u17-acc-g', poll_ip: '1.2.3.4')
+      specify { expect(@dev_name.poll_ip).to eql nil }
+      specify { expect(dev_ip.poll_ip).to eql '1.2.3.4' }
+    end
+
     describe '#interfaces' do
       specify { expect(@dev_name.interfaces).to be_a Hash }
       specify { expect(@dev_name.interfaces.values.first).to eql nil }
@@ -185,6 +195,17 @@ describe Device do
     alarm_yellow = JSON.load(P1U1_JSON_2)
     alarm_red = JSON.load(P1U1_JSON_3)
     alarm_both = JSON.load(P1U1_JSON_4)
+
+
+    describe '#name' do
+      specify { expect(dev1.name).to eql 'gar-b11u17-acc-g' }
+      specify { expect(dev2.name).to eql 'irv-i1u1-dist' }
+    end
+
+    describe '#poll_ip' do
+      specify { expect(dev1.poll_ip).to eql '172.24.7.54' }
+      specify { expect(dev2.poll_ip).to eql '208.113.142.180' }
+    end
 
     describe '#interfaces' do
       specify { expect(dev1.interfaces).to be_a Hash }

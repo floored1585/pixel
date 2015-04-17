@@ -49,6 +49,16 @@ class Device
   end
 
   
+  def name
+    @name
+  end
+
+
+  def poll_ip
+    @poll_ip
+  end
+
+
   # Return an array containing all Interface objects in the device
   def interfaces
     @interfaces
@@ -82,11 +92,6 @@ class Device
   # Return an array containing all Memory objects in the device
   def memory
     @memory
-  end
-
-
-  def name
-    @name
   end
 
 

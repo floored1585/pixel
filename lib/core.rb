@@ -100,10 +100,11 @@ module Core
 
 
   def get_poller_failures(settings, db)
-    return {}
-    failures = db[:device].filter(:last_poll_result => 1)
+    devices = []
+    db[:device].filter(:last_poll_result => 1).each do |row|
+      devices.push(Device.new(row[:device]).populate(row))
+    end
 
-    (devices, name_to_index) = _device_map(:devicedata => failures)
     return devices
   end
 

@@ -40,8 +40,8 @@
             <i class="fa fa-clock-o fa-2x"></i>
           </div>
           <div class="col-xs-9 text-right">
-            <span class="huge"><%= count = alarms.count %></span>
-            <span>&nbsp;Device<%= 's' if count != 1 %> with alarms</span>
+            <span class="huge"><%= alarms.count %></span>
+            <span>&nbsp;Device<%= 's' if alarms.count != 1 %> with alarms</span>
           </div>
         </div>
       </div>
@@ -77,8 +77,8 @@
             <i class="fa fa-trash-o fa-2x"></i>
           </div>
           <div class="col-xs-9 text-right">
-            <span class="huge"><%= count = ints_discarding.count %></span>
-            <span>&nbsp;Interface<%= 's' if count != 1 %> discarding over thresholds</span>
+            <span class="huge"><%= ints_discarding.count %></span>
+            <span>&nbsp;Interface<%= 's' if ints_discarding.count != 1 %> discarding over thresholds</span>
           </div>
         </div>
       </div>
@@ -139,8 +139,8 @@
             <i class="fa fa-warning fa-2x"></i>
           </div>
           <div class="col-xs-9 text-right">
-            <span class="huge"><%= count = count_children(poller_failures) %></span>
-            <span>&nbsp;Poller Failure<%= 's' if count != 1 %></span>
+            <span class="huge"><%= poller_failures.count %></span>
+            <span>&nbsp;Poller Failure<%= 's' if poller_failures.count != 1 %></span>
           </div>
         </div>
       </div>
@@ -154,11 +154,11 @@
         </tr>
       </thead>
       <tbody>
-      <% poller_failures.each do |device,data| %>
+      <% poller_failures.each do |device| %>
         <tr>
-          <td><%= device_link(data[:devicedata]) %></td>
-          <td><%= data[:devicedata][:ip] %></td>
-          <td><%= data[:devicedata][:worker] %></td>
+          <td><%= device_link(device.name) %></td>
+          <td><%= device.poll_ip %></td>
+          <td><%= device.worker %></td>
         </tr>
       <% end %>
       </tbody>

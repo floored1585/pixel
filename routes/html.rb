@@ -18,6 +18,7 @@ class Pixel < Sinatra::Base
     erb :dashboard, :locals => {
       :title => 'Dashboard!',
       :settings => @@settings,
+      :db => @@db,
       :poller_failures => poller_failures,
       :ints_discarding => ints_discarding,
       :ints_saturated => ints_saturated,

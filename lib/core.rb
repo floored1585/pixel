@@ -11,11 +11,11 @@ module Core
 
   def get_ints_down(settings, db)
     ints = []
-    interface_data = db[:interface].filter(
+    int_data = db[:interface].filter(
       Sequel.like(:alias, 'sub%') |
       Sequel.like(:alias, 'bb%')
     )
-    interface_data.exclude(:oper_status => 1).exclude(:type => 'acc').each do |row|
+    int_data.exclude(:oper_status => 1).exclude(:type => 'acc').each do |row|
       ints.push Interface.new(device: row[:device], index: row[:index]).populate(row)
     end
 
@@ -34,8 +34,8 @@ module Core
 
 
   def get_ints_discarding(settings, db)
-    return {}
-    interfaces = db[:interface].filter{Sequel.|(
+    ints = []
+    int_data = db[:interface].where{Sequel.|(
       Sequel.&(
         pps_out > 0, # Prevent div by zero
         discards_out > 20,
@@ -44,11 +44,12 @@ module Core
       ),
       discards_out > 500 # Also include anything discarding over 500pps
     )}
-    interfaces = interfaces.order(:discards_out).reverse
 
-    (devices, name_to_index) = _device_map(:interfaces => interfaces)
-    _fill_metadata!(devices, settings, name_to_index)
-    return devices
+    int_data.select_all.each do |row|
+      ints.push Interface.new(device: row[:device], index: row[:index]).populate(row)
+    end
+
+    return ints
   end
 
 
@@ -107,62 +108,139 @@ module Core
   end
 
 
-  def get_interface(settings, db, device, index=nil)
+  def get_interface(settings, db, device, index: nil, name: nil)
     if index
-      db[:interface].where(:device => device, :index => index).all[0] || {}
+      row = db[:interface].where(:device => device, :index => index).all[0]
+    elsif name
+      row = db[:interface].where(:device => device)
+      row = row.where(Sequel.function(:lower, :name) => name.downcase).all[0]
     else
-      db[:interface].where(:device => device).all
+      row = nil
+    end
+
+    if row
+      return Interface.new(device: row[:device], index: row[:index]).populate(row)
+    else
+      return {}
     end
   end
 
 
-  def get_cpu(settings, db, device, index=nil)
-    if index
-      db[:cpu].where(:device => device, :index => index).all[0] || {}
+  def get_interfaces(settings, db, device)
+    ints = {}
+    db[:interface].where(:device => device).each do |row|
+      index = row[:index].to_i
+      ints[index] = Interface.new(device: row[:device], index: index).populate(row)
+    end
+    return ints
+  end
+
+
+  def get_cpu(settings, db, device, index)
+    row = db[:cpu].where(:device => device, :index => index.to_s).all[0]
+    if row
+      return CPU.new(device: row[:device], index: row[:index]).populate(row)
     else
-      db[:cpu].where(:device => device).all
+      return {}
     end
   end
 
 
-  def get_fan(settings, db, device, index=nil)
-    if index
-      db[:fan].where(:device => device, :index => index).all[0] || {}
+  def get_cpus(settings, db, device)
+    cpus = {}
+    db[:cpu].where(:device => device).each do |row|
+      index = row[:index].to_i
+      cpus[index] = CPU.new(device: row[:device], index: index).populate(row)
+    end
+    return cpus
+  end
+
+
+  def get_fan(settings, db, device, index)
+    row = db[:fan].where(:device => device, :index => index.to_s).all[0]
+    if row
+      return Fan.new(device: row[:device], index: row[:index]).populate(row)
     else
-      db[:fan].where(:device => device).all
+      return {}
     end
   end
 
 
-  def get_memory(settings, db, device, index=nil)
-    if index
-      db[:memory].where(:device => device, :index => index).all[0] || {}
+  def get_fans(settings, db, device)
+    fans = {}
+    db[:fan].where(:device => device).each do |row|
+      index = row[:index].to_i
+      fans[index] = Fan.new(device: row[:device], index: index).populate(row)
+    end
+    return fans
+  end
+
+
+  def get_memory(settings, db, device, index)
+    row = db[:memory].where(:device => device, :index => index.to_s).all[0]
+    if row
+      return Memory.new(device: row[:device], index: row[:index]).populate(row)
     else
-      db[:memory].where(:device => device).all
+      return {}
     end
   end
 
 
-  def get_psu(settings, db, device, index=nil)
-    if index
-      db[:psu].where(:device => device, :index => index).all[0] || {}
+  def get_memories(settings, db, device)
+    memories = {}
+    db[:memory].where(:device => device).each do |row|
+      index = row[:index].to_i
+      memories[index] = Memory.new(device: row[:device], index: index).populate(row)
+    end
+    return memories
+  end
+
+
+  def get_psu(settings, db, device, index)
+    row = db[:psu].where(:device => device, :index => index.to_s).all[0]
+    if row
+      return PSU.new(device: row[:device], index: row[:index]).populate(row)
     else
-      db[:psu].where(:device => device).all
+      return {}
     end
   end
 
 
-  def get_temperature(settings, db, device, index=nil)
-    if index
-      db[:temperature].where(:device => device, :index => index).all[0] || {}
-    else
-      db[:temperature].where(:device => device).all
+  def get_psus(settings, db, device)
+    psus = {}
+    db[:psu].where(:device => device).each do |row|
+      index = row[:index].to_i
+      psus[index] = PSU.new(device: row[:device], index: index).populate(row)
     end
+    return psus
+  end
+
+
+  def get_temperature(settings, db, device, index)
+    row = db[:temperature].where(:device => device, :index => index.to_s).all[0]
+    if row
+      return Temperature.new(device: row[:device], index: row[:index]).populate(row)
+    else
+      return {}
+    end
+  end
+
+
+  def get_temperatures(settings, db, device)
+    temperatures = {}
+    db[:temperature].where(:device => device).each do |row|
+      index = row[:index].to_i
+      temperatures[index] = Temperature.new(device: row[:device], index: index).populate(row)
+    end
+    return temperatures
   end
 
 
   def get_device(settings, db, device)
-    db[:device].where(:device => device).all[0] || {}
+    db[:device].where(:device => device).each do |row|
+      return Device.new(row[:device]).populate(row)
+    end
+    return {}
   end
 
 

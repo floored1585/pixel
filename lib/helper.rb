@@ -25,40 +25,50 @@ module Helper
   end
 
 
-  def tr_attributes(oids, opts={})
+  def tr_attributes(int, parent=nil, hl_relation: false, hide_if_child: false)
+    classes = []
     attributes = [
       "data-toggle='tooltip'",
       "data-container='body'",
-      "title='index: #{oids[:index]}'",
+      "title='index: #{int.index}'",
       "data-rel='tooltip-left'",
-        "data-pxl-index='#{oids[:index]}'"
+      "data-pxl-index='#{int.index}'",
     ]
-    attributes.push "data-pxl-parent='#{oids[:my_parent]}'" if oids[:is_child] && opts[:hl_relation]
-    classes = []
 
-    if oids[:is_child]
-      classes.push("#{oids[:my_parent]}_child") if opts[:hl_relation]
-      classes.push('panel-collapse collapse out') if opts[:hide_if_child]
-      classes.push('pxl-child-tr') if opts[:hl_relation]
+    if parent && (hl_relation || hide_if_child)
+      if parent.class == Interface
+        attributes.push "data-pxl-parent='#{parent.index}'" if hl_relation
+        classes.push("#{parent.index}_child") if hl_relation
+        classes.push('panel-collapse collapse out') if hide_if_child
+        classes.push('pxl-child-tr') if hl_relation
+      else
+        $LOG.error("HELPER: Non-existent parent '#{int.parent_name}' on #{int.device}. Child: #{int.name}")
+      end
     end
 
     attributes.join(' ') + " class='#{classes.join(' ')}'"
   end
 
 
-  def bps_cell(direction, oids, opts={:pct_precision => 2})
-    pct_precision = opts[:pct_precision]
-    units = :bps
+  def bps_cell(direction, int, sigfigs: 3, bps_only: false, pct_only: false, units: :bps)
     # If bps_in/Out doesn't exist, return blank
-    return '' unless oids["bps_#{direction}".to_sym] && oids[:link_up]
-    util = ("%.3g" % oids["bps_#{direction}_util".to_sym]) + '%'
-    if opts[:compact]
-      util.gsub!(/\.[0-9]+/,'')
-      units = :si_short
+    return '' unless int.up?
+
+    if direction == :in
+      bps = int.bps_in
+      bps_util = int.bps_util_in
+    elsif direction == :out
+      bps = int.bps_out
+      bps_util = int.bps_util_out
+    else
+      return 'error'
     end
-    traffic = number_to_human(oids["bps_#{direction}".to_sym], units, true, '%.3g')
-    return traffic if opts[:bps_only]
-    return util if opts[:pct_only]
+
+    util = "#{bps_util.sigfig(sigfigs)}%"
+
+    traffic = number_to_human(bps, units: units, sigfigs: 2)
+    return traffic if bps_only
+    return util if pct_only
     return "#{util} (#{traffic})"
   end
 
@@ -195,9 +205,9 @@ module Helper
   end
 
 
-  def number_to_human(raw, unit, si=true, format='%.2f')
+  def number_to_human(raw, units:, si: true, sigfigs: 3)
     i = 0
-    units = {
+    unit_list = {
       :bps => [' bps', ' Kbps', ' Mbps', ' Gbps', ' Tbps', ' Pbps', ' Ebps', ' Zbps', ' Ybps'],
       :pps => [' pps', ' Kpps', ' Mpps', ' Gpps', ' Tpps', ' Ppps', ' Epps', ' Zpps', ' Ypps'],
       :si_short => [' b', ' K', ' M', ' G', ' T', ' P', ' E', ' Z', ' Y'],
@@ -208,7 +218,8 @@ module Helper
       i += 1
     end
 
-    return (sprintf format % raw).to_s + ' ' + units[unit][i]
+    return "#{raw.sigfig(sigfigs)} #{unit_list[units][i]}"
+    # ^-- Example: "234 Mbps"
   end
 
 

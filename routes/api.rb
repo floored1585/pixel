@@ -13,45 +13,45 @@ class Pixel < Sinatra::Base
   end
 
   get '/v2/device/*/interface/*' do |device, index|
-    JSON.generate( get_interface(@@settings, @@db, device, index) )
+    JSON.generate( get_interface(@@settings, @@db, device, index: index) )
   end
   get '/v2/device/*/interfaces' do |device|
-    JSON.generate( get_interface(@@settings, @@db, device) )
+    JSON.generate( get_interfaces(@@settings, @@db, device) )
   end
 
   get '/v2/device/*/cpu/*' do |device, index|
     JSON.generate( get_cpu(@@settings, @@db, device, index) )
   end
   get '/v2/device/*/cpus' do |device|
-    JSON.generate( get_cpu(@@settings, @@db, device) )
+    JSON.generate( get_cpus(@@settings, @@db, device) )
   end
 
   get '/v2/device/*/fan/*' do |device, index|
     JSON.generate( get_fan(@@settings, @@db, device, index) )
   end
   get '/v2/device/*/fans' do |device|
-    JSON.generate( get_fan(@@settings, @@db, device) )
+    JSON.generate( get_fans(@@settings, @@db, device) )
   end
 
   get '/v2/device/*/memory/*' do |device, index|
     JSON.generate( get_memory(@@settings, @@db, device, index) )
   end
   get '/v2/device/*/memory' do |device|
-    JSON.generate( get_memory(@@settings, @@db, device) )
+    JSON.generate( get_memories(@@settings, @@db, device) )
   end
 
   get '/v2/device/*/psu/*' do |device, index|
     JSON.generate( get_psu(@@settings, @@db, device, index) )
   end
   get '/v2/device/*/psus' do |device|
-    JSON.generate( get_psu(@@settings, @@db, device) )
+    JSON.generate( get_psus(@@settings, @@db, device) )
   end
 
   get '/v2/device/*/temperature/*' do |device, index|
     JSON.generate( get_temperature(@@settings, @@db, device, index) )
   end
   get '/v2/device/*/temperatures' do |device|
-    JSON.generate( get_temperature(@@settings, @@db, device) )
+    JSON.generate( get_temperatures(@@settings, @@db, device) )
   end
 
   get '/v2/device/*' do |device|

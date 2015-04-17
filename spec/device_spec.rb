@@ -84,28 +84,84 @@ describe Device do
 
     test_devices.each do |label, device|
       context "on a #{label} when no options passed" do
-        specify { expect(Device.fetch(device)).to be_a Device }
+        dev = Device.fetch(device)
+        specify { expect(dev).to be_a Device }
+        specify { expect(dev.interfaces.values.first).to eql nil }
+        specify { expect(dev.cpus.values.first).to eql nil }
+        specify { expect(dev.fans.values.first).to eql nil }
+        specify { expect(dev.memory.values.first).to eql nil }
+        specify { expect(dev.psus.values.first).to eql nil }
+        specify { expect(dev.temps.values.first).to eql nil }
       end
       context "on a #{label} when :interfaces passed" do
-        specify { expect(Device.fetch(device, :interfaces => true)).to be_a Device }
+        dev = Device.fetch(device, :interfaces => true)
+        specify { expect(dev).to be_a Device }
+        specify { expect(dev.interfaces.values.first).to be_a Interface }
+        specify { expect(dev.cpus.values.first).to eql nil }
+        specify { expect(dev.fans.values.first).to eql nil }
+        specify { expect(dev.memory.values.first).to eql nil }
+        specify { expect(dev.psus.values.first).to eql nil }
+        specify { expect(dev.temps.values.first).to eql nil }
       end
       context "on a #{label} when :cpus passed" do
-        specify { expect(Device.fetch(device, :cpus => true)).to be_a Device }
+        dev = Device.fetch(device, :cpus => true)
+        specify { expect(dev).to be_a Device }
+        specify { expect(dev.interfaces.values.first).to eql nil }
+        specify { expect(dev.cpus.values.first).to be_a CPU }
+        specify { expect(dev.fans.values.first).to eql nil }
+        specify { expect(dev.memory.values.first).to eql nil }
+        specify { expect(dev.psus.values.first).to eql nil }
+        specify { expect(dev.temps.values.first).to eql nil }
       end
       context "on a #{label} when :fans passed" do
-        specify { expect(Device.fetch(device, :fans => true)).to be_a Device }
+        dev = Device.fetch(device, :fans => true)
+        specify { expect(dev).to be_a Device }
+        specify { expect(dev.interfaces.values.first).to eql nil }
+        specify { expect(dev.cpus.values.first).to eql nil }
+        specify { expect(dev.fans.values.first).to be_a Fan } unless label == 'Cumulus'
+        specify { expect(dev.memory.values.first).to eql nil }
+        specify { expect(dev.psus.values.first).to eql nil }
+        specify { expect(dev.temps.values.first).to eql nil }
       end
       context "on a #{label} when :memory passed" do
-        specify { expect(Device.fetch(device, :memory => true)).to be_a Device }
+        dev = Device.fetch(device, :memory => true)
+        specify { expect(dev).to be_a Device }
+        specify { expect(dev.interfaces.values.first).to eql nil }
+        specify { expect(dev.cpus.values.first).to eql nil }
+        specify { expect(dev.fans.values.first).to eql nil }
+        specify { expect(dev.memory.values.first).to be_a Memory }
+        specify { expect(dev.psus.values.first).to eql nil }
+        specify { expect(dev.temps.values.first).to eql nil }
       end
       context "on a #{label} when :psus passed" do
-        specify { expect(Device.fetch(device, :psus => true)).to be_a Device }
+        dev = Device.fetch(device, :psus => true)
+        specify { expect(dev).to be_a Device }
+        specify { expect(dev.interfaces.values.first).to eql nil }
+        specify { expect(dev.cpus.values.first).to eql nil }
+        specify { expect(dev.fans.values.first).to eql nil }
+        specify { expect(dev.memory.values.first).to eql nil }
+        specify { expect(dev.psus.values.first).to be_a PSU } unless label == 'Cumulus'
+        specify { expect(dev.temps.values.first).to eql nil }
       end
       context "on a #{label} when :temperatures passed" do
-        specify { expect(Device.fetch(device, :temperatures => true)).to be_a Device }
+        dev = Device.fetch(device, :temperatures => true)
+        specify { expect(dev).to be_a Device }
+        specify { expect(dev.interfaces.values.first).to eql nil }
+        specify { expect(dev.cpus.values.first).to eql nil }
+        specify { expect(dev.fans.values.first).to eql nil }
+        specify { expect(dev.memory.values.first).to eql nil }
+        specify { expect(dev.psus.values.first).to eql nil }
+        specify { expect(dev.temps.values.first).to be_a Temperature } unless [ 'Cumulus', 'Cisco 2960' ].include? label
       end
       context "on a #{label} when all options passed" do
-        specify { expect(Device.fetch(device, :all => true)).to be_a Device }
+        dev = Device.fetch(device, :all => true)
+        specify { expect(dev).to be_a Device }
+        specify { expect(dev.interfaces.values.first).to be_a Interface }
+        specify { expect(dev.cpus.values.first).to be_a CPU }
+        specify { expect(dev.fans.values.first).to be_a Fan } unless label == 'Cumulus'
+        specify { expect(dev.memory.values.first).to be_a Memory }
+        specify { expect(dev.psus.values.first).to be_a PSU } unless label == 'Cumulus'
+        specify { expect(dev.temps.values.first).to be_a Temperature } unless [ 'Cumulus', 'Cisco 2960' ].include? label
       end
     end
 
@@ -343,8 +399,7 @@ describe Device do
 
     it 'should be identical before and after' do
       JSON.load(DEV2_JSON).save(DB)
-      dev = Device.fetch('test-v11u1-acc-y', :all => true)
-      expect(JSON.parse(dev.to_json)).to eql JSON.parse(JSON.load(DEV2_JSON).to_json)
+      expect(Device.fetch('test-v11u1-acc-y', :all => true).to_json).to eql DEV2_JSON
     end
 
     it 'should delete outdated components' do

@@ -58,28 +58,37 @@ describe Fan do
   end
 
 
-  # populate
-  describe '#populate' do
+  # fetch
+  describe '#fetch' do
 
     before :each do
-      @bad_fan = Fan.new(device: 'gar-test-1', index: 'test')
-      @good_fan = Fan.new(device: 'iad1-bdr-1', index: '1.4.0')
+      @bad_fan = Fan.fetch('gar-test-1', 'test')
+      @good_fan = Fan.fetch('iad1-bdr-1', '1.4.0')
     end
 
 
     it 'should return nil if the object does not exist' do
-      expect(@bad_fan.populate).to eql nil
+      expect(@bad_fan).to eql nil
     end
 
     it 'should return an object if the object exists' do
-      expect(@good_fan.populate).to be_a Fan
+      expect(@good_fan).to be_a Fan
     end
 
     it 'should fill up the object' do
-      expect(JSON.parse(@good_fan.populate(data1_base).to_json)['data'].keys).to eql json_keys
+      expect(JSON.parse(@good_fan.to_json)['data'].keys).to eql json_keys
     end
 
 
+  end
+
+
+  # populate
+  describe '#populate' do
+    it 'should fill up the object' do
+      good = Fan.new(device: 'iad1-bdr-1', index: '1.4.0')
+      expect(JSON.parse(good.populate(data1_base).to_json)['data'].keys).to eql json_keys
+    end
   end
 
 
@@ -89,6 +98,11 @@ describe Fan do
       @fan = Fan.new(device: 'gar-test-1', index: '103')
     end
 
+
+    # index
+    describe '#index' do
+      specify { expect(@fan.index).to eql '103' }
+    end
 
     # update
     describe '#update' do
@@ -109,6 +123,13 @@ describe Fan do
       @fan1 = Fan.new(device: 'gar-b11u1-dist', index: '7.1.0.0').populate(data1_base)
       @fan2 = Fan.new(device: 'gar-k11u1-dist', index: '1').populate(data2_base)
       @fan3 = Fan.new(device: 'gar-k11u1-dist', index: '1').populate(data3_base)
+    end
+
+    # index
+    describe '#index' do
+      specify { expect(@fan1.index).to eql '7.1.0.0' }
+      specify { expect(@fan2.index).to eql '1' }
+      specify { expect(@fan3.index).to eql '1' }
     end
 
     # update
@@ -142,7 +163,7 @@ describe Fan do
 
 
     it 'should not exist before saving' do
-      fan = Fan.new(device: 'test-v11u1-acc-y', index: '1004').populate
+      fan = Fan.fetch('test-v11u1-acc-y', '1004')
       expect(fan).to eql nil
     end
 
@@ -158,20 +179,20 @@ describe Fan do
 
     it 'should exist after being saved' do
       JSON.load(DEV2_JSON).fans['1004'].save(DB)
-      fan = Fan.new(device: 'test-v11u1-acc-y', index: '1004').populate
+      fan = Fan.fetch('test-v11u1-acc-y', '1004')
       expect(fan).to be_a Fan
     end
 
     it 'should update without error' do
       JSON.load(DEV2_JSON).fans['1004'].save(DB)
       JSON.load(DEV2_JSON).fans['1004'].save(DB)
-      fan = Fan.new(device: 'test-v11u1-acc-y', index: '1004').populate
+      fan = Fan.fetch('test-v11u1-acc-y', '1004')
       expect(fan).to be_a Fan
     end
 
     it 'should be identical before and after' do
       JSON.load(DEV2_JSON).fans['1004'].save(DB)
-      fan = Fan.new(device: 'test-v11u1-acc-y', index: '1004').populate
+      fan = Fan.fetch('test-v11u1-acc-y', '1004')
       expect(fan.to_json).to eql JSON.load(DEV2_JSON).fans['1004'].to_json
     end
 
@@ -231,10 +252,10 @@ describe Fan do
     context 'when populated' do
 
       before(:each) do
-        @fan1 = Fan.new(device: 'gar-b11u1-dist', index: '4.1.1.1').populate
-        @fan2 = Fan.new(device: 'iad1-bdr-1', index: '4.1.4.0').populate
-        @fan3 = Fan.new(device: 'gar-k11u1-dist', index: '1').populate
-        @fan4 = Fan.new(device: 'iad1-trn-1', index: '2.1').populate
+        @fan1 = Fan.fetch('gar-b11u1-dist', '4.1.1.1')
+        @fan2 = Fan.fetch('iad1-bdr-1', '4.1.4.0')
+        @fan3 = Fan.fetch('gar-k11u1-dist', '1')
+        @fan4 = Fan.fetch('iad1-trn-1', '2.1')
       end
 
 

@@ -58,27 +58,36 @@ describe PSU do
   end
 
 
-  # populate
-  describe '#populate' do
+  # fetch
+  describe '#fetch' do
 
     before :each do
-      @bad_psu = PSU.new(device: 'gar-test-1', index: 'test')
-      @good_psu = PSU.new(device: 'iad1-trn-1', index: '1.1')
+      @bad_psu = PSU.fetch('gar-test-1', 'test')
+      @good_psu = PSU.fetch('iad1-trn-1', '1.1')
     end
 
 
     it 'should return nil if the object does not exist' do
-      expect(@bad_psu.populate).to eql nil
+      expect(@bad_psu).to eql nil
     end
 
     it 'should return an object if the object exists' do
-      expect(@good_psu.populate).to be_a PSU
+      expect(@good_psu).to be_a PSU
     end
 
     it 'should fill up the object' do
-      expect(JSON.parse(@good_psu.populate(data1_base).to_json)['data'].keys).to eql json_keys
+      expect(JSON.parse(@good_psu.to_json)['data'].keys).to eql json_keys
     end
 
+  end
+
+
+  # populate
+  describe '#populate' do
+    it 'should fill up the object' do
+      good = PSU.new(device: 'iad1-bdr-1', index: '1.4.0')
+      expect(JSON.parse(good.populate(data1_base).to_json)['data'].keys).to eql json_keys
+    end
   end
 
 
@@ -88,6 +97,11 @@ describe PSU do
       @psu = PSU.new(device: 'gar-test-1', index: '103')
     end
 
+
+    # index
+    describe '#index' do
+      specify { expect(@psu.index).to eql '103' }
+    end
 
     # update
     describe '#update' do
@@ -110,6 +124,13 @@ describe PSU do
       @psu3 = PSU.new(device: 'gar-k11u1-dist', index: '1').populate(data3_base)
     end
 
+
+    # index
+    describe '#index' do
+      specify { expect(@psu1.index).to eql '7.1.0.0' }
+      specify { expect(@psu2.index).to eql '1' }
+      specify { expect(@psu3.index).to eql '1' }
+    end
 
     # update
     describe '#update' do
@@ -142,7 +163,7 @@ describe PSU do
 
 
     it 'should not exist before saving' do
-      psu = PSU.new(device: 'test-v11u1-acc-y', index: '1003').populate
+      psu = PSU.fetch('test-v11u1-acc-y', '1003')
       expect(psu).to eql nil
     end
 
@@ -158,20 +179,20 @@ describe PSU do
 
     it 'should exist after being saved' do
       JSON.load(DEV2_JSON).psus['1003'].save(DB)
-      psu = PSU.new(device: 'test-v11u1-acc-y', index: '1003').populate
+      psu = PSU.fetch('test-v11u1-acc-y', '1003')
       expect(psu).to be_a PSU
     end
 
     it 'should update without error' do
       JSON.load(DEV2_JSON).psus['1003'].save(DB)
       JSON.load(DEV2_JSON).psus['1003'].save(DB)
-      psu = PSU.new(device: 'test-v11u1-acc-y', index: '1003').populate
+      psu = PSU.fetch('test-v11u1-acc-y', '1003')
       expect(psu).to be_a PSU
     end
 
     it 'should be identical before and after' do
       JSON.load(DEV2_JSON).psus['1003'].save(DB)
-      psu = PSU.new(device: 'test-v11u1-acc-y', index: '1003').populate
+      psu = PSU.fetch('test-v11u1-acc-y', '1003')
       expect(psu.to_json).to eql JSON.load(DEV2_JSON).psus['1003'].to_json
     end
 
@@ -231,10 +252,10 @@ describe PSU do
     context 'when populated' do
 
       before(:each) do
-        @psu1 = PSU.new(device: 'gar-b11u1-dist', index: '2.1.1.0').populate
-        @psu2 = PSU.new(device: 'gar-b11u17-acc-g', index: '1003').populate
-        @psu3 = PSU.new(device: 'gar-bdr-1', index: '2.1.0.0').populate
-        @psu4 = PSU.new(device: 'iad1-trn-1', index: '1.1').populate
+        @psu1 = PSU.fetch('gar-b11u1-dist', '2.1.1.0')
+        @psu2 = PSU.fetch('gar-b11u17-acc-g', '1003')
+        @psu3 = PSU.fetch('gar-bdr-1', '2.1.0.0')
+        @psu4 = PSU.fetch('iad1-trn-1', '1.1')
       end
 
 

@@ -49,28 +49,37 @@ describe Memory do
   end
 
 
-  # populate
-  describe '#populate' do
+  # fetch
+  describe '#fetch' do
 
     before :each do
-      @bad_memory = Memory.new(device: 'gar-test-1', index: 'test')
-      @good_memory = Memory.new(device: 'iad1-trn-1', index: '2')
+      @bad_memory = Memory.fetch('gar-test-1', 'test')
+      @good_memory = Memory.fetch('iad1-trn-1', '2')
     end
 
 
     it 'should return nil if the object does not exist' do
-      expect(@bad_memory.populate).to eql nil
+      expect(@bad_memory).to eql nil
     end
 
     it 'should return an object if the object exists' do
-      expect(@good_memory.populate).to be_a Memory
+      expect(@good_memory).to be_a Memory
     end
 
     it 'should fill up the object' do
-      expect(JSON.parse(@good_memory.populate(data1_base).to_json)['data'].keys).to eql json_keys
+      expect(JSON.parse(@good_memory.to_json)['data'].keys).to eql json_keys
     end
 
 
+  end
+
+
+  # populate
+  describe '#populate' do
+    it 'should fill up the object' do
+      good = Memory.new(device: 'iad1-bdr-1', index: '1.4.0')
+      expect(JSON.parse(good.populate(data1_base).to_json)['data'].keys).to eql json_keys
+    end
   end
 
 
@@ -80,6 +89,11 @@ describe Memory do
       @memory = Memory.new(device: 'gar-test-1', index: '103')
     end
 
+
+    # index
+    describe '#index' do
+      specify { expect(@memory.index).to eql '103' }
+    end
 
     # update
     describe '#update' do
@@ -102,6 +116,13 @@ describe Memory do
       @memory3 = Memory.new(device: 'gar-k11u1-dist', index: '1').populate(data3_base)
     end
 
+
+    # index
+    describe '#index' do
+      specify { expect(@memory1.index).to eql '7.1.0.0' }
+      specify { expect(@memory2.index).to eql '1' }
+      specify { expect(@memory3.index).to eql '1' }
+    end
 
     # update
     describe '#update' do
@@ -134,7 +155,7 @@ describe Memory do
 
 
     it 'should not exist before saving' do
-      mem = Memory.new(device: 'test-v11u1-acc-y', index: '1').populate
+      mem = Memory.fetch('test-v11u1-acc-y', '1')
       expect(mem).to eql nil
     end
 
@@ -150,20 +171,20 @@ describe Memory do
 
     it 'should exist after being saved' do
       JSON.load(DEV2_JSON).memory['1'].save(DB)
-      mem = Memory.new(device: 'test-v11u1-acc-y', index: '1').populate
+      mem = Memory.fetch('test-v11u1-acc-y', '1')
       expect(mem).to be_a Memory
     end
 
     it 'should update without error' do
       JSON.load(DEV2_JSON).memory['1'].save(DB)
       JSON.load(DEV2_JSON).memory['1'].save(DB)
-      mem = Memory.new(device: 'test-v11u1-acc-y', index: '1').populate
+      mem = Memory.fetch('test-v11u1-acc-y', '1')
       expect(mem).to be_a Memory
     end
 
     it 'should be identical before and after' do
       JSON.load(DEV2_JSON).memory['1'].save(DB)
-      mem = Memory.new(device: 'test-v11u1-acc-y', index: '1').populate
+      mem = Memory.fetch('test-v11u1-acc-y', '1')
       expect(mem.to_json).to eql JSON.load(DEV2_JSON).memory['1'].to_json
     end
 
@@ -223,10 +244,10 @@ describe Memory do
     context 'when populated' do
 
       before(:each) do
-        @memory1 = Memory.new(device: 'gar-b11u1-dist', index: '7.2.0.0').populate
-        @memory2 = Memory.new(device: 'aon-cumulus-2', index: '0').populate
-        @memory3 = Memory.new(device: 'gar-k11u1-dist', index: '1').populate
-        @memory4 = Memory.new(device: 'iad1-trn-1', index: '2').populate
+        @memory1 = Memory.fetch('gar-b11u1-dist', '7.2.0.0')
+        @memory2 = Memory.fetch('aon-cumulus-2', '0')
+        @memory3 = Memory.fetch('gar-k11u1-dist', '1')
+        @memory4 = Memory.fetch('iad1-trn-1', '2')
       end
 
 

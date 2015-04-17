@@ -41,28 +41,37 @@ describe CPU do
   end
 
 
-  # populate
-  describe '#populate' do
+  # fetch
+  describe '#fetch' do
 
     before :each do
-      @bad_cpu = CPU.new(device: 'gar-test-1', index: 'test')
-      @good_cpu = CPU.new(device: 'iad1-trn-1', index: '2')
+      @bad_cpu = CPU.fetch('gar-test-1', 'test')
+      @good_cpu = CPU.fetch('iad1-trn-1', '2')
     end
 
 
     it 'should return nil if the object does not exist' do
-      expect(@bad_cpu.populate).to eql nil
+      expect(@bad_cpu).to eql nil
     end
 
     it 'should return an object if the object exists' do
-      expect(@good_cpu.populate).to be_a CPU
+      expect(@good_cpu).to be_a CPU
     end
 
     it 'should fill up the object' do
-      expect(JSON.parse(@good_cpu.populate(data1_base).to_json)['data'].keys).to eql json_keys
+      expect(JSON.parse(@good_cpu.to_json)['data'].keys).to eql json_keys
     end
 
 
+  end
+
+
+  # populate
+  describe '#populate' do
+    it 'should fill up the object' do
+      good = CPU.new(device: 'iad1-bdr-1', index: '1.4.0')
+      expect(JSON.parse(good.populate(data1_base).to_json)['data'].keys).to eql json_keys
+    end
   end
 
 
@@ -72,6 +81,11 @@ describe CPU do
       @cpu = CPU.new(device: 'gar-test-1', index: '103')
     end
 
+
+    # index
+    describe '#index' do
+      specify { expect(@cpu.index).to eql '103' }
+    end
 
     # update
     describe '#update' do
@@ -94,6 +108,13 @@ describe CPU do
       @cpu3 = CPU.new(device: 'gar-k11u1-dist', index: '1').populate(data3_base)
     end
 
+
+    # index
+    describe '#index' do
+      specify { expect(@cpu1.index).to eql '7.1.0.0' }
+      specify { expect(@cpu2.index).to eql '1' }
+      specify { expect(@cpu3.index).to eql '1' }
+    end
 
     # update
     describe '#update' do
@@ -126,7 +147,7 @@ describe CPU do
 
 
     it 'should not exist before saving' do
-      cpu = CPU.new(device: 'test-v11u1-acc-y', index: '1').populate
+      cpu = CPU.fetch('test-v11u1-acc-y', '1')
       expect(cpu).to eql nil
     end
 
@@ -142,20 +163,20 @@ describe CPU do
 
     it 'should exist after being saved' do
       JSON.load(DEV2_JSON).cpus['1'].save(DB)
-      cpu = CPU.new(device: 'test-v11u1-acc-y', index: '1').populate
+      cpu = CPU.fetch('test-v11u1-acc-y', '1')
       expect(cpu).to be_a CPU
     end
 
     it 'should update without error' do
       JSON.load(DEV2_JSON).cpus['1'].save(DB)
       JSON.load(DEV2_JSON).cpus['1'].save(DB)
-      cpu = CPU.new(device: 'test-v11u1-acc-y', index: '1').populate
+      cpu = CPU.fetch('test-v11u1-acc-y', '1')
       expect(cpu).to be_a CPU
     end
 
     it 'should be identical before and after' do
       JSON.load(DEV2_JSON).cpus['1'].save(DB)
-      cpu = CPU.new(device: 'test-v11u1-acc-y', index: '1').populate
+      cpu = CPU.fetch('test-v11u1-acc-y', '1')
       expect(cpu.to_json).to eql JSON.load(DEV2_JSON).cpus['1'].to_json
     end
 
@@ -215,10 +236,10 @@ describe CPU do
     context 'when populated' do
 
       before(:each) do
-        @cpu1 = CPU.new(device: 'gar-b11u1-dist', index: '7.1.0.0').populate
-        @cpu2 = CPU.new(device: 'aon-cumulus-2', index: '768').populate
-        @cpu3 = CPU.new(device: 'gar-k11u1-dist', index: '1').populate
-        @cpu4 = CPU.new(device: 'iad1-trn-1', index: '2').populate
+        @cpu1 = CPU.fetch('gar-b11u1-dist', '7.1.0.0')
+        @cpu2 = CPU.fetch('aon-cumulus-2', '768')
+        @cpu3 = CPU.fetch('gar-k11u1-dist', '1')
+        @cpu4 = CPU.fetch('iad1-trn-1', '2')
       end
 
 

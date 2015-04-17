@@ -8,7 +8,7 @@ describe Temperature do
   data1_base = {
     "device" => "gar-b11u1-dist", "index" => "7.1.0.0", "temperature" => 52, "worker" => "test123",
     "last_updated" => 1426657712,"description" => "FPC=> EX4300-48T @ 0/*/*", "status" => 0,
-    "threshold" => nil,"vendor_status" => nil,"status_text" => "Unknown" }
+    "threshold" => 95,"vendor_status" => 1,"status_text" => "Unknown" }
   data2_base = {
     "device" => "gar-k11u1-dist", "index" => "1", "temperature" => 38, "worker" => "test123",
     "last_updated" => 1426657935,"description" => "Chassis Temperature Sensor", "status" => 1,
@@ -59,27 +59,36 @@ describe Temperature do
   end
 
 
-  # populate
-  describe '#populate' do
+  # fetch
+  describe '#fetch' do
 
     before :each do
-      @bad_temp = Temperature.new(device: 'gar-test-1', index: 'test')
-      @good_temp = Temperature.new(device: 'gar-p1u1-dist', index: '7.1.0.0')
+      @bad_temp = Temperature.fetch('gar-test-1', 'test')
+      @good_temp = Temperature.fetch('gar-c11u1-dist', '1')
     end
 
 
     it 'should return nil if the object does not exist' do
-      expect(@bad_temp.populate).to eql nil
+      expect(@bad_temp).to eql nil
     end
 
     it 'should return an object if the object exists' do
-      expect(@good_temp.populate).to be_a Temperature
+      expect(@good_temp).to be_a Temperature
     end
 
     it 'should fill up the object' do
-      expect(JSON.parse(@good_temp.populate(data2_base).to_json)['data'].keys).to eql json_keys
+      expect(JSON.parse(@good_temp.to_json)['data'].keys).to eql json_keys
     end
 
+  end
+
+
+  # populate
+  describe '#populate' do
+    it 'should fill up the object' do
+      good = Temperature.new(device: 'iad1-bdr-1', index: '1.4.0')
+      expect(JSON.parse(good.populate(data1_base).to_json)['data'].keys).to eql json_keys
+    end
   end
 
 
@@ -89,6 +98,11 @@ describe Temperature do
       @temp = Temperature.new(device: 'gar-test-1', index: '103')
     end
 
+
+    # index
+    describe '#index' do
+      specify { expect(@temp.index).to eql '103' }
+    end
 
     # update
     describe '#update' do
@@ -110,6 +124,12 @@ describe Temperature do
       @temp2 = Temperature.new(device: 'gar-k11u1-dist', index: '1').populate(data2_base)
     end
 
+
+    # index
+    describe '#index' do
+      specify { expect(@temp1.index).to eql '7.1.0.0' }
+      specify { expect(@temp2.index).to eql '1' }
+    end
 
     # update
     describe '#update' do
@@ -140,7 +160,7 @@ describe Temperature do
 
 
     it 'should not exist before saving' do
-      temp = Temperature.new(device: 'test-v11u1-acc-y', index: '1005').populate
+      temp = Temperature.fetch('test-v11u1-acc-y', '1005')
       expect(temp).to eql nil
     end
 
@@ -156,20 +176,20 @@ describe Temperature do
 
     it 'should exist after being saved' do
       JSON.load(DEV2_JSON).temps['1005'].save(DB)
-      temp = Temperature.new(device: 'test-v11u1-acc-y', index: '1005').populate
+      temp = Temperature.fetch('test-v11u1-acc-y', '1005')
       expect(temp).to be_a Temperature
     end
 
     it 'should update without error' do
       JSON.load(DEV2_JSON).temps['1005'].save(DB)
       JSON.load(DEV2_JSON).temps['1005'].save(DB)
-      temp = Temperature.new(device: 'test-v11u1-acc-y', index: '1005').populate
+      temp = Temperature.fetch('test-v11u1-acc-y', '1005')
       expect(temp).to be_a Temperature
     end
 
     it 'should be identical before and after' do
       JSON.load(DEV2_JSON).temps['1005'].save(DB)
-      temp = Temperature.new(device: 'test-v11u1-acc-y', index: '1005').populate
+      temp = Temperature.fetch('test-v11u1-acc-y', '1005')
       expect(temp.to_json).to eql JSON.load(DEV2_JSON).temps['1005'].to_json
     end
 
@@ -229,10 +249,10 @@ describe Temperature do
     context 'when populated' do
 
       before(:each) do
-        @temp1 = Temperature.new(device: 'gar-b11u1-dist', index: '7.1.0.0').populate
-        @temp2 = Temperature.new(device: 'irv-i1u1-dist', index: '1').populate
-        @temp3 = Temperature.new(device: 'gar-bdr-1', index: '4.2.5.0').populate
-        @temp4 = Temperature.new(device: 'iad1-trn-1', index: '1').populate
+        @temp1 = Temperature.fetch('gar-b11u1-dist', '7.1.0.0')
+        @temp2 = Temperature.fetch('irv-i1u1-dist', '1')
+        @temp3 = Temperature.fetch('gar-bdr-1', '4.2.5.0')
+        @temp4 = Temperature.fetch('iad1-trn-1', '1')
       end
 
 

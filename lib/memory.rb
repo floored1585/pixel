@@ -9,24 +9,34 @@ $LOG ||= Logger.new(STDOUT)
 class Memory
 
 
+  def self.fetch(device, index)
+    obj = API.get('core', "/v2/device/#{device}/memory/#{index}", 'Memory', 'memory data')
+    obj.class == Memory ? obj : nil
+  end
+
+
   def initialize(device:, index:)
 
     # required
     @device = device
-    @index = index
+    @index = index.to_s
 
   end
-  
+
+
+  def index
+    @index
+  end
+
 
   def last_updated
     @last_updated || 0
   end
 
 
-  def populate(data=nil)
+  def populate(data)
 
-    # If we weren't passed data, look ourselves up
-    data ||= API.get('core', "/v2/device/#{@device}/memory/#{@index}", 'Memory', 'memory data')
+    # Required in order to accept symbol and non-symbol keys
     data = data.symbolize
 
     # Return nil if we didn't find any data
@@ -105,7 +115,7 @@ class Memory
     hash['data']["description"] = @description if @description
     hash['data']["last_updated"] = @last_updated if @last_updated
     hash['data']["worker"] = @worker if @worker
-    
+
     hash.to_json(*a)
   end
 

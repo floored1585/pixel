@@ -36,18 +36,7 @@ describe Interface do
     'worker',
   ]
 
-  # Up/Up
-  interface_1 = {
-    "device" => "gar-b11u1-dist", "index" => 604,"last_updated" => 1424752121,
-    "alias" => "bb__gar-crmx-1__xe-1/0/3", "name" => "xe-0/2/0", "worker" => "test123",
-    "hc_in_octets" => "0.3959706331274391E16", "hc_out_octets" => "0.3281296197965732E16",
-    "hc_in_ucast_pkts" => "0.4388140890014E13", "hc_out_ucast_pkts" => "0.3813525530792E13",
-    "speed" => 10000000000,"mtu" => 1522,"admin_status" => 1,
-    "admin_status_time" => 1409786067,"oper_status" => 1,"oper_status_time" => 1409786067,
-    "in_discards" => "0.0", "in_errors" => "0.0", "out_discards" => "0.0",
-    "out_errors" => "0.0", "bps_in" => 1349172320,"bps_out" => 1371081672,"discards_in" => 100,
-    "errors_in" => 0,"discards_out" => 15000,"errors_out" => 0,"pps_in" => 180411,
-    "pps_out" => 262760, "bps_util_in" => 13.49,"bps_util_out" => 13.71, "type" => "bb" }
+  interface_1 = JSON.parse(INTERFACE_1)['data']
   int1_update = {
     "name" => "xe-0/2/0", "hc_in_octets" => "3959713831274390",
     "hc_out_octets" => "3281311197965730", "hc_in_ucast_pkts" => "4417738539412",
@@ -55,51 +44,20 @@ describe Interface do
     "alias" => "acc__gar-crmx-2__xe-16/0/3", "mtu" => "1522", "admin_status" => "1",
     "oper_status" => "1", "in_discards" => "0", "in_errors" => "0",
     "out_discards" => "0", "out_errors" => "0" }
-  # Up/Down
-  interface_2 = {
-    "device" => "gar-b11u17-acc-g", "index" => 10040,"last_updated" => 1424752718,
-    "alias" => "acc__", "name" => "Fa0/40", "hc_in_octets" => "0.0", "worker": "test123",
-    "hc_out_octets" => "0.0", "hc_in_ucast_pkts" => "0.0", "hc_out_ucast_pkts" => "0.0",
-    "speed" => 10000000,"mtu" => 1500,"admin_status" => 1,
-    "admin_status_time" => 1415142088,"oper_status" => 2,"oper_status_time" => 1415142088,
-    "in_discards" => "0.0", "in_errors" => "0.0", "out_discards" => "0.0",
-    "out_errors" => "0.0", "bps_in" => 0,"bps_out" => 0,"discards_in" => 0,"errors_in" => 0,
-    "discards_out" => 0,"errors_out" => 0,"pps_in" => 0,"pps_out" => 0,"bps_util_in" => 0.0,
-    "bps_util_out" => 0.0,"type" => "acc" }
+  interface_2 = JSON.parse(INTERFACE_2)['data']
   int2_update = {
     "name"=>"Fa0/40", "hc_in_octets"=>"0", "hc_out_octets"=>"0",
     "hc_in_ucast_pkts"=>"0", "hc_out_ucast_pkts"=>"0", "high_speed"=>"10",
     "alias"=>"acc__", "mtu"=>"1500", "admin_status"=>"1", "oper_status"=>"2",
     "in_discards"=>"0", "in_errors"=>"0", "out_discards"=>"0", "out_errors"=>"0" }
-  # Up/Up, AE
-  interface_3 = {
-    "device" => "gar-p1u1-dist", "index" => 656,"last_updated" => 1424752472,
-    "alias" => "sub[ae12]__gar-cr-1__ae3", "name" => "ae0", "worker" => "test123",
-    "hc_in_octets" => "0.484779762679182E15", "hc_out_octets" => "0.1111644194120525E16",
-    "hc_in_ucast_pkts" => "0.878552042051E12", "hc_out_ucast_pkts" => "0.1174804345552E13",
-    "speed" => 20000000000,"mtu" => 1514,"admin_status" => 1,
-    "admin_status_time" => 1416350411,"oper_status" => 1,"oper_status_time" => 1416350411,
-    "in_discards" => "0.0", "in_errors" => "0.0", "out_discards" => "0.0",
-    "out_errors" => "0.0", "bps_in" => 408764184,"bps_out" => 1172468480,"discards_in" => 0,
-    "errors_in" => 300,"discards_out" => 0,"errors_out" => 350,"pps_in" => 104732,
-    "pps_out" => 144934, "bps_util_in" => 2.04,"bps_util_out" => 5.86,"type" => "sub" }
+  interface_3 = JSON.parse(INTERFACE_3)['data']
   int3_update = {
     "name"=>"ae0", "hc_in_octets"=>"493124877631750", "hc_out_octets"=>"1135292119081151",
     "hc_in_ucast_pkts"=>"895162904912", "hc_out_ucast_pkts"=>"1198370633351",
     "high_speed"=>"20000", "alias"=>"bb__gar-cr-1__ae3", "mtu"=>"1514",
     "admin_status"=>"1", "oper_status"=>"1", "in_discards"=>"0", "in_errors"=>"0",
     "out_discards"=>"0", "out_errors"=>"0" }
-  # Shutdown
-  interface_4 = {
-    "device" => "irv-a3u2-acc-g", "index" => 10119,"last_updated" => 1424752571,"alias" => "",
-    "name" => "Gi0/19", "hc_in_octets" => "0.0", "hc_out_octets" => "0.2628E4",
-    "hc_in_ucast_pkts" => "0.0", "hc_out_ucast_pkts" => "0.2E1", "speed" => 1000000000,
-    "mtu" => 1500,"admin_status" => 2,"admin_status_time" => 1415142087, "worker" => "te",
-    "oper_status" => 2,"oper_status_time" => 1415142087,"in_discards" => "0.0",
-    "in_errors" => "0.0", "out_discards" => "0.0", "out_errors" => "0.0", "bps_in" => 0,
-    "bps_out" => 0,"discards_in" => 0,"errors_in" => 0,"discards_out" => 0,"errors_out" => 0,
-    "pps_in" => 0,"pps_out" => 0,"bps_util_in" => 0.0,"bps_util_out" => 0.0,
-    "type" => "unknown" }
+  interface_4 = JSON.parse(INTERFACE_4)['data']
   int4_update = {
     "name"=>"Gi0/19", "hc_in_octets"=>"0", "hc_out_octets"=>"2628",
     "hc_in_ucast_pkts"=>"0", "hc_out_ucast_pkts"=>"2", "high_speed"=>"1000",
@@ -115,9 +73,6 @@ describe Interface do
     "bps_out" => 0,"discards_in" => 0,"errors_in" => 0,"discards_out" => 0,"errors_out" => 0,
     "pps_in" => 0,"pps_out" => 0,"bps_util_in" => 0.0,"bps_util_out" => 0.0,
     "type" => "unknown" }
-
-  interfaces = [ interface_1, interface_2, interface_3, interface_4 ]
-
 
   # Constructor
   describe '#new' do
@@ -138,28 +93,36 @@ describe Interface do
   end
 
 
-  # populate should work the same no matter what state the interface is in
-  describe '#populate' do
+  describe '#fetch' do
 
     before(:each) do
       # Create our empty interface
-      @bad_int = Interface.new(device: 'gar-test-1', index: 103)
-      @good_int = Interface.new(device: 'gar-p1u1-dist', index: 656)
+      @bad_int = Interface.fetch('gar-test-1', 103)
+      @good_int = Interface.fetch('gar-p1u1-dist', 656)
     end
 
 
     it 'should return nil if the object does not exist' do
-      expect(@bad_int.populate).to eql nil
+      expect(@bad_int).to eql nil
     end
 
     it 'should return an object if the object exists' do
-      expect(@good_int.populate).to be_a Interface
+      expect(@good_int).to be_a Interface
     end
 
     it 'should fill up the object' do
-      expect(JSON.parse(@good_int.populate(interface_1).to_json)['data'].keys).to eql json_keys
+      expect(JSON.parse(@good_int.to_json)['data'].keys).to eql json_keys
     end
 
+  end
+
+
+  # populate
+  describe '#populate' do
+    it 'should fill up the object' do
+      good = Interface.new(device: 'iad1-bdr-1', index: 1)
+      expect(JSON.parse(good.populate(interface_1).to_json)['data'].keys).to eql json_keys
+    end
   end
 
 
@@ -214,7 +177,7 @@ describe Interface do
 
     describe '#clone_type' do
       # This interface has type 'unknown'
-      unknown = Interface.new(device: 'irv-a3u2-acc-g', index: 10119).populate(interface_4)
+      unknown = JSON.load(INTERFACE_4)
       specify { expect(@int.clone_type(@int).type).to eql nil }
       specify { expect(@int.clone_type(@int)).to equal @int }
       specify { expect(@int.clone_type(unknown).type).to eql 'unknown' }
@@ -312,17 +275,17 @@ describe Interface do
   end
 
 
-  context 'populated' do
+  context 'when populated' do
 
     before(:each) do
-      interface_1['last_updated'] = Time.now.to_i - 60
-      @int1 = Interface.new(device: 'gar-b11u1-dist', index: 604).populate(interface_1)
-      @int2 = Interface.new(device: 'gar-b11u17-acc-g', index: 10040).populate(interface_2)
-      @int3 = Interface.new(device: 'gar-p1u1-dist', index: 656).populate(interface_3)
-      @int4 = Interface.new(device: 'irv-a3u2-acc-g', index: 10119).populate(interface_4)
+      @int1_before = JSON.parse(INTERFACE_1)
+      @int1_before['data']['last_updated'] = Time.now.to_i - 60
+      @int1 = JSON.load(@int1_before.to_json)
+      @int2 = JSON.load(INTERFACE_2)
+      @int3 = JSON.load(INTERFACE_3)
+      @int4 = JSON.load(INTERFACE_4)
       @ints = [ @int1, @int2, @int3, @int4 ]
     end
-
 
     describe '#device' do
       specify { expect(@int1.device).to eql 'gar-b11u1-dist' }
@@ -500,7 +463,7 @@ describe Interface do
     end
 
     describe '#last_updated' do
-      specify { expect(@int1.last_updated).to eql interface_1['last_updated'].to_i }
+      specify { expect(@int1.last_updated).to eql @int1_before['data']['last_updated'].to_i }
       specify { expect(@int2.last_updated).to eql interface_2['last_updated'].to_i }
       specify { expect(@int3.last_updated).to eql interface_3['last_updated'].to_i }
       specify { expect(@int4.last_updated).to eql interface_4['last_updated'].to_i }
@@ -580,8 +543,7 @@ describe Interface do
 
 
     it 'should not exist before saving' do
-      int = Interface.new(device: 'test-v11u1-acc-y', index: 10139).populate
-      expect(int).to eql nil
+      expect(Interface.fetch('test-v11u1-acc-y', 10139)).to eql nil
     end
 
     it 'should fail if empty' do
@@ -590,26 +552,26 @@ describe Interface do
     end
 
     it 'should fail if devices does not exist' do
-      int = Interface.new(device: 'test-test-acc-y', index: 10139).populate(imaginary_int)
+      int = JSON.load(IMAGINARY_INT)
       expect{int.save(DB)}.to raise_error Sequel::ForeignKeyConstraintViolation
     end
 
     it 'should exist after being saved' do
       JSON.load(DEV2_JSON).interfaces[10139].save(DB)
-      int = Interface.new(device: 'test-v11u1-acc-y', index: 10139).populate
+      int = Interface.fetch('test-v11u1-acc-y', 10139)
       expect(int).to be_a Interface
     end
 
     it 'should update without error' do
       JSON.load(DEV2_JSON).interfaces[10139].save(DB)
       JSON.load(DEV2_JSON).interfaces[10139].save(DB)
-      int = Interface.new(device: 'test-v11u1-acc-y', index: 10139).populate
+      int = Interface.fetch('test-v11u1-acc-y', 10139)
       expect(int).to be_a Interface
     end
 
     it 'should be identical before and after' do
       JSON.load(DEV2_JSON).interfaces[10139].save(DB)
-      int = Interface.new(device: 'test-v11u1-acc-y', index: 10139).populate
+      int = Interface.fetch('test-v11u1-acc-y', 10139)
       expect(int.to_json).to eql JSON.load(DEV2_JSON).interfaces[10139].to_json
     end
 
@@ -668,10 +630,10 @@ describe Interface do
 
     context 'when populated' do
 
-      int1 = Interface.new(device: 'gar-b11u1-dist', index: 604).populate
-      int2 = Interface.new(device: 'gar-b11u17-acc-g', index: 10040).populate
-      int3 = Interface.new(device: 'gar-bdr-1', index: 541).populate
-      int4 = Interface.new(device: 'aon-cumulus-2', index: 15).populate
+      int1 = Interface.fetch('gar-b11u1-dist', 604)
+      int2 = Interface.fetch('gar-b11u17-acc-g', 10040)
+      int3 = Interface.fetch('gar-bdr-1', 541)
+      int4 = Interface.fetch('aon-cumulus-2', 15)
 
       json1 = int1.to_json
       json2 = int2.to_json

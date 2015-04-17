@@ -10,7 +10,7 @@ module API
   def self.get(dst_component, request, src_component, task, retry_limit=5)
     url = @settings[dst_component] + request
     response = _execute_request(url, 'GET', src_component, nil, task, retry_limit)
-    response ? JSON.parse(response.body) : false
+    response ? JSON.load(response.body) : false
   end
 
   def self.post(dst_component, request, rawdata, src_component, task, retry_limit=5)

@@ -264,7 +264,7 @@ describe Device do
 
     test_devices.each do |label, device|
       context "on a #{label} when populated" do
-        dev_obj = Device.new(device).populate
+        dev_obj = Device.fetch(device)
         specify { expect(dev_obj.poll(worker: 'test-worker')).to equal dev_obj }
       end
     end

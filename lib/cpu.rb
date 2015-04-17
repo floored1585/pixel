@@ -9,24 +9,34 @@ $LOG ||= Logger.new(STDOUT)
 class CPU
 
 
+  def self.fetch(device, index)
+    obj = API.get('core', "/v2/device/#{device}/cpu/#{index}", 'CPU', 'cpu data')
+    obj.class == CPU ? obj : nil
+  end
+
+
   def initialize(device:, index:)
 
     # required
     @device = device
-    @index = index
+    @index = index.to_s
 
   end
-  
+
+
+  def index
+    @index
+  end
+
 
   def last_updated
     @last_updated || 0
   end
 
 
-  def populate(data=nil)
+  def populate(data)
 
-    # If we weren't passed data, look ourselves up
-    data ||= API.get('core', "/v2/device/#{@device}/cpu/#{@index}", 'CPU', 'cpu data')
+    # Required in order to accept symbol and non-symbol keys
     data = data.symbolize
 
     # Return nil if we didn't find any data

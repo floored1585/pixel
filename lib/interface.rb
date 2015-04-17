@@ -9,6 +9,13 @@ $LOG ||= Logger.new(STDOUT)
 class Interface
 
 
+  # Interface#fetch gets an Interface object from the Pixel API
+  def self.fetch(device, index)
+    obj = API.get('core', "/v2/device/#{device}/interface/#{index}", 'Interface', 'interface data')
+    obj.class == Interface ? obj : nil
+  end
+
+
   def initialize(device:, index:)
 
     # If index doesn't look like an integer, raise an exception.
@@ -199,10 +206,9 @@ class Interface
   end
 
 
-  def populate(data=nil)
+  def populate(data)
 
-    # If we weren't passed data, look ourselves up
-    data ||= API.get('core', "/v2/device/#{@device}/interface/#{@index}", 'Interface', 'interface data')
+    # Required in order to accept symbol and non-symbol keys
     data = data.symbolize
 
     # Return nil if we didn't find any data

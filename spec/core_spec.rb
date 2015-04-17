@@ -5,6 +5,11 @@ include Core
 
 settings = Configfile.retrieve
 
+
+# get_interface
+describe '#get_interface' do
+end
+
 # add_devices
 describe '#add_devices' do
   around :each do |test|

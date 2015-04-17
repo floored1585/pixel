@@ -17,6 +17,19 @@ $LOG ||= Logger.new(STDOUT)
 class Device
 
 
+  def self.fetch(device, opts={})
+    # Get the device via API
+    obj = API.get('core', "/v2/device/#{device}", 'Device', 'device data')
+    return nil unless obj.class == Device
+
+    valid_opts = [ :all, :interfaces, :cpus, :fans, :memory, :psus, :temperatures ]
+    # Run populate only if one of the valid_opts are present (if we
+    #   were asked to fetch components as well)
+    obj.populate(nil, opts) unless (valid_opts - opts.keys) == valid_opts
+    return obj
+  end
+
+
   def initialize(name, poll_ip: nil, poll_cfg: nil)
 
     # required
@@ -187,118 +200,106 @@ class Device
   end
 
 
-  def populate(opts={})
+  # populate is called by #fetch to get components and by #json_create to fill in
+  #   device data and components.
+  def populate(data, opts={})
 
-    # Read any data passed into populate, and if it's present do not
-    # get data from the API later (if JSON data is passed, ONLY use that)
-    data = opts['data']
+    # directly passed data will never be overwritten by data passed via opts hash
     data = JSON.load(data) if data.class == String # To allow for raw JSON as well as objects
-    get_data = true if data == nil
 
-    # First get device metadata from pixel API & update instance variables
-    data ||= API.get('core', "/v2/device/#{@name}", 'Device', 'device data')
-    data = data.symbolize
+    # If data was passed in, update the device
+    if data
+      # Required in order to accept symbol and non-symbol keys
+      data = data.symbolize
 
-    # These will all be nil unless data was passed into populate via opts
-    @interfaces = data[:interfaces] || {}
-    # Convert keys to integers for @interface
-    @interfaces = Hash[@interfaces.map{|key,int|[ key.to_i, int ]}]
-    @memory = data[:memory] || {}
-    @temps = data[:temps] || {}
-    @cpus = data[:cpus] || {}
-    @psus = data[:psus] || {}
-    @fans = data[:fans] || {}
+      @interfaces = data[:interfaces] || {}
+      # Convert keys to integers for @interface
+      @interfaces = Hash[@interfaces.map{|key,int|[ key.to_i, int ]}]
+      @memory = data[:memory] || {}
+      @temps = data[:temps] || {}
+      @cpus = data[:cpus] || {}
+      @psus = data[:psus] || {}
+      @fans = data[:fans] || {}
 
-    # Return if the device wasn't found
-    return nil unless data[:device]
+      # Return if the device wasn't found
+      return nil unless data[:device]
 
-    # Update instance variables
-    @poll_ip = data[:ip]
-    @last_poll = data[:last_poll].to_i_if_numeric
-    @next_poll = data[:next_poll].to_i_if_numeric
-    @last_poll_duration = data[:last_poll_duration].to_i_if_numeric
-    @last_poll_result = data[:last_poll_result].to_i_if_numeric
-    @last_poll_text = data[:last_poll_text]
-    @currently_polling = data[:currently_polling].to_i_if_numeric
-    @worker = data[:worker]
-    @sys_descr = data[:sys_descr]
-    @vendor = data[:vendor]
-    @sw_descr = data[:sw_descr]
-    @sw_version = data[:sw_version]
-    @hw_model = data[:hw_model]
-    @uptime = data[:uptime].to_i_if_numeric
-    @yellow_alarm = data[:yellow_alarm].to_i_if_numeric
-    @red_alarm = data[:red_alarm].to_i_if_numeric
+      # Update instance variables
+      @poll_ip = data[:ip]
+      @last_poll = data[:last_poll].to_i_if_numeric
+      @next_poll = data[:next_poll].to_i_if_numeric
+      @last_poll_duration = data[:last_poll_duration].to_i_if_numeric
+      @last_poll_result = data[:last_poll_result].to_i_if_numeric
+      @last_poll_text = data[:last_poll_text]
+      @currently_polling = data[:currently_polling].to_i_if_numeric
+      @worker = data[:worker]
+      @sys_descr = data[:sys_descr]
+      @vendor = data[:vendor]
+      @sw_descr = data[:sw_descr]
+      @sw_version = data[:sw_version]
+      @hw_model = data[:hw_model]
+      @uptime = data[:uptime].to_i_if_numeric
+      @yellow_alarm = data[:yellow_alarm].to_i_if_numeric
+      @red_alarm = data[:red_alarm].to_i_if_numeric
+    end
 
     # Fill in interfaces
-    if get_data && (opts[:interfaces] || opts[:all])
+    if data == nil && (opts[:interfaces] || opts[:all])
       @interfaces = {}
       interfaces = API.get('core', "/v2/device/#{@name}/interfaces", 'Device', 'interface data') 
-      interfaces.each do |interface_data|
-        # eliminate the 'data' key when building object from json
-        interface_data = interface_data.delete('data') || interface_data
-        index = interface_data['index']
-        @interfaces[index] = Interface.new(device: @name, index: index).populate(interface_data)
+      interfaces.each do |index, int|
+        next unless int.class == Interface
+        @interfaces[int.index] = int
       end
     end
 
     # Fill in CPUs
-    if get_data && (opts[:cpus] || opts[:all])
+    if data == nil && (opts[:cpus] || opts[:all])
       @cpus = {}
       cpus = API.get('core', "/v2/device/#{@name}/cpus", 'Device', 'cpu data')
-      cpus.each do |cpu_data|
-        # eliminate the 'data' key when building object from json
-        cpu_data = cpu_data.delete('data') || cpu_data
-        index = cpu_data['index']
-        @cpus[index] = CPU.new(device: @name, index: index).populate(cpu_data)
-      end
-    end
-
-    # Fill in memory
-    if get_data && (opts[:memory] || opts[:all])
-      @memory = {}
-      memory = API.get('core', "/v2/device/#{@name}/memory", 'Device', 'memory data')
-      memory.each do |memory_data|
-        # eliminate the 'data' key when building object from json
-        memory_data = memory_data.delete('data') || memory_data
-        index = memory_data['index']
-        @memory[index] = Memory.new(device: @name, index: index).populate(memory_data)
-      end
-    end
-
-    # Fill in temperatures
-    if get_data && (opts[:temperatures] || opts[:all])
-      @temps = {}
-      temps = API.get('core', "/v2/device/#{@name}/temperatures", 'Device', 'temperature data')
-      temps.each do |temperature_data|
-        # eliminate the 'data' key when building object from json
-        temperature_data = temperature_data.delete('data') || temperature_data
-        index = temperature_data['index']
-        @temps[index] = Temperature.new(device: @name, index: index).populate(temperature_data)
-      end
-    end
-
-    # Fill in PSUs
-    if get_data && (opts[:psus] || opts[:all])
-      @psus = {}
-      psus = API.get('core', "/v2/device/#{@name}/psus", 'Device', 'psu data')
-      psus.each do |psu_data|
-        # eliminate the 'data' key when building object from json
-        psu_data = psu_data.delete('data') || psu_data
-        index = psu_data['index']
-        @psus[index] = PSU.new(device: @name, index: index).populate(psu_data)
+      cpus.each do |index, cpu|
+        next unless cpu.class == CPU
+        @cpus[cpu.index] = cpu
       end
     end
 
     # Fill in fans
-    if get_data && (opts[:fans] || opts[:all])
+    if data == nil && (opts[:fans] || opts[:all])
       @fans = {}
       fans = API.get('core', "/v2/device/#{@name}/fans", 'Device', 'fan data')
-      fans.each do |fan_data|
-        # eliminate the 'data' key when building object from json
-        fan_data = fan_data.delete('data') || fan_data
-        index = fan_data['index']
-        @fans[index] = Fan.new(device: @name, index: index).populate(fan_data)
+      fans.each do |index, fan|
+        next unless fan.class == Fan
+        @fans[fan.index] = fan
+      end
+    end
+
+    # Fill in memory
+    if data == nil && (opts[:memory] || opts[:all])
+      @memory = {}
+      memories = API.get('core', "/v2/device/#{@name}/memory", 'Device', 'memory data')
+      memories.each do |index, memory|
+        next unless memory.class == Memory
+        @memory[memory.index] = memory
+      end
+    end
+
+    # Fill in PSUs
+    if data == nil && (opts[:psus] || opts[:all])
+      @psus = {}
+      psus = API.get('core', "/v2/device/#{@name}/psus", 'Device', 'psu data')
+      psus.each do |index, psu|
+        next unless psu.class == PSU
+        @psus[psu.index] = psu
+      end
+    end
+
+    # Fill in temperatures
+    if data == nil && (opts[:temperatures] || opts[:all])
+      @temps = {}
+      temps = API.get('core', "/v2/device/#{@name}/temperatures", 'Device', 'temperature data')
+      temps.each do |index, temp|
+        next unless temp.class == Temperature
+        @temps[temp.index] = temp
       end
     end
 
@@ -427,11 +428,11 @@ class Device
     hash['data']['yellow_alarm'] = @yellow_alarm if @yellow_alarm
     hash['data']['red_alarm'] = @red_alarm if @red_alarm
     hash['data']['interfaces'] = @interfaces if @interfaces
-    hash['data']['memory'] = @memory if @memory
-    hash['data']['temps'] = @temps if @temps
     hash['data']['cpus'] = @cpus if @cpus
-    hash['data']['psus'] = @psus if @psus
     hash['data']['fans'] = @fans if @fans
+    hash['data']['memory'] = @memory if @memory
+    hash['data']['psus'] = @psus if @psus
+    hash['data']['temps'] = @temps if @temps
 
     hash.to_json(*a)
   end
@@ -439,7 +440,7 @@ class Device
 
   def self.json_create(json)
     data = json['data']
-    Device.new(data['device']).populate(:all => true, 'data' => data)
+    Device.new(data['device']).populate(data)
   end
 
 

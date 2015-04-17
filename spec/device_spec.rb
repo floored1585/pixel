@@ -4,13 +4,52 @@ describe Device do
 
 
   test_devices = {
-   'Cisco 2960' => 'gar-b11u17-acc-g',
-   'Cisco 4948' => 'irv-i1u1-dist',
-   'Cumulus' => 'aon-cumulus-2',
-   'Juniper EX' => 'gar-p1u1-dist',
-   'Juniper MX' => 'iad1-bdr-1',
-   'Force10 S4810' => 'iad1-trn-1',
+    'Cisco 2960' => 'gar-b11u17-acc-g',
+    'Cisco 4948' => 'irv-i1u1-dist',
+    'Cumulus' => 'aon-cumulus-2',
+    'Juniper EX' => 'gar-p1u1-dist',
+    'Juniper MX' => 'iad1-bdr-1',
+    'Force10 S4810' => 'iad1-trn-1',
   }
+
+  dev_hash = {
+    "device" => "gar-v11u1-acc-y", "ip" => "172.24.8.117", "last_poll" => 1427920458,
+    "next_poll" => 1427920564, "last_poll_duration" => 4, "last_poll_result" => 0,
+    "last_poll_text" => "", "currently_polling" => 0, "worker" => "gar", "red_alarm" => 2,
+    "pps_out" => 465065, "bps_out" => 3365960688, "discards_out" => 5131, "errors_out" => 500,
+    "sys_descr" => "Cisco IOS Software, C3560 Software (C3560-IPSERVICESK9-M), Version 12.2(53)SE2, RELEASE SOFTWARE (fc3)\r\nTechnical Support: http://www.cisco.com/techsupport\r\nCopyright (c) 1986-2010 by Cisco Systems, Inc.\r\nCompiled Wed 21-Apr-10 05 => 33 by prod_rel_team",
+    "vendor" => "Cisco", "sw_descr" => "C3560-IPSERVICESK9-M", "sw_version" => "12.2(53)SE2",
+    "hw_model" => "catalyst3560G48TS", "uptime" => 42462808, "yellow_alarm" => 2 }
+
+  json_keys = [
+    'device',
+    'ip',
+    'last_poll',
+    'next_poll',
+    'last_poll_duration',
+    'last_poll_result',
+    'last_poll_text',
+    'currently_polling',
+    'worker',
+    'pps_out',
+    'bps_out',
+    'discards_out',
+    'errors_out',
+    'sys_descr',
+    'vendor',
+    'sw_descr',
+    'sw_version',
+    'hw_model',
+    'uptime',
+    'yellow_alarm',
+    'red_alarm',
+    'interfaces',
+    'cpus',
+    'fans',
+    'memory',
+    'psus',
+    'temps',
+  ]
 
 
   # Constructor
@@ -40,60 +79,45 @@ describe Device do
   end
 
 
-  # populate should work the same no matter what state the device is in
-  describe '#populate' do
+  # fetch should work the same no matter what state the device is in
+  describe '#fetch' do
 
     test_devices.each do |label, device|
       context "on a #{label} when no options passed" do
-        it 'should equal' do
-          dev_obj = Device.new(device)
-          expect(dev_obj.populate).to equal dev_obj
-        end
+        specify { expect(Device.fetch(device)).to be_a Device }
       end
       context "on a #{label} when :interfaces passed" do
-        it 'should equal' do
-          dev_obj = Device.new(device)
-          expect(dev_obj.populate(:interfaces => true)).to equal dev_obj
-        end
+        specify { expect(Device.fetch(device, :interfaces => true)).to be_a Device }
       end
       context "on a #{label} when :cpus passed" do
-        it 'should equal' do
-          dev_obj = Device.new(device)
-          expect(dev_obj.populate(:cpus => true)).to equal dev_obj
-        end
-      end
-      context "on a #{label} when :memory passed" do
-        it 'should equal' do
-          dev_obj = Device.new(device)
-          expect(dev_obj.populate(:memory => true)).to equal dev_obj
-        end
-      end
-      context "on a #{label} when :temperatures passed" do
-        it 'should equal' do
-          dev_obj = Device.new(device)
-          expect(dev_obj.populate(:temperatures => true)).to equal dev_obj
-        end
-      end
-      context "on a #{label} when :psus passed" do
-        it 'should equal' do
-          dev_obj = Device.new(device)
-          expect(dev_obj.populate(:psus => true)).to equal dev_obj
-        end
+        specify { expect(Device.fetch(device, :cpus => true)).to be_a Device }
       end
       context "on a #{label} when :fans passed" do
-        it 'should equal' do
-          dev_obj = Device.new(device)
-          expect(dev_obj.populate(:fans => true)).to equal dev_obj
-        end
+        specify { expect(Device.fetch(device, :fans => true)).to be_a Device }
+      end
+      context "on a #{label} when :memory passed" do
+        specify { expect(Device.fetch(device, :memory => true)).to be_a Device }
+      end
+      context "on a #{label} when :psus passed" do
+        specify { expect(Device.fetch(device, :psus => true)).to be_a Device }
+      end
+      context "on a #{label} when :temperatures passed" do
+        specify { expect(Device.fetch(device, :temperatures => true)).to be_a Device }
       end
       context "on a #{label} when all options passed" do
-        it 'should equal' do
-          dev_obj = Device.new(device)
-          expect(dev_obj.populate(:all => true)).to equal dev_obj
-        end
+        specify { expect(Device.fetch(device, :all => true)).to be_a Device }
       end
     end
 
+  end
+
+
+  # populate
+  describe '#populate' do
+    it 'should fill up the object' do
+      dev = Device.new('gar-v11u1-acc-y')
+      expect(JSON.parse(dev.populate(dev_hash).to_json)['data'].keys).to eql json_keys
+    end
   end
 
 
@@ -155,8 +179,8 @@ describe Device do
 
   context 'when populated' do
 
-    dev1 = Device.new('gar-b11u17-acc-g').populate(:all => true)
-    dev2 = Device.new('irv-i1u1-dist').populate(:all => true)
+    dev1 = Device.fetch('gar-b11u17-acc-g', :all => true)
+    dev2 = Device.fetch('irv-i1u1-dist', :all => true)
     alarm_none = JSON.load(P1U1_JSON_1)
     alarm_yellow = JSON.load(P1U1_JSON_2)
     alarm_red = JSON.load(P1U1_JSON_3)
@@ -270,7 +294,7 @@ describe Device do
 
 
     it 'should not exist before saving' do
-      expect(Device.new('test-v11u1-acc-y').populate).to eql nil
+      expect(Device.fetch('test-v11u1-acc-y')).to eql nil
     end
 
     it 'should raise exception if no poll IP' do
@@ -285,20 +309,20 @@ describe Device do
 
     it 'should exist after being saved' do
       JSON.load(DEV2_JSON).save(DB)
-      dev = Device.new('test-v11u1-acc-y').populate
+      dev = Device.fetch('test-v11u1-acc-y')
       expect(dev).to be_a Device
     end
 
     it 'should update without error' do
       JSON.load(DEV2_JSON).save(DB)
       JSON.load(DEV2_JSON).save(DB)
-      dev = Device.new('test-v11u1-acc-y').populate
+      dev = Device.fetch('test-v11u1-acc-y')
       expect(dev).to be_a Device
     end
 
     it 'should be identical before and after' do
       JSON.load(DEV2_JSON).save(DB)
-      dev = Device.new('test-v11u1-acc-y').populate(:all => true)
+      dev = Device.fetch('test-v11u1-acc-y', :all => true)
       expect(JSON.parse(dev.to_json)).to eql JSON.parse(JSON.load(DEV2_JSON).to_json)
     end
 
@@ -307,7 +331,7 @@ describe Device do
       JSON.load(DEV2_JSON).save(DB)
       # Past dated last_updated times (this should delete everything except the device)
       JSON.load(DEV3_JSON).save(DB)
-      dev = Device.new('test-v11u1-acc-y').populate(:all => true)
+      dev = Device.fetch('test-v11u1-acc-y', :all => true)
       expect(dev.interfaces).to be_empty
       expect(dev.cpus).to be_empty
       expect(dev.fans).to be_empty
@@ -336,7 +360,7 @@ describe Device do
 
     it 'should return the number of deleted objects' do
       JSON.load(DEV2_JSON).save(DB)
-      object = Device.new('test-v11u1-acc-y').populate(:all => true)
+      object = Device.fetch('test-v11u1-acc-y', :all => true)
       expect(object.delete(DB)).to eql 61
     end
 
@@ -373,12 +397,12 @@ describe Device do
 
     context 'when populated' do
 
-      c2960 = Device.new(test_devices['Cisco 2960']).populate(:all => true)
-      c4948 = Device.new(test_devices['Cisco 4948']).populate(:all => true)
-      cumulus = Device.new(test_devices['Cumulus']).populate(:all => true)
-      ex = Device.new(test_devices['Juniper EX']).populate(:all => true)
-      mx = Device.new(test_devices['Juniper MX']).populate(:all => true)
-      f10_s4810 = Device.new(test_devices['Force10 S4810']).populate(:all => true)
+      c2960 = Device.fetch(test_devices['Cisco 2960'], :all => true)
+      c4948 = Device.fetch(test_devices['Cisco 4948'], :all => true)
+      cumulus = Device.fetch(test_devices['Cumulus'], :all => true)
+      ex = Device.fetch(test_devices['Juniper EX'], :all => true)
+      mx = Device.fetch(test_devices['Juniper MX'], :all => true)
+      f10_s4810 = Device.fetch(test_devices['Force10 S4810'], :all => true)
 
       json_c2960 = c2960.to_json
       json_c4948 = c4948.to_json

@@ -9,24 +9,34 @@ $LOG ||= Logger.new(STDOUT)
 class PSU
 
 
+  def self.fetch(device, index)
+    obj = API.get('core', "/v2/device/#{device}/psu/#{index}", 'PSU', 'psu data')
+    obj.class == PSU ? obj : nil
+  end
+
+
   def initialize(device:, index:)
 
     # required
     @device = device
-    @index = index
+    @index = index.to_s
 
   end
-  
+
+
+  def index
+    @index
+  end
+
 
   def last_updated
     @last_updated || 0
   end
 
 
-  def populate(data=nil)
+  def populate(data)
 
-    # If we weren't passed data, look ourselves up
-    data ||= API.get('core', "/v2/device/#{@device}/psu/#{@index}", 'PSU', 'psu data')
+    # Required in order to accept symbol and non-symbol keys
     data = data.symbolize
 
     # Return nil if we didn't find any data
@@ -90,7 +100,7 @@ class PSU
 
 
   def to_json(*a)
-    hash = { 
+    hash = {
       "json_class" => self.class.name,
       "data" => {
         "device" => @device,
@@ -104,7 +114,7 @@ class PSU
     hash['data']["vendor_status"] = @vendor_status if @vendor_status
     hash['data']["status_text"] = @status_text if @status_text
     hash['data']["worker"] = @worker if @worker
-    
+
     hash.to_json(*a)
   end
 

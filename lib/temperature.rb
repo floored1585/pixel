@@ -44,6 +44,11 @@ class Temperature
   end
 
 
+  def status_text
+    @status_text
+  end
+
+
   def last_updated
     @last_updated || 0
   end

@@ -119,6 +119,11 @@ describe Temperature do
       specify { expect(@temp.temp).to eql nil }
     end
 
+    # status_text
+    describe '#status_text' do
+      specify { expect(@temp.status_text).to eql nil }
+    end
+
     # update
     describe '#update' do
       specify { expect(@temp.update(data1_update_ok, worker: 'test')).to be_a Temperature }
@@ -162,6 +167,12 @@ describe Temperature do
     describe '#temp' do
       specify { expect(@temp1.temp).to eql 52 }
       specify { expect(@temp2.temp).to eql 38 }
+    end
+
+    # status_text
+    describe '#status_text' do
+      specify { expect(@temp1.status_text).to eql 'Unknown' }
+      specify { expect(@temp2.status_text).to eql 'OK' }
     end
 
     # update

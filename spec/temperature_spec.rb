@@ -99,9 +99,24 @@ describe Temperature do
     end
 
 
+    # device
+    describe '#device' do
+      specify { expect(@temp.device).to eql 'gar-test-1' }
+    end
+
     # index
     describe '#index' do
       specify { expect(@temp.index).to eql '103' }
+    end
+
+    # description
+    describe '#description' do
+      specify { expect(@temp.description).to eql nil }
+    end
+
+    # temp
+    describe '#temp' do
+      specify { expect(@temp.temp).to eql nil }
     end
 
     # update
@@ -125,10 +140,28 @@ describe Temperature do
     end
 
 
+    # device
+    describe '#device' do
+      specify { expect(@temp1.device).to eql 'gar-b11u1-dist' }
+      specify { expect(@temp2.device).to eql 'gar-k11u1-dist' }
+    end
+
     # index
     describe '#index' do
       specify { expect(@temp1.index).to eql '7.1.0.0' }
       specify { expect(@temp2.index).to eql '1' }
+    end
+
+    # description
+    describe '#description' do
+      specify { expect(@temp1.description).to eql 'FPC=> EX4300-48T @ 0/*/*' }
+      specify { expect(@temp2.description).to eql 'Chassis Temperature Sensor' }
+    end
+
+    # temp
+    describe '#temp' do
+      specify { expect(@temp1.temp).to eql 52 }
+      specify { expect(@temp2.temp).to eql 38 }
     end
 
     # update

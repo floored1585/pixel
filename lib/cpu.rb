@@ -24,8 +24,23 @@ class CPU
   end
 
 
+  def device
+    @device
+  end
+
+
   def index
     @index
+  end
+
+
+  def description
+    @description
+  end
+
+
+  def util
+    @util || 0
   end
 
 
@@ -111,7 +126,7 @@ class CPU
       }
     }
 
-    hash['data']["util"] = @util if @util
+    hash['data']["util"] = util
     hash['data']["description"] = @description if @description
     hash['data']["last_updated"] = @last_updated if @last_updated
     hash['data']["worker"] = @worker if @worker

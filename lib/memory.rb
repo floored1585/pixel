@@ -24,8 +24,23 @@ class Memory
   end
 
 
+  def device
+    @device
+  end
+
+
   def index
     @index
+  end
+
+
+  def description
+    @description
+  end
+
+
+  def util
+    @util || 0
   end
 
 
@@ -43,7 +58,7 @@ class Memory
     # TODO: Raise an exception instead?
     return nil if data.empty?
 
-    @util = data[:util].to_i_if_numeric
+    @util = data[:util].to_i
     @description = data[:description]
     @last_updated = data[:last_updated].to_i_if_numeric
     @worker = data[:worker]
@@ -111,7 +126,7 @@ class Memory
       }
     }
 
-    hash['data']["util"] = @util if @util
+    hash['data']["util"] = util
     hash['data']["description"] = @description if @description
     hash['data']["last_updated"] = @last_updated if @last_updated
     hash['data']["worker"] = @worker if @worker

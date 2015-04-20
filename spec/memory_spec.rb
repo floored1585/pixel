@@ -5,34 +5,34 @@ describe Memory do
   json_keys = [ 'device', 'index', 'util', 'description', 'last_updated', 'worker' ]
 
   data1_base = {
-    "device" => "irv-i1u1-dist", "index" => "1", "util" => 8.0, "worker" => "test123",
+    "device" => "irv-i1u1-dist", "index" => "1", "util" => 8, "worker" => "test123",
     "description" => "Linecard(slot 1)", "last_updated" => 1427224290 }
   data2_base = {
-    "device" => "gar-b11u1-dist", "index" => "7.2.0.0", "util" => 54.0, "worker" => "test123",
+    "device" => "gar-b11u1-dist", "index" => "7.2.0.0", "util" => 54, "worker" => "test123",
     "description" => "FPC: EX4300-48T @ 1/*/*", "last_updated" => 1427224144 }
   data3_base = {
-    "device" => "aon-cumulus-3", "index" => "768", "util" => 20.0, "description" => "Memory 768", 
+    "device" => "aon-cumulus-3", "index" => "768", "util" => 20, "description" => "Memory 768", 
     "worker" => "test123", "last_updated" => 1427224306 }
   imaginary_data = {
-    "device" => "test-test-3", "index" => "768", "util" => 20.0, "description" => "Memory 768", 
+    "device" => "test-test-3", "index" => "768", "util" => 20, "description" => "Memory 768", 
     "worker" => "test123", "last_updated" => 1427224306 }
 
   data1_update_ok = {
     "device" => "irv-i1u1-dist",
     "index" => "1",
-    "util" => 10.0,
+    "util" => 10,
     "description" => "Linecard(slot 1)",
     "last_updated" => 1427224490 }
   data2_update_ok = {
     "device" => "gar-b11u1-dist",
     "index" => "7.2.0.0",
-    "util" => 54.2,
+    "util" => 54,
     "description" => "FPC: EX4300-48T @ 1/*/*",
     "last_updated" => 1427224344 }
   data3_update_ok = {
     "device" => "aon-cumulus-3",
     "index" => "768",
-    "util" => 23.0,
+    "util" => 23,
     "description" => "Memory 768",
     "last_updated" => 1427224906 }
 
@@ -90,9 +90,24 @@ describe Memory do
     end
 
 
+    # device
+    describe '#device' do
+      specify { expect(@memory.device).to eql 'gar-test-1' }
+    end
+
     # index
     describe '#index' do
       specify { expect(@memory.index).to eql '103' }
+    end
+
+    # description
+    describe '#description' do
+      specify { expect(@memory.description).to eql nil }
+    end
+
+    # util
+    describe '#util' do
+      specify { expect(@memory.util).to eql 0 }
     end
 
     # update
@@ -117,11 +132,32 @@ describe Memory do
     end
 
 
+    # device
+    describe '#device' do
+      specify { expect(@memory1.device).to eql 'gar-b11u1-dist' }
+      specify { expect(@memory2.device).to eql 'gar-k11u1-dist' }
+      specify { expect(@memory3.device).to eql 'gar-k11u1-dist' }
+    end
+
     # index
     describe '#index' do
       specify { expect(@memory1.index).to eql '7.1.0.0' }
       specify { expect(@memory2.index).to eql '1' }
       specify { expect(@memory3.index).to eql '1' }
+    end
+
+    # description
+    describe '#description' do
+      specify { expect(@memory1.description).to eql 'Linecard(slot 1)' }
+      specify { expect(@memory2.description).to eql 'FPC: EX4300-48T @ 1/*/*' }
+      specify { expect(@memory3.description).to eql 'Memory 768' }
+    end
+
+    # util
+    describe '#util' do
+      specify { expect(@memory1.util).to eql 8 }
+      specify { expect(@memory2.util).to eql 54 }
+      specify { expect(@memory3.util).to eql 20 }
     end
 
     # update

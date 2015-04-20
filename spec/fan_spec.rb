@@ -99,9 +99,19 @@ describe Fan do
     end
 
 
+    # device
+    describe '#device' do
+      specify { expect(@fan.device).to eql 'gar-test-1' }
+    end
+
     # index
     describe '#index' do
       specify { expect(@fan.index).to eql '103' }
+    end
+
+    # description
+    describe '#description' do
+      specify { expect(@fan.description).to eql nil }
     end
 
     # update
@@ -125,11 +135,25 @@ describe Fan do
       @fan3 = Fan.new(device: 'gar-k11u1-dist', index: '1').populate(data3_base)
     end
 
+    # device
+    describe '#device' do
+      specify { expect(@fan1.device).to eql 'gar-b11u1-dist' }
+      specify { expect(@fan2.device).to eql 'gar-k11u1-dist' }
+      specify { expect(@fan3.device).to eql 'gar-k11u1-dist' }
+    end
+
     # index
     describe '#index' do
       specify { expect(@fan1.index).to eql '7.1.0.0' }
       specify { expect(@fan2.index).to eql '1' }
       specify { expect(@fan3.index).to eql '1' }
+    end
+
+    # description
+    describe '#description' do
+      specify { expect(@fan1.description).to eql 'FAN 0 @ 0/0/0' }
+      specify { expect(@fan2.description).to eql 'Switch#1,  Fan#1' }
+      specify { expect(@fan3.description).to eql 'PSU 1.1' }
     end
 
     # update

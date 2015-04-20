@@ -24,8 +24,18 @@ class Fan
   end
 
 
+  def device
+    @device
+  end
+
+
   def index
     @index
+  end
+
+
+  def description
+    @description
   end
 
 

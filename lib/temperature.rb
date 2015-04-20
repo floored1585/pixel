@@ -24,8 +24,23 @@ class Temperature
   end
 
 
+  def device
+    @device
+  end
+
+
   def index
     @index
+  end
+
+
+  def description
+    @description
+  end
+
+
+  def temp
+    @temperature
   end
 
 

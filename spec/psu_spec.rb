@@ -98,9 +98,19 @@ describe PSU do
     end
 
 
+    # device
+    describe '#device' do
+      specify { expect(@psu.device).to eql 'gar-test-1' }
+    end
+
     # index
     describe '#index' do
       specify { expect(@psu.index).to eql '103' }
+    end
+
+    # description
+    describe '#description' do
+      specify { expect(@psu.description).to eql nil }
     end
 
     # update
@@ -125,11 +135,25 @@ describe PSU do
     end
 
 
+    # device
+    describe '#device' do
+      specify { expect(@psu1.device).to eql 'gar-b11u1-dist' }
+      specify { expect(@psu2.device).to eql 'gar-k11u1-dist' }
+      specify { expect(@psu3.device).to eql 'gar-k11u1-dist' }
+    end
+
     # index
     describe '#index' do
       specify { expect(@psu1.index).to eql '7.1.0.0' }
       specify { expect(@psu2.index).to eql '1' }
       specify { expect(@psu3.index).to eql '1' }
+    end
+
+    # description
+    describe '#description' do
+      specify { expect(@psu1.description).to eql 'PSU 0 @ 0/0/0' }
+      specify { expect(@psu2.description).to eql 'Switch#1,  PSU#1' }
+      specify { expect(@psu3.description).to eql 'PSU 1.1' }
     end
 
     # update

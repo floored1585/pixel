@@ -399,7 +399,8 @@ describe Device do
 
     it 'should be identical before and after' do
       JSON.load(DEV2_JSON).save(DB)
-      expect(Device.fetch('test-v11u1-acc-y', :all => true).to_json).to eql DEV2_JSON
+      fetched = JSON.parse(Device.fetch('test-v11u1-acc-y', :all => true).to_json)
+      expect(fetched).to eql JSON.parse(DEV2_JSON)
     end
 
     it 'should delete outdated components' do

@@ -82,9 +82,24 @@ describe CPU do
     end
 
 
+    # device
+    describe '#device' do
+      specify { expect(@cpu.device).to eql 'gar-test-1' }
+    end
+
     # index
     describe '#index' do
       specify { expect(@cpu.index).to eql '103' }
+    end
+
+    # description
+    describe '#description' do
+      specify { expect(@cpu.description).to eql nil }
+    end
+
+    # util
+    describe '#util' do
+      specify { expect(@cpu.util).to eql 0 }
     end
 
     # update
@@ -109,11 +124,32 @@ describe CPU do
     end
 
 
+    # device
+    describe '#device' do
+      specify { expect(@cpu1.device).to eql 'gar-b11u1-dist' }
+      specify { expect(@cpu2.device).to eql 'gar-k11u1-dist' }
+      specify { expect(@cpu3.device).to eql 'gar-k11u1-dist' }
+    end
+
     # index
     describe '#index' do
       specify { expect(@cpu1.index).to eql '7.1.0.0' }
       specify { expect(@cpu2.index).to eql '1' }
       specify { expect(@cpu3.index).to eql '1' }
+    end
+
+    # description
+    describe '#description' do
+      specify { expect(@cpu1.description).to eql "Linecard(slot 1)" }
+      specify { expect(@cpu2.description).to eql "FPC: EX4300-48T @ 1/*/*" }
+      specify { expect(@cpu3.description).to eql "CPU 768" }
+    end
+
+    # util
+    describe '#util' do
+      specify { expect(@cpu1.util).to eql 8 }
+      specify { expect(@cpu2.util).to eql 54 }
+      specify { expect(@cpu3.util).to eql 20 }
     end
 
     # update

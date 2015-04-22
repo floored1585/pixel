@@ -274,7 +274,7 @@ module Core
         uuid = SecureRandom.uuid
         devices[row[:device]] = uuid
         $LOG.warn("CORE: Overriding currently_polling for #{row[:device]} (#{poller})") if row[:currently_polling] == 1
-        $LOG.info("CORE: Sending device #{row[:device]} to #{poller} (#{uuid})")
+        $LOG.info("CORE: Sending device #{row[:device]} to #{poller} (#{uuid})") if row[:device] == 'iad1-a-1'
         device_row = db[:device].where(:device => row[:device])
         device_row.update(
           :currently_polling => 1,
@@ -296,9 +296,9 @@ module Core
       if device.poller_uuid == db[:device].where(:device => device.name).get(:poller_uuid)
         device.save(db)
         db[:device].where(:device => device.name).update(:currently_polling => 0)
-        $LOG.info("CORE: Saved device #{device.name} from #{device.worker}")
+        $LOG.info("CORE: Saved device #{device.name} from #{device.worker}") if device.name == 'iad1-a-1'
       else
-        $LOG.error("CORE: Received invalid poller_uuid (#{uuid}) for device #{device.name} from #{device.worker}")
+        $LOG.error("CORE: Received invalid poller_uuid (#{uuid}) for device #{device.name} from #{device.worker}") if device.name == 'iad1-a-1'
       end
     rescue Sequel::PoolTimeout => e
       $LOG.error("CORE: SQL error! \n#{e}")

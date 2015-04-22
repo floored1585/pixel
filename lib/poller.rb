@@ -36,7 +36,7 @@ module Poller
     end # End fork
 
     Process.detach(pid)
-    $LOG.info("POLLER: Forked PID #{pid} (#{device_name})")
+    $LOG.info("POLLER: Forked PID #{pid} (#{device_name})") if device_name == 'iad1-a-1'
   end
 
 

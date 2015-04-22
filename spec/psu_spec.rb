@@ -113,6 +113,11 @@ describe PSU do
       specify { expect(@psu.description).to eql nil }
     end
 
+    # status_text
+    describe '#status_text' do
+      specify { expect(@psu.status_text).to eql nil }
+    end
+
     # update
     describe '#update' do
       specify { expect(@psu.update(data1_update_ok, worker: 'test')).to be_a PSU }
@@ -154,6 +159,13 @@ describe PSU do
       specify { expect(@psu1.description).to eql 'PSU 0 @ 0/0/0' }
       specify { expect(@psu2.description).to eql 'Switch#1,  PSU#1' }
       specify { expect(@psu3.description).to eql 'PSU 1.1' }
+    end
+
+    # status_text
+    describe '#status_text' do
+      specify { expect(@psu1.status_text).to eql 'OK' }
+      specify { expect(@psu2.status_text).to eql 'OK' }
+      specify { expect(@psu3.status_text).to eql 'OK' }
     end
 
     # update

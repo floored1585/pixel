@@ -7,6 +7,36 @@ include Core
 
 settings = Configfile.retrieve
 
+#TODO: bps_cell
+#TODO: total_bps_cell
+#TODO: speed_cell
+#TODO: neighbor_link
+#TODO: alarm_type_text
+#TODO: link_status_color
+#TODO: link_status_tooltip
+
+
+# humanize_time
+describe '#humanize_time' do
+  specify { expect(humanize_time(0)).to eql '0 seconds' }
+  specify { expect(humanize_time(1)).to eql '1 second' }
+  specify { expect(humanize_time(32)).to eql '32 seconds' }
+  specify { expect(humanize_time(60)).to eql '1 minute' }
+  specify { expect(humanize_time(310)).to eql '5 minutes' }
+  specify { expect(humanize_time(3600)).to eql '1 hour' }
+  specify { expect(humanize_time(3660)).to eql '1 hour' }
+  specify { expect(humanize_time(7660)).to eql '2 hours' }
+  specify { expect(humanize_time(86400)).to eql '1 day' }
+  specify { expect(humanize_time(8640000)).to eql '100 days' }
+end
+
+
+# full_title
+describe '#full_title' do
+  specify { expect(full_title(nil)).to eql 'Pixel' }
+  specify { expect(full_title('test')).to eql 'Pixel | test' }
+end
+
 
 # tr_attributes
 describe '#tr_attributes' do
@@ -41,7 +71,7 @@ describe '#tr_attributes' do
     int1 = JSON.load(INT_CHILD1_JSON)
     int2 = JSON.load(INT_CHILD2_JSON)
 
-    attr1 = tr_attributes(int1,parent)
+    attr1 = tr_attributes(int1, parent)
     expected_1 = "data-toggle='tooltip' data-container='body' title='index: 600'" +
       " data-rel='tooltip-left' data-pxl-index='600' class=''"
     attr2 = tr_attributes(int2, parent)
@@ -117,8 +147,6 @@ describe '#device_link' do
 end
 
 
-#TODO: #neighbor_link
-#TODO: #alarm_type_text
 
 
 # interface_link

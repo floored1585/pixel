@@ -100,6 +100,11 @@ class Device
   end
 
 
+  def uptime
+    @uptime
+  end
+
+
   def bps_out
     bps_out = 0
     @interfaces.each { |index,int| bps_out += int.bps_out if int.physical? }
@@ -128,6 +133,26 @@ class Device
   end
 
 
+  def vendor
+    @vendor
+  end
+
+
+  def sw_descr
+    @sw_descr
+  end
+
+
+  def sw_version
+    @sw_version
+  end
+
+
+  def hw_model
+    @hw_model
+  end
+
+
   def red_alarm
     return true if @red_alarm && @red_alarm != 2
     return false
@@ -148,6 +173,21 @@ class Device
     @interfaces.each { |index, int| return int if name.downcase == int.name.downcase }
 
     return nil # If nothing matched
+  end
+
+
+  def get_children(parent_name: nil, parent_index: nil)
+    # Return nil unless either a name or index was passed and they match something
+    return [] unless parent_name || parent_index
+    return [] unless parent = @interfaces[parent_index.to_i] || get_interface(name: parent_name)
+
+    children = []
+    @interfaces.each do |index, int|
+      next unless int.parent_name
+      children.push(int) if int.parent_name.downcase == parent.name.downcase
+    end
+
+    return children
   end
 
 

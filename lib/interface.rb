@@ -68,6 +68,13 @@ class Interface
 
 
   def type
+    return "Access" if @type == 'acc'
+    return "Backbone" if @type == 'bb'
+    return "Unknown" if @type == 'unknown'
+  end
+
+
+  def type_raw
     @type
   end
 
@@ -146,8 +153,13 @@ class Interface
   end
 
 
+  def child?
+    !!(@alias =~ /^sub\[/)
+  end
+
+
   def parent_name
-    return nil unless (@alias && type == 'sub')
+    return nil unless child?
     @alias.match(/sub\[([a-zA-Z0-9\/-]+)\]/) { |match| return match[1] }
   end
 
@@ -187,6 +199,13 @@ class Interface
   end
 
 
+  def stale?(timer: 600)
+    time_since_update = Time.now.to_i - @last_updated
+    return time_since_update if time_since_update > timer
+    return false
+  end
+
+
   # Substitutes characters in the current name using the provided hash
   def substitute_name(substitutions)
 
@@ -201,7 +220,7 @@ class Interface
   # This method takes an interface, and mimics its type (sets this interface's
   #   type to be the same as the interface that was passed in)
   def clone_type(int)
-    @type = int.type unless int.type == nil
+    @type = int.type_raw unless int.type_raw == nil
     return self
   end
 

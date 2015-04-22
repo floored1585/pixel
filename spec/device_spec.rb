@@ -194,6 +194,10 @@ describe Device do
       specify { expect(dev_ip.poll_ip).to eql '1.2.3.4' }
     end
 
+    describe '#uptime' do
+      specify { expect(@dev_name.uptime).to eql nil }
+    end
+
     describe '#interfaces' do
       specify { expect(@dev_name.interfaces).to be_a Hash }
       specify { expect(@dev_name.interfaces.values.first).to eql nil }
@@ -224,6 +228,22 @@ describe Device do
       specify { expect(@dev_name.memory.values.first).to eql nil }
     end
 
+    describe '#vendor' do
+      specify { expect(@dev_name.vendor).to eql nil }
+    end
+
+    describe '#sw_descr' do
+      specify { expect(@dev_name.sw_descr).to eql nil }
+    end
+
+    describe '#sw_version' do
+      specify { expect(@dev_name.sw_version).to eql nil }
+    end
+
+    describe '#hw_model' do
+      specify { expect(@dev_name.hw_model).to eql nil }
+    end
+
     describe '#red_alarm' do
       specify { expect(@dev_name.red_alarm).to eql false }
     end
@@ -237,6 +257,10 @@ describe Device do
       specify { expect(@dev_name.get_interface(index: '10001')).to eql nil }
       specify { expect(@dev_name.get_interface(index: 10001)).to eql nil }
       specify { expect(@dev_name.get_interface(index: 10001, name: 'Fa0/2')).to eql nil }
+    end
+
+    describe '#get_children' do
+      specify { expect(@dev_name.get_children(parent_name: 'Gi0/1')).to eql [] }
     end
 
 
@@ -261,6 +285,11 @@ describe Device do
     describe '#poll_ip' do
       specify { expect(dev1.poll_ip).to eql '172.24.7.54' }
       specify { expect(dev2.poll_ip).to eql '208.113.142.180' }
+    end
+
+    describe '#uptime' do
+      specify { expect(dev1.uptime).to be_a Numeric }
+      specify { expect(dev2.uptime).to be_a Numeric }
     end
 
     describe '#interfaces' do
@@ -293,6 +322,26 @@ describe Device do
       specify { expect(dev2.memory.values.first).to be_a Memory }
     end
 
+    describe '#vendor' do
+      specify { expect(dev1.vendor).to eql 'Cisco' }
+      specify { expect(dev2.vendor).to eql 'Cisco' }
+    end
+
+    describe '#sw_descr' do
+      specify { expect(dev1.sw_descr).to eql 'C2960-LANBASEK9-M' }
+      specify { expect(dev2.sw_descr).to eql 'cat4500-ENTSERVICESK9-M' }
+    end
+
+    describe '#sw_version' do
+      specify { expect(dev1.sw_version).to eql '15.0(2)SE2' }
+      specify { expect(dev2.sw_version).to eql '12.2(53)SG2' }
+    end
+
+    describe '#hw_model' do
+      specify { expect(dev1.hw_model).to eql 'catalyst296048TT' }
+      specify { expect(dev2.hw_model).to eql 'catalyst494810GE' }
+    end
+
     describe '#red_alarm' do
       specify { expect(alarm_none.red_alarm).to eql false }
       specify { expect(dev1.red_alarm).to eql false }
@@ -316,6 +365,19 @@ describe Device do
       specify { expect(dev1.get_interface(index: 10001).name).to eql 'Fa0/1' }
       specify { expect(dev1.get_interface(index: 10002, name: 'Fa0/1').name).to eql 'Fa0/2' }
       specify { expect(dev1.get_interface).to eql nil }
+    end
+
+    describe '#get_children' do
+      specify { expect(dev1.get_children(parent_name: 'Po2').size).to eql 2 }
+      specify { expect(dev1.get_children(parent_name: 'po2').size).to eql 2 }
+      specify { expect(dev1.get_children(parent_name: 'PO2').size).to eql 2 }
+      specify { expect(dev1.get_children(parent_index: 5002).size).to eql 2 }
+      specify { expect(dev1.get_children(parent_index: '5002').size).to eql 2 }
+      specify { expect(dev1.get_children(parent_name: 'PO2').first).to be_a Interface }
+      specify { expect(dev1.get_children(parent_name: 'PO2').first.index).to eql 10101 }
+      specify { expect(dev1.get_children(parent_index: 5002).first).to be_a Interface }
+      specify { expect(dev1.get_children(parent_index: '5002').first.index).to eql 10101 }
+      specify { expect(dev1.get_children(parent_index: '5001202')).to eql [] }
     end
 
 

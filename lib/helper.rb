@@ -1,15 +1,17 @@
 module Helper
 
 
-  def humanize_time secs
-    [[60, :seconds], [60, :minutes], [24, :hours], [10000, :days]].map{ |count, name|
-      if secs > 0
-        secs, n = secs.divmod(count)
+  def humanize_time seconds
+    [[60, :seconds], [60, :minutes], [24, :hours], [1000000, :days]].map{ |count, name|
+      if seconds > 0
+        seconds, n = seconds.divmod(count)
         if n.to_i > 1
           "#{n.to_i} #{name}"
         else
           "#{n.to_i} #{name.to_s.gsub(/s$/,'')}"
         end
+      else
+        return '0 seconds' if name == :seconds
       end
     }.compact[-1]
   end
@@ -17,7 +19,7 @@ module Helper
 
   def full_title(page_title)
     base_title = "Pixel"
-    if page_title.empty?
+    if page_title.nil? || page_title.empty?
       base_title
     else
       "#{base_title} | #{page_title}"
@@ -66,37 +68,31 @@ module Helper
 
     util = "#{bps_util.sigfig(sigfigs)}%"
 
-    traffic = number_to_human(bps, units: units, sigfigs: 2)
+    traffic = number_to_human(bps, units: units, sigfigs: sigfigs)
     return traffic if bps_only
     return util if pct_only
     return "#{util} (#{traffic})"
   end
 
 
-  def total_bps_cell(interfaces, oids)
+  def total_bps_cell(int, parent)
     # If interface is child, set total to just under parent total,
     # so that the interface is sorted to sit directly under parent
     # when tablesorter runs.
-    if oids[:is_child]
-      p_oids = interfaces[oids[:my_parent]]
-      if p_oids && p_oids[:bps_in] && p_oids[:bps_out]
-        p_total = p_oids[:bps_in] + p_oids[:bps_out]
-        me_total = (oids[:bps_in] || 0) + (oids[:bps_out] || 0)
-        offset = me_total / (oids[:if_high_speed].to_f * 1000000) * 10
-        return p_total - 20 + offset
-      else
-        return '0'
-      end
+    total = int.bps_in + int.bps_out
+    if parent.class == Interface
+      parent_total = parent.bps_in + parent.bps_out
+      offset = total / (int.speed.to_f) * 10
+      return parent_total - 20 + offset
     end
     # If not child, just return the total bps
-    oids[:bps_in] + oids[:bps_out] if oids[:bps_in] && oids[:bps_out]
+    return total
   end
 
 
-  def speed_cell(oids)
-    return '' unless oids[:link_up]
-    speed_in_bps = oids[:if_high_speed] * 1000000
-    number_to_human(speed_in_bps, :bps, true, '%.0f')
+  def speed_cell(int)
+    return '' if int.down?
+    number_to_human(int.speed, units: :bps, sigfigs: 2)
   end
 
 
@@ -143,65 +139,43 @@ module Helper
   end
 
 
-  def link_status_color(interfaces,oids)
-    return 'grey' if oids[:stale]
-    return 'darkRed' if oids[:if_admin_status] == 2
-    return 'red' unless oids[:link_up]
-    return 'orange' if !oids[:discards_out].to_s.empty? && oids[:discards_out] != 0
-    return 'orange' if !oids[:errors_in].to_s.empty? && oids[:errors_in] != 0
-    # Check children -- return orange unless all children are up
-    if oids[:is_parent]
-      oids[:children].each do |child_index|
-        return 'orange' unless interfaces[child_index][:link_up]
-      end
+  def link_status_color(int, children=[])
+    # hardcoded 10m -- TODO: Change to config value
+    return 'grey' if int.stale?
+    return 'darkRed' if int.status(:admin) == 'Down'
+    return 'red' if int.down?
+    return 'orange' if int.discards_in > 0 || int.discards_out > 0
+    return 'orange' if int.errors_in > 0 || int.errors_out > 0
+    # Check children -- return orange if any children are down
+    children.each do |child|
+      return 'orange' if child.down?
     end
     return 'green'
   end
 
 
-  def link_status_tooltip(interfaces,oids)
-    shutdown = oids[:if_admin_status] == 2 ? "Shutdown\n" : ''
-    discards = oids[:discards_out] || 0
-    errors = oids[:errors_in] || 0
-    stale_warn = oids[:stale] ? "Last polled: #{humanize_time(oids[:stale])} ago\n" : ''
-    discard_warn = discards == 0 ? '' : "#{discards} outbound discards/sec\n"
-    error_warn = errors == 0 ? '' : "#{errors} receive errors/sec\n"
-    child_warn = ''
-    if oids[:is_parent]
-      oids[:children].each do |child_index|
-        child_warn = "Child link down\n" unless interfaces[child_index][:link_up]
-      end
+  def link_status_tooltip(int, children)
+    tooltip = ''
+    tooltip << "Shutdown\n" if int.status(:admin) == 'Down'
+    tooltip << "Last polled: #{humanize_time(int.stale?)} ago\n" if int.stale?
+    tooltip << "#{int.discards_in} inbound discards/sec\n" if int.discards_in > 0
+    tooltip << "#{int.discards_out} outbound discards/sec\n" if int.discards_out > 0
+    tooltip << "#{int.errors_out} inbound errors/sec\n" if int.errors_in > 0
+    tooltip << "#{int.errors_out} outbound errors/sec\n" if int.errors_out > 0
+    children.each do |child|
+      tooltip << "Child link down\n" if child.down?
     end
-    state = oids[:link_up] ? 'Up' : 'Down'
-    time = humanize_time(Time.now.to_i - oids[:if_oper_status_time])
-    return shutdown + stale_warn + discard_warn + error_warn + child_warn + "#{state} for #{time}"
+    time = humanize_time(Time.now.to_i - int.oper_status_time)
+    return "#{tooltip}#{int.status} for #{time}"
   end
 
 
-  def sw_tooltip(data)
-    if data[:vendor] && data[:sw_descr] && data[:sw_version]
-      "running #{data[:sw_descr]} #{data[:sw_version]}"
+  def sw_tooltip(device)
+    if device.vendor && device.sw_descr && device.sw_version
+      "running #{device.sw_descr} #{device.sw_version}"
     else
       "No software data found"
     end
-  end
-
-
-  def count_children(devices, type=[:all])
-
-    count = 0
-
-    devices.each do |dev,data|
-      count += 1 if ( type.include?(:devicedata) || type.include?(:all) ) && data[:devicedata]
-      count += (data[:cpus] || {}).count if type.include?(:cpus) || type.include?(:all)
-      count += (data[:fans] || {}).count if type.include?(:fans) || type.include?(:all)
-      count += (data[:psus] || {}).count if type.include?(:psus) || type.include?(:all)
-      count += (data[:memory] || {}).count if type.include?(:memory) || type.include?(:all)
-      count += (data[:interfaces] || {}).count if type.include?(:interfaces) || type.include?(:all)
-      count += (data[:temperatures] || {}).count if type.include?(:temperatures) || type.include?(:all)
-    end
-
-    return count
   end
 
 
@@ -229,17 +203,21 @@ module Helper
 
 
   def devicedata_to_human(oid, value, opts={})
-    oids_to_modify = [ :bps_out, :pps_out, :discards_out, :uptime, :last_poll_duration,
-                       :last_poll, :next_poll, :currently_polling, :last_poll_result,
-                       :yellow_alarm, :red_alarm ]
+    oid = oid.to_sym
+    oids_to_modify = [
+      :bps_out, :pps_out, :discards_out, :errors_out,  :uptime,
+      :last_poll_duration, :last_poll, :next_poll, :currently_polling, :last_poll_result,
+      :yellow_alarm, :red_alarm
+    ]
+    pps_oids = [ :discards_out, :errors_out, :pps_out ]
     # abort on empty or non-existant values
     return value unless value && !value.to_s.empty?
     return value unless oids_to_modify.include?(oid)
 
     output = "#{value} (" if opts[:add]
 
-    output << number_to_human(value, :bps) if oid == :bps_out
-    output << number_to_human(value, :pps) if [ :pps_out, :discards_out ].include?(oid)
+    output << number_to_human(value, units: :bps) if oid == :bps_out
+    output << number_to_human(value, units: :pps) if pps_oids.include?(oid)
     output << humanize_time(value) if [ :uptime, :last_poll_duration ].include?(oid)
     output << epoch_to_date(value) if [ :last_poll, :next_poll ].include?(oid)
     output << (value == 1 ? 'Yes' : 'No') if oid == :currently_polling

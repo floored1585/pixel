@@ -171,6 +171,10 @@ describe Interface do
       specify { expect(@int.type).to eql nil }
     end
 
+    describe '#type_raw' do
+      specify { expect(@int.type_raw).to eql nil }
+    end
+
     describe '#oper_status_time' do
       specify { expect(@int.oper_status_time).to eql nil }
     end
@@ -178,9 +182,9 @@ describe Interface do
     describe '#clone_type' do
       # This interface has type 'unknown'
       unknown = JSON.load(INTERFACE_4)
-      specify { expect(@int.clone_type(@int).type).to eql nil }
+      specify { expect(@int.clone_type(@int).type_raw).to eql nil }
       specify { expect(@int.clone_type(@int)).to equal @int }
-      specify { expect(@int.clone_type(unknown).type).to eql 'unknown' }
+      specify { expect(@int.clone_type(unknown).type_raw).to eql 'unknown' }
     end
 
     describe '#status' do
@@ -265,7 +269,8 @@ describe Interface do
       specify { expect(@int.update(int1_update, worker: 'test').alias).to eql 'acc__gar-crmx-2__xe-16/0/3' }
       specify { expect(@int.update(int1_update, worker: 'test').neighbor).to eql 'gar-crmx-2' }
       specify { expect(@int.update(int1_update, worker: 'test').neighbor_port).to eql 'xe-16/0/3' }
-      specify { expect(@int.update(int1_update, worker: 'test').type).to eql 'acc' }
+      specify { expect(@int.update(int1_update, worker: 'test').type_raw).to eql 'acc' }
+      specify { expect(@int.update(int1_update, worker: 'test').type).to eql 'Access' }
     end
 
     describe '#write_to_influxdb' do
@@ -339,10 +344,17 @@ describe Interface do
     end
 
     describe '#type' do
-      specify { expect(@int1.type).to eql 'bb' }
-      specify { expect(@int2.type).to eql 'acc' }
-      specify { expect(@int3.type).to eql 'sub' }
-      specify { expect(@int4.type).to eql 'unknown' }
+      specify { expect(@int1.type).to eql 'Backbone' }
+      specify { expect(@int2.type).to eql 'Access' }
+      specify { expect(@int3.type).to eql nil }
+      specify { expect(@int4.type).to eql 'Unknown' }
+    end
+
+    describe '#type_raw' do
+      specify { expect(@int1.type_raw).to eql 'bb' }
+      specify { expect(@int2.type_raw).to eql 'acc' }
+      specify { expect(@int3.type_raw).to eql 'sub' }
+      specify { expect(@int4.type_raw).to eql 'unknown' }
     end
 
     describe '#oper_status_time' do
@@ -353,9 +365,9 @@ describe Interface do
     end
 
     describe '#clone_type' do
-      specify { expect(@int1.clone_type(@int2).type).to eql 'acc' }
-      specify { expect(@int2.clone_type(@int1).type).to eql 'bb' }
-      specify { expect(@int3.clone_type(@int4).type).to eql 'unknown' }
+      specify { expect(@int1.clone_type(@int2).type_raw).to eql 'acc' }
+      specify { expect(@int2.clone_type(@int1).type_raw).to eql 'bb' }
+      specify { expect(@int3.clone_type(@int4).type_raw).to eql 'unknown' }
       specify { expect(@int4.clone_type(@int3)).to equal @int4 }
     end
 
@@ -374,6 +386,13 @@ describe Interface do
       specify { expect(@int4.status(:admin)).to eql 'Down' }
     end
 
+    describe '#up?' do
+      specify { expect(@int1.up?).to eql true }
+      specify { expect(@int2.up?).to eql false }
+      specify { expect(@int3.up?).to eql true }
+      specify { expect(@int4.up?).to eql false }
+    end
+
     describe '#down?' do
       specify { expect(@int1.down?).to eql false }
       specify { expect(@int2.down?).to eql true }
@@ -381,11 +400,11 @@ describe Interface do
       specify { expect(@int4.down?).to eql true }
     end
 
-    describe '#up?' do
-      specify { expect(@int1.up?).to eql true }
-      specify { expect(@int2.up?).to eql false }
-      specify { expect(@int3.up?).to eql true }
-      specify { expect(@int4.up?).to eql false }
+    describe '#stale?' do
+      specify { expect(@int1.stale?).to eql false }
+      specify { expect(@int2.stale?).to be_a Numeric }
+      specify { expect(@int3.stale?).to be_a Numeric }
+      specify { expect(@int4.stale?).to be_a Numeric }
     end
 
     describe '#bps_in' do
@@ -476,6 +495,13 @@ describe Interface do
       specify { expect(@int4.physical?).to equal true }
     end
 
+    describe '#child?' do
+      specify { expect(@int1.child?).to eql false }
+      specify { expect(@int2.child?).to eql false }
+      specify { expect(@int3.child?).to eql true }
+      specify { expect(@int4.child?).to eql false }
+    end
+
     describe '#parent_name' do
       specify { expect(@int1.parent_name).to eql nil }
       specify { expect(@int2.parent_name).to eql nil }
@@ -518,8 +544,10 @@ describe Interface do
       specify { expect(@int1.update(int1_update, worker: 'test').alias).to eql 'acc__gar-crmx-2__xe-16/0/3' }
       specify { expect(@int1.update(int1_update, worker: 'test').neighbor).to eql 'gar-crmx-2' }
       specify { expect(@int1.update(int1_update, worker: 'test').neighbor_port).to eql 'xe-16/0/3' }
-      specify { expect(@int1.update(int1_update, worker: 'test').type).to eql 'acc' }
-      specify { expect(@int3.update(int3_update, worker: 'test').type).to eql 'bb' }
+      specify { expect(@int1.update(int1_update, worker: 'test').type).to eql 'Access' }
+      specify { expect(@int3.update(int3_update, worker: 'test').type).to eql 'Backbone' }
+      specify { expect(@int1.update(int1_update, worker: 'test').type_raw).to eql 'acc' }
+      specify { expect(@int3.update(int3_update, worker: 'test').type_raw).to eql 'bb' }
     end
 
     describe '#write_to_influxdb' do

@@ -36,19 +36,19 @@ class Pixel < Sinatra::Base
     redirect to(target.empty? ? '/' : "/device/#{target}")
   end
 
-  get '/device/:device' do |device|
+  get '/device/*' do |device_name|
     # Start timer
     beginning = Time.now
 
-    devices = get_device(@@settings, @@db, device)
+    device = Device.fetch(device_name, :all => true)
 
     # How long did it take us to query the database
     db_elapsed = '%.2f' % (Time.now - beginning)
 
     erb :device, :locals => {
       :settings => @@settings,
+      :device_name => device_name,
       :device => device,
-      :data => devices[device],
       :db_elapsed => db_elapsed,
     }
   end

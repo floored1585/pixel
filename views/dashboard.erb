@@ -184,8 +184,8 @@
             <i class="fa fa-clock-o fa-2x"></i>
           </div>
           <div class="col-xs-9 text-right">
-            <span class="huge"><%= count = count_children(cpus_high) %></span>
-            <span>&nbsp;Device<%= 's' if count != 1 %> with high CPU utilization</span>
+            <span class="huge"><%= count = cpus_high.count %></span>
+            <span>&nbsp;Device<%= 's' if cpus_high.count != 1 %> with high CPU utilization</span>
           </div>
         </div>
       </div>
@@ -199,17 +199,15 @@
             </tr>
           </thead>
           <tbody>
-          <% cpus_high.each do |device,data| %>
-            <% data[:cpus].each do |index,data| %>
+          <% cpus_high.each do |cpu| %>
             <tr>
-            <td><%= device_link(data) %></td>
-            <td><%= data[:description] %></td>
-            <td>
-              <span class='text-danger'><b><%= data[:util] %>%</b></span>
-            </td>
-          </tr>
-        <% end %>
-        <% end %>
+              <td><%= device_link(cpu.device) %></td>
+              <td><%= cpu.description %></td>
+              <td>
+                <span class='text-danger'><b><%= cpu.util %>%</b></span>
+              </td>
+            </tr>
+          <% end %>
           </tbody>
         </table>
         <div class="clearfix"></div>
@@ -227,8 +225,8 @@
             <i class="fa fa-tasks fa-2x"></i>
           </div>
           <div class="col-xs-9 text-right">
-            <span class="huge"><%= count = count_children(memory_high) %></span>
-            <span>&nbsp;Device<%= 's' if count != 1 %> with high memory utilization</span>
+            <span class="huge"><%= count = memory_high.count %></span>
+            <span>&nbsp;Device<%= 's' if memory_high.count != 1 %> with high memory utilization</span>
           </div>
         </div>
       </div>
@@ -242,16 +240,14 @@
             </tr>
           </thead>
           <tbody>
-          <% memory_high.each do |device,data| %>
-            <% data[:memory].each do |index,data| %>
+          <% memory_high.each do |memory| %>
             <tr>
-            <td><%= device_link(data) %></td>
-            <td><%= data[:description] %></td>
+            <td><%= device_link(memory.device) %></td>
+            <td><%= memory.description %></td>
             <td>
-              <span class='text-danger'><b><%= data[:util] %>%</b></span>
+              <span class='text-danger'><b><%= memory.util %>%</b></span>
             </td>
           </tr>
-        <% end %>
         <% end %>
           </tbody>
         </table>
@@ -270,7 +266,8 @@
             &nbsp;<i class="fa fa-bolt fa-2x"></i>
           </div>
           <div class="col-xs-9 text-right">
-            <span class="huge"><%= count = count_children(hw_problems) %></span>
+            <% count = hw_problems[:fans].count + hw_problems[:psus].count + hw_problems[:temps].count %>
+            <span class="huge"><%= count %></span>
             <span>&nbsp;Hardware Problem<%= 's' if count != 1 %></span>
           </div>
         </div>
@@ -286,20 +283,42 @@
             </tr>
           </thead>
           <tbody>
-          <% hw_problems.each do |device,components| %>
-            <% components.keys.each do |key| %>
-              <% components[key].each do |index,data| %>
-              <tr>
-              <td><%= device_link(data) %></td>
-              <td><%= key.to_s.gsub(/s$/,'').gsub('temperature','temp') %></td>
-              <td><%= data[:description] %></td>
-              <td>
-                <span class='text-danger'><b><%= data[:status_text].upcase %><%= " (#{data[:temperature]}&deg;)" if data[:temperature] %></b></span>
-              </td>
+          <% hw_problems[:fans].each do |fan| %>
+            <tr>
+            <td><%= device_link(fan.device) %></td>
+            <td>Fan</td>
+            <td><%= fan.description %></td>
+            <td>
+              <span class='text-danger'>
+                <b><%= fan.status_text.upcase %></b>
+              </span>
+            </td>
             </tr>
           <% end %>
-        <% end %>
-        <% end %>
+          <% hw_problems[:psus].each do |psu| %>
+            <tr>
+            <td><%= device_link(psu.device) %></td>
+            <td>PSU</td>
+            <td><%= psu.description %></td>
+            <td>
+              <span class='text-danger'>
+                <b><%= psu.status_text.upcase %></b>
+              </span>
+            </td>
+            </tr>
+          <% end %>
+          <% hw_problems[:temps].each do |temp| %>
+            <tr>
+            <td><%= device_link(temp.device) %></td>
+            <td>Temp</td>
+            <td><%= temp.description %></td>
+            <td>
+              <span class='text-danger'>
+                <b><%= temp.status_text.upcase %><%= " (#{temp.temp}&deg;)" %></b>
+              </span>
+            </td>
+            </tr>
+          <% end %>
           </tbody>
         </table>
         <div class="clearfix"></div>
@@ -317,8 +336,8 @@
             <i class="fa fa-exchange fa-2x"></i>
           </div>
           <div class="col-xs-9 text-right">
-            <span class="huge"><%= count = count_children(ints_saturated) %></span>
-            <span>&nbsp;Saturated interface<%= 's' if count != 1 %></span>
+            <span class="huge"><%= count = ints_saturated.count %></span>
+            <span>&nbsp;Saturated interface<%= 's' if ints_saturated.count != 1 %></span>
           </div>
         </div>
       </div>
@@ -336,36 +355,34 @@
         </tr>
       </thead>
       <tbody>
-      <% ints_saturated.each do |device,data| %>
-        <% data[:interfaces].each do |index,oids| %>
-          <tr <%= tr_attributes(oids) %>>
-            <td class='pxl-hidden'><%= oids[:bps_out] + oids[:bps_in] %></td>
-            <td><%= device_link(oids) %></td>
-            <td><%= interface_link(settings, oids) %></td>
-            <td><%= oids[:link_type] %>
-              <% if oids[:is_child] %>
-                <span> <%= "[#{oids[:my_parent_name]}]" %></span>
-              <% end %>
-            </td>
-            <td class='hidden-md hidden-sm hidden-xs'><%= neighbor_link(oids, { device_only: true }) %></td>
-            <td class='pxl-histogram pxl-meta <%= 'pxl-hoverswap' unless /^10+/.match(oids[:if_high_speed].to_s) %>' data-pxl-meta='<%= oids[:bps_in_util]%>'>
-              <span class='pxl-swap-pri'>
-                <%= bps_cell('in', oids, { compact: true, bps_only: true }) %>
-              </span>
-              <span class='pxl-swap-alt'>
-                <%= bps_cell('in', oids, { pct_only: true }) %>
-              </span>
-            </td>
-            <td class='pxl-histogram pxl-meta <%= 'pxl-hoverswap' unless /^10+/.match(oids[:if_high_speed].to_s) %>' data-pxl-meta='<%= oids[:bps_out_util]%>'>
-              <span class='pxl-swap-pri'>
-                <%= bps_cell('out', oids, { compact: true, bps_only: true }) %>
-              </span>
-              <span class='pxl-swap-alt'>
-                <%= bps_cell('out', oids, { pct_only: true }) %>
-              </span>
-            </td>
-          </tr>
-        <% end %>
+      <% ints_saturated.each do |int| %>
+        <tr <%= tr_attributes(int) %>>
+          <td class='pxl-hidden'><%= int.bps_out + int.bps_in %></td>
+          <td><%= device_link(int.device) %></td>
+          <td><%= interface_link(settings, int) %></td>
+          <td><%= int.type %>
+          <% if int.parent_name %>
+            <span> <%= "[#{int.parent_name}]" %></span>
+          <% end %>
+          </td>
+          <td class='hidden-md hidden-sm hidden-xs'><%= neighbor_link(int, { device_only: true }) %></td>
+          <td class='pxl-histogram pxl-meta <%= 'pxl-hoverswap' unless /^10+/.match(int.speed.to_s) %>' data-pxl-meta='<%= int.bps_util_in %>'>
+            <span class='pxl-swap-pri'>
+              <%= bps_cell(:in, int, sigfigs: 2, bps_only: true, units: :si_short) %>
+            </span>
+            <span class='pxl-swap-alt'>
+              <%= bps_cell(:in, int, sigfigs: 2, pct_only: true, units: :si_short) %>
+            </span>
+          </td>
+          <td class='pxl-histogram pxl-meta <%= 'pxl-hoverswap' unless /^10+/.match(int.speed.to_s) %>' data-pxl-meta='<%= int.bps_util_out %>'>
+            <span class='pxl-swap-pri'>
+              <%= bps_cell(:out, int, sigfigs: 2, bps_only: true, units: :si_short) %>
+            </span>
+            <span class='pxl-swap-alt'>
+              <%= bps_cell(:out, int, sigfigs: 2, pct_only: true, units: :si_short) %>
+            </span>
+          </td>
+        </tr>
       <% end %>
       </tbody>
       </table>

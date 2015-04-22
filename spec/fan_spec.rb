@@ -114,6 +114,11 @@ describe Fan do
       specify { expect(@fan.description).to eql nil }
     end
 
+    # status_text
+    describe '#status_text' do
+      specify { expect(@fan.status_text).to eql nil }
+    end
+
     # update
     describe '#update' do
       specify { expect(@fan.update(data1_update_ok, worker: 'test')).to be_a Fan }
@@ -154,6 +159,13 @@ describe Fan do
       specify { expect(@fan1.description).to eql 'FAN 0 @ 0/0/0' }
       specify { expect(@fan2.description).to eql 'Switch#1,  Fan#1' }
       specify { expect(@fan3.description).to eql 'PSU 1.1' }
+    end
+
+    # status_text
+    describe '#status_text' do
+      specify { expect(@fan1.status_text).to eql 'OK' }
+      specify { expect(@fan2.status_text).to eql 'OK' }
+      specify { expect(@fan3.status_text).to eql 'OK' }
     end
 
     # update

@@ -273,6 +273,22 @@ describe '#get_temperatures' do
 end
 
 
+# get_device
+describe '#get_device' do
+
+  context 'when called with a valid device' do
+    device = get_device(settings, DB, 'iad1-bdr-1')
+    specify { expect(device).to be_a Device }
+  end
+
+  context 'when called with an invalid device' do
+    device = get_device(settings, DB, 'imaginary-bdr-1')
+    specify { expect(device).to be_a Hash }
+  end
+
+end
+
+
 # add_devices
 describe '#add_devices' do
   around :each do |test|

@@ -24,12 +24,12 @@ module Core
 
 
   def get_ints_saturated(settings, db)
-    return {}
-    interfaces = db[:interface].filter{ (bps_in_util > 90) | (bps_out_util > 90) }
+    ints = []
+    db[:interface].filter{ (bps_util_in > 90) | (bps_util_out > 90) }.each do |row|
+      ints.push Interface.new(device: row[:device], index: row[:index]).populate(row)
+    end
 
-    (devices, name_to_index) = _device_map(:interfaces => interfaces)
-    _fill_metadata!(devices, settings, name_to_index)
-    return devices
+    return ints
   end
 
 
@@ -54,34 +54,39 @@ module Core
 
 
   def get_cpus_high(settings, db)
-    return {}
-    cpus = db[:cpu].filter{ util > 85 }
+    cpus = []
+    db[:cpu].filter{ util > 85 }.each do |row|
+      cpus.push CPU.new(device: row[:device], index: row[:index]).populate(row)
+    end
 
-    (devices, name_to_index) = _device_map(:cpus => cpus)
-    return devices
+    return cpus
   end
 
 
   def get_memory_high(settings, db)
-    return {}
-    memory = db[:memory].filter{ util > 90 }
+    memory = []
+    db[:memory].filter{ util > 90 }.each do |row|
+      memory.push Memory.new(device: row[:device], index: row[:index]).populate(row)
+    end
 
-    (devices, name_to_index) = _device_map(:memory => memory)
-    return devices
+    return memory
   end
 
 
   def get_hw_problems(settings, db)
-    return {}
-    temperatures = db[:temperature].filter(:status => 2)
-    psus = db[:psu].filter(:status => [2,3])
-    fans = db[:fan].filter(:status => [2,3])
+    hw = { :fans => [], :psus => [], :temps => [] }
 
-    (devices, name_to_index) = _device_map(:temperatures => temperatures,
-                                           :psus => psus,
-                                           :fans => fans,
-                                          )
-    return devices
+    db[:fan].filter(:status => [2,3]).each do |row|
+      hw[:fans].push Fan.new(device: row[:device], index: row[:index]).populate(row)
+    end
+    db[:psu].filter(:status => [2,3]).each do |row|
+      hw[:psus].push PSU.new(device: row[:device], index: row[:index]).populate(row)
+    end
+    db[:temperature].filter(:status => 2).each do |row|
+      hw[:temps].push Temperature.new(device: row[:device], index: row[:index]).populate(row)
+    end
+
+    return hw
   end
 
 
@@ -239,7 +244,7 @@ module Core
 
   def get_device(settings, db, device)
     db[:device].where(:device => device).each do |row|
-      return Device.new(row[:device]).populate(row)
+      return Device.new(row[:device]).populate(row) || {}
     end
     return {}
   end

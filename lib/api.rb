@@ -23,9 +23,9 @@ module API
     base_log = "#{src_component}: API request to #{req_type} #{task} failed: #{url}"
 
     begin # Attempt the connection
+      detail = 'unknown data'
       if req_type == 'POST'
         # Convert the object to JSON unless it's already a string!
-        detail = 'unknown data'
         detail = rawdata.name if rawdata.class == Device
         rawdata = rawdata.to_json unless rawdata.class == String
         response = HTTP.post(url, :body => rawdata)

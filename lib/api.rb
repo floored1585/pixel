@@ -19,14 +19,14 @@ module API
   end
 
   def self._execute_request(url, req_type, src_component, rawdata, task, retry_limit, retry_count=0)
+    detail = 'unknown data'
+    detail = rawdata.name if rawdata.class == Device
     retry_delay = @settings["api_retry_delay_#{req_type}"] || 5
-    base_log = "#{src_component}: API request to #{req_type} #{task} failed: #{url}"
+    base_log = "#{src_component}: API request to #{req_type} #{task} (#{detail}) failed: #{url}"
 
     begin # Attempt the connection
-      detail = 'unknown data'
       if req_type == 'POST'
         # Convert the object to JSON unless it's already a string!
-        detail = rawdata.name if rawdata.class == Device
         rawdata = rawdata.to_json unless rawdata.class == String
         response = HTTP.post(url, :body => rawdata)
       elsif req_type == 'GET'
@@ -35,7 +35,7 @@ module API
       if response.code.to_i >= 200 && response.code.to_i < 400
         return response
       else
-        $LOG.error("#{src_component}: Bad response (#{response.code.to_i}) from #{url} (#{detail}")
+        $LOG.error("#{src_component}: Bad response (#{response.code.to_i}) from #{url} (#{detail})")
         raise Net::HTTPBadResponse
       end
     rescue Timeout::Error, Errno::ETIMEDOUT, Errno::EINVAL, Errno::ECONNRESET, Net::ReadTimeout,

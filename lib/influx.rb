@@ -67,11 +67,11 @@ module Influx
     response = []
     counter = 0
     original.each do |series,points|
-      description = /#{attribute}\.(.+)$/.match(series)[1]
+      index = /#{attribute}\.([\.\d]+)\.[^\.]+$/.match(series)[1]
       device = /(.+)\.#{attribute}/.match(series)[1]
-      name = db[attribute.to_sym].filter(:device => device, :description => description).first
-      next unless name
-      name = name[:description]
+      row = db[attribute.to_sym].filter(:device => device, :index => index).first
+      next unless row
+      description = row[:description]
       data = []
       points.each do |point|
         data.unshift({
@@ -81,7 +81,7 @@ module Influx
       end
       response.push({
         'color' => @colors[counter],
-        'name' => name,
+        'name' => description,
         'data' => data,
       })
       counter += 1

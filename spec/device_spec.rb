@@ -374,9 +374,9 @@ describe Device do
       specify { expect(dev1.get_children(parent_index: 5002).size).to eql 2 }
       specify { expect(dev1.get_children(parent_index: '5002').size).to eql 2 }
       specify { expect(dev1.get_children(parent_name: 'PO2').first).to be_a Interface }
-      specify { expect(dev1.get_children(parent_name: 'PO2').first.index).to eql 10101 }
+      specify { expect(dev1.get_children(parent_name: 'PO2').first.index.to_s).to match /1010[12]/ }
       specify { expect(dev1.get_children(parent_index: 5002).first).to be_a Interface }
-      specify { expect(dev1.get_children(parent_index: '5002').first.index).to eql 10101 }
+      specify { expect(dev1.get_children(parent_index: '5002').first.index.to_s).to match /1010[12]/ }
       specify { expect(dev1.get_children(parent_index: '5001202')).to eql [] }
     end
 

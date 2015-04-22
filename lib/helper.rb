@@ -118,7 +118,7 @@ module Helper
   def interface_link(settings, int)
     "<a href='#{settings['grafana_if_dash']}" +
     "?title=#{int.device}%20::%20#{CGI::escape(int.name)}" +
-    "&name=#{int.device}.#{int.index}" +
+    "&name=#{int.device}.interface.#{int.index}.#{int.name}" +
     "&ifSpeedBps=#{int.speed}" +
     "&ifMaxBps=#{[ int.bps_in, int.bps_out ].max}" +
     "' target='_blank'>#{int.name}</a>"

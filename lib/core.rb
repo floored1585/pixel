@@ -296,7 +296,7 @@ module Core
       if device.poller_uuid == db[:device].where(:device => device.name).get(:poller_uuid)
         device.save(db)
         db[:device].where(:device => device.name).update(:currently_polling => 0)
-        $LOG.info("CORE: Saved device #{device.name} from #{device.worker}") if device.name == 'iad1-a-1'
+        $LOG.info("CORE: Saved device #{device.name} from #{device.worker} (#{uuid})") if device.name == 'iad1-a-1'
       else
         $LOG.error("CORE: Received invalid poller_uuid (#{uuid}) for device #{device.name} from #{device.worker}") if device.name == 'iad1-a-1'
       end

@@ -291,7 +291,7 @@ module Core
   def post_device(settings, db, device)
     db.disconnect
     uuid = device.poller_uuid
-    $LOG.info("CORE: Receiving device #{device.name} from #{device.worker} (#{uuid})")
+    $LOG.info("CORE: Receiving device #{device.name} from #{device.worker} (#{uuid})") if device.name == 'iad1-a-1'
     begin
       if device.poller_uuid == db[:device].where(:device => device.name).get(:poller_uuid)
         device.save(db)

@@ -290,14 +290,15 @@ module Core
 
   def post_device(settings, db, device)
     db.disconnect
-    $LOG.info("CORE: Receiving device #{device.name} from #{device.worker} (#{device.poller_uuid})")
+    uuid = device.poller_uuid
+    $LOG.info("CORE: Receiving device #{device.name} from #{device.worker} (#{uuid})")
     begin
       if device.poller_uuid == db[:device].where(:device => device.name).get(:poller_uuid)
         device.save(db)
         db[:device].where(:device => device.name).update(:currently_polling => 0)
         $LOG.info("CORE: Saved device #{device.name} from #{device.worker}")
       else
-        $LOG.error("CORE: Invalid poller_uuid from #{device.worker} - #{device.name}")
+        $LOG.error("CORE: Received invalid poller_uuid (#{uuid}) for device #{device.name} from #{device.worker}")
       end
     rescue Sequel::PoolTimeout => e
       $LOG.error("CORE: SQL error! \n#{e}")

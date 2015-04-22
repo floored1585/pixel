@@ -199,8 +199,12 @@ class Device
     @poll_cfg = poll_cfg if poll_cfg
 
     # Return if we don't have everything needed to poll
-    unless @poll_cfg && @poll_ip
-      $LOG.error("Device<#{@name}>: Can't execute poll with no poll_cfg or poll_ip")
+    unless @poll_cfg
+      $LOG.error("Device<#{@name}>: Can't execute poll with no poll_cfg")
+      return nil
+    end
+    unless @poll_ip
+      $LOG.error("Device<#{@name}>: Can't execute poll with poll_ip")
       return nil
     end
 

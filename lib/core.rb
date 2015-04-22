@@ -266,7 +266,7 @@ module Core
     # Fetch some devices and mark them as polling
     db.transaction do
       rows = db[:device].filter{ next_poll < Time.now.to_i }
-      rows = rows.filter{Sequel.|({:currently_polling => 0}, (last_poll < Time.now.to_i - 1000))}
+      rows = rows.filter{Sequel.|({:currently_polling => 0}, (last_poll < Time.now.to_i - 1800))}
       rows = rows.order(:next_poll)
       rows = rows.limit(count).for_update
 

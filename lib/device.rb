@@ -234,6 +234,15 @@ class Device
       @next_poll = Time.now.to_i + 100
       @last_poll_result = 1
       @last_poll_text = e.to_s
+
+      # Unset components so they aren't erased
+      @interfaces = {}
+      @cpus = {}
+      @fans = {}
+      @memory = {}
+      @psus = {}
+      @temps = {}
+
       send
       return nil
     ensure

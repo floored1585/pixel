@@ -291,7 +291,7 @@ module Core
     db.disconnect
     $LOG.info("CORE: Received device #{device.name} from #{device.worker}")
     begin
-      if device.poller_uuid == db[:device].where(:device => device.name)[0][:poller_uuid]
+      if device.poller_uuid == db[:device].where(:device => device.name).get(:poller_uuid)
         device.save(db)
         db[:device].where(:device => device.name).update(:currently_polling => 0)
       else

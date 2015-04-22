@@ -289,6 +289,7 @@ module Core
     $LOG.info("CORE: Received device #{device.name} from #{device.worker}")
     begin
       device.save(db)
+      db.where(:device => device.name).update(:currently_polling => 0)
     rescue Sequel::PoolTimeout => e
       $LOG.error("CORE: SQL error! \n#{e}")
     end

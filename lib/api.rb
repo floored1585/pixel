@@ -25,6 +25,8 @@ module API
     begin # Attempt the connection
       if req_type == 'POST'
         # Convert the object to JSON unless it's already a string!
+        detail = 'unknown data'
+        detail = rawdata.name if rawdata.class == Device
         rawdata = rawdata.to_json unless rawdata.class == String
         response = HTTP.post(url, :body => rawdata)
       elsif req_type == 'GET'
@@ -33,7 +35,7 @@ module API
       if response.code.to_i >= 200 && response.code.to_i < 400
         return response
       else
-        $LOG.error("#{src_component}: Bad response (#{response.code.to_i}) from #{url}")
+        $LOG.error("#{src_component}: Bad response (#{response.code.to_i}) from #{url} (#{detail}")
         raise Net::HTTPBadResponse
       end
     rescue Timeout::Error, Errno::ETIMEDOUT, Errno::EINVAL, Errno::ECONNRESET, Net::ReadTimeout,

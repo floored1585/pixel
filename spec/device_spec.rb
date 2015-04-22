@@ -195,7 +195,7 @@ describe Device do
     end
 
     describe '#uptime' do
-      specify { expect(@dev_name.uptime).to eql nil }
+      specify { expect(@dev_name.uptime).to eql 0 }
     end
 
     describe '#interfaces' do
@@ -229,19 +229,19 @@ describe Device do
     end
 
     describe '#vendor' do
-      specify { expect(@dev_name.vendor).to eql nil }
+      specify { expect(@dev_name.vendor).to eql '' }
     end
 
     describe '#sw_descr' do
-      specify { expect(@dev_name.sw_descr).to eql nil }
+      specify { expect(@dev_name.sw_descr).to eql '' }
     end
 
     describe '#sw_version' do
-      specify { expect(@dev_name.sw_version).to eql nil }
+      specify { expect(@dev_name.sw_version).to eql '' }
     end
 
     describe '#hw_model' do
-      specify { expect(@dev_name.hw_model).to eql nil }
+      specify { expect(@dev_name.hw_model).to eql '' }
     end
 
     describe '#red_alarm' do

@@ -96,12 +96,12 @@ class Device
 
 
   def worker
-    @worker
+    @worker.to_s
   end
 
 
   def uptime
-    @uptime
+    @uptime.to_i
   end
 
 
@@ -134,22 +134,22 @@ class Device
 
 
   def vendor
-    @vendor
+    @vendor.to_s
   end
 
 
   def sw_descr
-    @sw_descr
+    @sw_descr.to_s
   end
 
 
   def sw_version
-    @sw_version
+    @sw_version.to_s
   end
 
 
   def hw_model
-    @hw_model
+    @hw_model.to_s
   end
 
 
@@ -231,11 +231,11 @@ class Device
 
     rescue RuntimeError, ArgumentError => e
       $LOG.error("POLLER: Error encountered while polling #{@name}: #{e}")
-      @last_poll = Time.now.to_i
       @next_poll = Time.now.to_i + 100
       @last_poll_result = 1
       @last_poll_text = e.to_s
       send
+      return nil
     ensure
       session.close if session
     end

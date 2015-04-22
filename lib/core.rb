@@ -1,4 +1,5 @@
 #!/usr/bin/env ruby
+require 'securerandom'
 
 module Core
 
@@ -254,14 +255,14 @@ module Core
     db.disconnect
     currently_polling = db[:device].filter{Sequel.&(
       {:currently_polling => 1, :worker => poller},
-      last_poll > Time.now.to_i - 1000,
+      last_poll > Time.now.to_i - 1800,
     )}.count
     count = count - currently_polling
 
     # Don't return more work if this poller is maxed out
     return {} if count < 1
 
-    devices = []
+    devices = {}
     # Fetch some devices and mark them as polling
     db.transaction do
       rows = db[:device].filter{ next_poll < Time.now.to_i }
@@ -270,11 +271,13 @@ module Core
       rows = rows.limit(count).for_update
 
       rows.each do |row|
-        devices.push(row[:device])
+        uuid = SecureRandom.uuid
+        devices[row[:device]] = uuid
         $LOG.warn("CORE: Overriding currently_polling for #{row[:device]} (#{poller})") if row[:currently_polling] == 1
         device_row = db[:device].where(:device => row[:device])
         device_row.update(
           :currently_polling => 1,
+          :poller_uuid => uuid,
           :worker => poller,
           :last_poll => Time.now.to_i,
         )
@@ -288,8 +291,12 @@ module Core
     db.disconnect
     $LOG.info("CORE: Received device #{device.name} from #{device.worker}")
     begin
-      device.save(db)
-      db[:device].where(:device => device.name).update(:currently_polling => 0)
+      if device.poller_uuid == db[:device].where(:device => device.name)[0][:poller_uuid]
+        device.save(db)
+        db[:device].where(:device => device.name).update(:currently_polling => 0)
+      else
+        $LOG.error("CORE: Invalid poller_uuid from #{device.worker} - #{device.name}")
+      end
     rescue Sequel::PoolTimeout => e
       $LOG.error("CORE: SQL error! \n#{e}")
     end

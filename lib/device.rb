@@ -59,6 +59,11 @@ class Device
   end
 
 
+  def poller_uuid
+    @poller_uuid || ''
+  end
+
+
   # Return an array containing all Interface objects in the device
   def interfaces
     @interfaces
@@ -191,8 +196,9 @@ class Device
   end
 
 
-  def poll(worker:, poll_ip: nil, poll_cfg: nil, items: [ :all ])
+  def poll(worker:, uuid:, poll_ip: nil, poll_cfg: nil, items: [ :all ])
     @worker = worker
+    @poller_uuid = uuid
 
     # If poll_ip or poll_cfg were passed in, update them
     @poll_ip = poll_ip if poll_ip
@@ -243,7 +249,6 @@ class Device
       @psus = {}
       @temps = {}
 
-      send
       return nil
     ensure
       session.close if session
@@ -299,6 +304,7 @@ class Device
       @uptime = data[:uptime].to_i_if_numeric
       @yellow_alarm = data[:yellow_alarm].to_i_if_numeric
       @red_alarm = data[:red_alarm].to_i_if_numeric
+      @poller_uuid = data[:poller_uuid]
     end
 
     # Fill in interfaces
@@ -485,6 +491,7 @@ class Device
     hash['data']['uptime'] = @uptime if @uptime
     hash['data']['yellow_alarm'] = @yellow_alarm if @yellow_alarm
     hash['data']['red_alarm'] = @red_alarm if @red_alarm
+    hash['data']['poller_uuid'] = @poller_uuid if @poller_uuid
     hash['data']['interfaces'] = @interfaces if @interfaces
     hash['data']['cpus'] = @cpus if @cpus
     hash['data']['fans'] = @fans if @fans

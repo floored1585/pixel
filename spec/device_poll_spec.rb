@@ -19,7 +19,7 @@ describe Device do
     context 'when newly created with name' do
       dev = Device.new('gar-c11u1-dist')
 
-      specify { expect(dev.poll(worker: 'test-worker')).to eql nil }
+      specify { expect(dev.poll(worker: 'test-worker', uuid: 'blah')).to eql nil }
     end
 
     context 'when newly created with name and IP' do
@@ -33,15 +33,15 @@ describe Device do
       dev_memory = Device.new('irv-i1u1-dist', poll_ip: '208.113.142.180')
       dev_all = Device.new('irv-i1u1-dist', poll_ip: '208.113.142.180')
 
-      dev.poll(worker: 'test-worker')
-      dev_device.poll(worker: 'test-worker', items: [])
-      dev_interfaces.poll(worker: 'test-worker', items: [:interfaces])
-      dev_temperatures.poll(worker: 'test-worker', items: [:temperatures])
-      dev_fans.poll(worker: 'test-worker', items: [:fans])
-      dev_psus.poll(worker: 'test-worker', items: [:psus])
-      dev_cpus.poll(worker: 'test-worker', items: [:cpus])
-      dev_memory.poll(worker: 'test-worker', items: [:memory])
-      dev_all.poll(worker: 'test-worker', items: [:all])
+      dev.poll(worker: 'test-worker', uuid: 'blah')
+      dev_device.poll(worker: 'test-worker', uuid: 'blah', items: [])
+      dev_interfaces.poll(worker: 'test-worker', uuid: 'blah', items: [:interfaces])
+      dev_temperatures.poll(worker: 'test-worker', uuid: 'blah', items: [:temperatures])
+      dev_fans.poll(worker: 'test-worker', uuid: 'blah', items: [:fans])
+      dev_psus.poll(worker: 'test-worker', uuid: 'blah', items: [:psus])
+      dev_cpus.poll(worker: 'test-worker', uuid: 'blah', items: [:cpus])
+      dev_memory.poll(worker: 'test-worker', uuid: 'blah', items: [:memory])
+      dev_all.poll(worker: 'test-worker', uuid: 'blah', items: [:all])
 
       context 'and when all items polled' do
         it 'should return a Device object' do
@@ -265,7 +265,7 @@ describe Device do
     test_devices.each do |label, device|
       context "on a #{label} when populated" do
         dev_obj = Device.fetch(device)
-        specify { expect(dev_obj.poll(worker: 'test-worker')).to be_a Device }
+        specify { expect(dev_obj.poll(worker: 'test-worker', uuid: 'blah')).to be_a Device }
       end
     end
 

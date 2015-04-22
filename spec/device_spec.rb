@@ -194,6 +194,10 @@ describe Device do
       specify { expect(dev_ip.poll_ip).to eql '1.2.3.4' }
     end
 
+    describe '#poller_uuid' do
+      specify { expect(@dev_name.poller_uuid).to be_empty }
+    end
+
     describe '#uptime' do
       specify { expect(@dev_name.uptime).to eql 0 }
     end
@@ -285,6 +289,11 @@ describe Device do
     describe '#poll_ip' do
       specify { expect(dev1.poll_ip).to eql '172.24.7.54' }
       specify { expect(dev2.poll_ip).to eql '208.113.142.180' }
+    end
+
+    describe '#poller_uuid' do
+      specify { expect(dev1.poller_uuid).not_to be_empty }
+      specify { expect(dev2.poller_uuid).not_to be_empty }
     end
 
     describe '#uptime' do

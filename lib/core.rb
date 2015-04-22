@@ -274,7 +274,7 @@ module Core
         uuid = SecureRandom.uuid
         devices[row[:device]] = uuid
         $LOG.warn("CORE: Overriding currently_polling for #{row[:device]} (#{poller})") if row[:currently_polling] == 1
-        $LOG.info("CORE: Sending device #{row[:device]} to #{poller}")
+        $LOG.info("CORE: Sending device #{row[:device]} to #{poller} (#{uuid})")
         device_row = db[:device].where(:device => row[:device])
         device_row.update(
           :currently_polling => 1,
@@ -290,12 +290,12 @@ module Core
 
   def post_device(settings, db, device)
     db.disconnect
-    $LOG.info("CORE: Receiving device #{device.name} from #{device.worker}")
+    $LOG.info("CORE: Receiving device #{device.name} from #{device.worker} (#{device.poller_uuid})")
     begin
       if device.poller_uuid == db[:device].where(:device => device.name).get(:poller_uuid)
         device.save(db)
         db[:device].where(:device => device.name).update(:currently_polling => 0)
-        $LOG.info("CORE: Device #{device.name} from #{device.worker} saved")
+        $LOG.info("CORE: Saved device #{device.name} from #{device.worker}")
       else
         $LOG.error("CORE: Invalid poller_uuid from #{device.worker} - #{device.name}")
       end

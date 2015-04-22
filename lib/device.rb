@@ -204,7 +204,7 @@ class Device
       return nil
     end
     unless @poll_ip
-      $LOG.error("Device<#{@name}>: Can't execute poll with poll_ip")
+      $LOG.error("Device<#{@name}>: Can't execute poll with no poll_ip")
       return nil
     end
 

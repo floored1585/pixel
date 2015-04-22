@@ -388,17 +388,6 @@ class Device
 
   def save(db)
 
-    # Remove keys from the from_json output that are not part of the device table
-    not_keys = %w( interfaces memory temps cpus psus fans )
-    data = JSON.parse(self.to_json)['data'].delete_if { |k,v| not_keys.include?(k) }
-
-    # Update the device table
-    existing = db[:device].where(:device => @name)
-    if existing.update(data) != 1
-      db[:device].insert(data)
-      $LOG.info("DEVICE: Created device #{@name}")
-    end
-
     expire_time = Time.now.to_i - 300
 
     # If the interface was just updated, save it.  If not, delete it.
@@ -419,6 +408,17 @@ class Device
     end
     @temps.each do |index, temp|
       temp.last_updated > expire_time ? temp.save(db) : temp.delete(db)
+    end
+
+    # Remove keys from the from_json output that are not part of the device table
+    not_keys = %w( interfaces memory temps cpus psus fans )
+    data = JSON.parse(self.to_json)['data'].delete_if { |k,v| not_keys.include?(k) }
+
+    # Update the device table
+    existing = db[:device].where(:device => @name)
+    if existing.update(data) != 1
+      db[:device].insert(data)
+      $LOG.info("DEVICE: Created device #{@name}")
     end
 
     return self

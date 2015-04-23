@@ -20,7 +20,7 @@ module API
 
   def self._execute_request(url, req_type, src_component, rawdata, task, retry_limit, retry_count=0)
     detail = 'unknown data'
-    detail = rawdata[/iad1-a-1/] if rawdata.class == String
+    detail = rawdata[/iad1-a-1/].to_s + ' ' + rawdata[/uuid":"[0-9a-zA-Z\-]+/].to_s if rawdata.class == String
     retry_delay = @settings["api_retry_delay_#{req_type}"] || 5
     base_log = "#{src_component}: API request to #{req_type} #{task} (#{detail}) failed: #{url}"
 

@@ -375,10 +375,10 @@ class Device
     start = Time.now.to_i
     if API.post('core', '/v2/device', to_json, 'POLLER', 'poll results')
       elapsed = Time.now.to_i - start
-      $LOG.info("POLLER: POST successful for #{@name} (#{elapsed} seconds)") if @name == 'iad1-a-1'
+      $LOG.info("POLLER: POST successful for #{@name} (#{elapsed} seconds)")
       return true
     else
-      $LOG.error("POLLER: POST failed for #{@name}; Aborting") if @name == 'iad1-a-1'
+      $LOG.error("POLLER: POST failed for #{@name}; Aborting")
       return false
     end
   end

@@ -28,6 +28,7 @@ module API
       if req_type == 'POST'
         # Convert the object to JSON unless it's already a string!
         rawdata = rawdata.to_json unless rawdata.class == String
+        $LOG.info("API: Sending data for iad1-a-1 to core") if detail == 'iad1-a-1' && src_component == 'POLLER'
         response = HTTP.post(url, :body => rawdata)
       elsif req_type == 'GET'
         response = HTTP.get(url)

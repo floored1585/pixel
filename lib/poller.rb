@@ -31,6 +31,7 @@ module Poller
       end
 
       # Send regardless of success or failure
+      $LOG.info("POLLER: Sending device #{device_name} (#{device.poller_uuid})")
       device.send
 
     end # End fork

@@ -95,10 +95,15 @@ class PSU
     data = JSON.parse(self.to_json)['data']
 
     # Update the psu table
-    existing = db[:psu].where(:device => @device, :index => @index)
-    if existing.update(data) != 1
-      db[:psu].insert(data)
-      $LOG.info("PSU: Adding new psu #{@index} on #{@device} from #{@worker}")
+    begin
+      existing = db[:psu].where(:device => @device, :index => @index)
+      if existing.update(data) != 1
+        db[:psu].insert(data)
+        $LOG.info("PSU: Adding new psu #{@index} on #{@device} from #{@worker}")
+      end
+    rescue Sequel::NotNullConstraintViolation, Sequel::ForeignKeyConstraintViolation => e
+      $LOG.error("PSU: Save failed. #{e.to_s.gsub(/\n/,'. ')}")
+      return nil
     end
 
     return self

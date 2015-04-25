@@ -98,10 +98,15 @@ class CPU
     data = JSON.parse(self.to_json)['data']
 
     # Update the cpu table
-    existing = db[:cpu].where(:device => @device, :index => @index)
-    if existing.update(data) != 1
-      db[:cpu].insert(data)
-      $LOG.info("CPU: Adding new cpu #{@index} on #{@device} from #{@worker}")
+    begin
+      existing = db[:cpu].where(:device => @device, :index => @index)
+      if existing.update(data) != 1
+        db[:cpu].insert(data)
+        $LOG.info("CPU: Adding new cpu #{@index} on #{@device} from #{@worker}")
+      end
+    rescue Sequel::NotNullConstraintViolation, Sequel::ForeignKeyConstraintViolation => e
+      $LOG.error("CPU: Save failed. #{e.to_s.gsub(/\n/,'. ')}")
+      return nil
     end
 
     return self

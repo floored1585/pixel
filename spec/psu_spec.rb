@@ -205,12 +205,12 @@ describe PSU do
 
     it 'should fail if empty' do
       psu = PSU.new(device: 'test-v11u1-acc-y', index: '1003')
-      expect{psu.save(DB)}.to raise_error Sequel::NotNullConstraintViolation
+      expect(psu.save(DB)).to eql nil
     end
 
     it 'should fail if device does not exist' do
       psu = PSU.new(device: 'test-test-y', index: '1003').populate(imaginary_data)
-      expect{psu.save(DB)}.to raise_error Sequel::ForeignKeyConstraintViolation
+      expect(psu.save(DB)).to eql nil
     end
 
     it 'should exist after being saved' do

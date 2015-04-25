@@ -98,10 +98,15 @@ class Memory
     data = JSON.parse(self.to_json)['data']
 
     # Update the memory table
-    existing = db[:memory].where(:device => @device, :index => @index)
-    if existing.update(data) != 1
-      db[:memory].insert(data)
-      $LOG.info("MEMORY: Adding new memory #{@index} on #{@device} from #{@worker}")
+    begin
+      existing = db[:memory].where(:device => @device, :index => @index)
+      if existing.update(data) != 1
+        db[:memory].insert(data)
+        $LOG.info("MEMORY: Adding new memory #{@index} on #{@device} from #{@worker}")
+      end
+    rescue Sequel::NotNullConstraintViolation, Sequel::ForeignKeyConstraintViolation => e
+      $LOG.error("MEMORY: Save failed. #{e.to_s.gsub(/\n/,'. ')}")
+      return nil
     end
 
     return self

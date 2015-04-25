@@ -197,12 +197,12 @@ describe Memory do
 
     it 'should fail if empty' do
       memory = Memory.new(device: 'test-v11u1-acc-y', index: '1')
-      expect{memory.save(DB)}.to raise_error Sequel::NotNullConstraintViolation
+      expect(memory.save(DB)).to eql nil
     end
 
     it 'should fail if device does not exist' do
       memory = Memory.new(device: 'test-test-acc-y', index: '1').populate(imaginary_data)
-      expect{memory.save(DB)}.to raise_error Sequel::ForeignKeyConstraintViolation
+      expect(memory.save(DB)).to eql nil
     end
 
     it 'should exist after being saved' do

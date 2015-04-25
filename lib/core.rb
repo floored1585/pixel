@@ -293,8 +293,11 @@ module Core
     uuid = device.poller_uuid
     $LOG.info("CORE: Receiving device #{device.name} from #{device.worker} (#{uuid})")
     begin
-      if device.poller_uuid == db[:device].where(:device => device.name).get(:poller_uuid)
-        device.save(db)
+      # Only process the data if the poller_uuid is empty (post not from a poller) or
+      #   matches the database value.  This won't be needed after HTTP gem is removed so
+      #   we can control timeouts properly.
+      if uuid.empty? || uuid == db[:device].where(:device => device.name).get(:poller_uuid)
+        response = device.save(db).class == Device ? 200 : 400
         db[:device].where(:device => device.name).update(:currently_polling => 0)
         $LOG.info("CORE: Saved device #{device.name} from #{device.worker} (#{uuid})")
       else
@@ -303,7 +306,7 @@ module Core
     rescue Sequel::PoolTimeout => e
       $LOG.error("CORE: SQL error! \n#{e}")
     end
-    return 200
+    return response
   end
 
   def post_interface(settings, db, int)

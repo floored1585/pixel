@@ -445,9 +445,9 @@ describe Device do
       expect(Device.fetch('test-v11u1-acc-y')).to eql nil
     end
 
-    it 'should raise exception if no poll IP' do
+    it 'should return nil if no poll IP' do
       dev = Device.new('test-v11u1-acc-y')
-      expect{dev.save(DB)}.to raise_error Sequel::NotNullConstraintViolation
+      expect(dev.save(DB)).to eql nil
     end
 
     it 'should save OK w/ name and IP' do

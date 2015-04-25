@@ -205,12 +205,12 @@ describe Fan do
 
     it 'should fail if empty' do
       fan = Fan.new(device: 'test-v11u1-acc-y', index: '1004')
-      expect{fan.save(DB)}.to raise_error Sequel::NotNullConstraintViolation
+      expect(fan.save(DB)).to eql nil
     end
 
     it 'should fail if device does not exist' do
       fan = Fan.new(device: 'test-test-test-y', index: '1004').populate(imaginary_data)
-      expect{fan.save(DB)}.to raise_error Sequel::ForeignKeyConstraintViolation
+      expect(fan.save(DB)).to eql nil
     end
 
     it 'should exist after being saved' do

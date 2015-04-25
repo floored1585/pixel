@@ -189,12 +189,12 @@ describe CPU do
 
     it 'should fail if empty' do
       cpu = CPU.new(device: 'test-v11u1-acc-y', index: '1')
-      expect{cpu.save(DB)}.to raise_error Sequel::NotNullConstraintViolation
+      expect(cpu.save(DB)).to eql nil
     end
 
     it 'should fail if device does not exist' do
       cpu = CPU.new(device: 'test-test-acc-y', index: '1').populate(imaginary_data)
-      expect{cpu.save(DB)}.to raise_error Sequel::ForeignKeyConstraintViolation
+      expect(cpu.save(DB)).to eql nil
     end
 
     it 'should exist after being saved' do

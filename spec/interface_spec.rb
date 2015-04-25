@@ -576,12 +576,12 @@ describe Interface do
 
     it 'should fail if empty' do
       int = Interface.new(device: 'test-v11u1-acc-y', index: 10139)
-      expect{int.save(DB)}.to raise_error Sequel::NotNullConstraintViolation
+      expect(int.save(DB)).to eql nil
     end
 
-    it 'should fail if devices does not exist' do
+    it 'should fail if device does not exist' do
       int = JSON.load(IMAGINARY_INT)
-      expect{int.save(DB)}.to raise_error Sequel::ForeignKeyConstraintViolation
+      expect(int.save(DB)).to eql nil
     end
 
     it 'should exist after being saved' do

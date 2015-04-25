@@ -95,10 +95,15 @@ class Fan
     data = JSON.parse(self.to_json)['data']
 
     # Update the fan table
-    existing = db[:fan].where(:device => @device, :index => @index)
-    if existing.update(data) != 1
-      db[:fan].insert(data)
-      $LOG.info("FAN: Adding new fan #{@index} on #{@device} from #{@worker}")
+    begin
+      existing = db[:fan].where(:device => @device, :index => @index)
+      if existing.update(data) != 1
+        db[:fan].insert(data)
+        $LOG.info("FAN: Adding new fan #{@index} on #{@device} from #{@worker}")
+      end
+    rescue Sequel::NotNullConstraintViolation, Sequel::ForeignKeyConstraintViolation => e
+      $LOG.error("FAN: Save failed. #{e.to_s.gsub(/\n/,'. ')}")
+      return nil
     end
 
     return self

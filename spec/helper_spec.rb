@@ -157,7 +157,7 @@ describe '#interface_link' do
     link = interface_link(settings, int)
     correct_link = "<a href='#{settings['grafana_if_dash']}" +
     "?title=gar-v11u1-acc-y%20::%20Gi0%2F2" +
-    "&name=gar-v11u1-acc-y.10102" +
+    "&name=gar-v11u1-acc-y.interface.10102.Gi0/2" +
     "&ifSpeedBps=1000" +
     "&ifMaxBps=35802192" +
     "' target='_blank'>Gi0/2</a>"

@@ -115,10 +115,15 @@ class Temperature
     data = JSON.parse(self.to_json)['data']
 
     # Update the temperature table
-    existing = db[:temperature].where(:device => @device, :index => @index)
-    if existing.update(data) != 1
-      db[:temperature].insert(data)
-      $LOG.info("TEMPERATURE: Adding new temperature #{@index} on #{@device} from #{@worker}")
+    begin
+      existing = db[:temperature].where(:device => @device, :index => @index)
+      if existing.update(data) != 1
+        db[:temperature].insert(data)
+        $LOG.info("TEMPERATURE: Adding new temperature #{@index} on #{@device} from #{@worker}")
+      end
+    rescue Sequel::NotNullConstraintViolation, Sequel::ForeignKeyConstraintViolation => e
+      $LOG.error("PSU: Save failed. #{e.to_s.gsub(/\n/,'. ')}")
+      return nil
     end
 
     return self

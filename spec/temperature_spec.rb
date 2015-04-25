@@ -210,12 +210,12 @@ describe Temperature do
 
     it 'should fail if empty' do
       temp = Temperature.new(device: 'test-v11u1-acc-y', index: '1005')
-      expect{temp.save(DB)}.to raise_error Sequel::NotNullConstraintViolation
+      expect(temp.save(DB)).to eql nil
     end
 
     it 'should fail if device does not exist' do
       temp = Temperature.new(device: 'test-test-y', index: '1005').populate(imaginary_data)
-      expect{temp.save(DB)}.to raise_error Sequel::ForeignKeyConstraintViolation
+      expect(temp.save(DB)).to eql nil
     end
 
     it 'should exist after being saved' do

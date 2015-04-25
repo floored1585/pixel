@@ -414,10 +414,15 @@ class Interface
     data = JSON.parse(self.to_json)['data']
 
     # Update the interface table
-    existing = db[:interface].where(:device => @device, :index => @index)
-    if existing.update(data) != 1
-      db[:interface].insert(data)
-      $LOG.info("INTERFACE: Adding new interface #{@index} (#{@name}) on #{@device}. Last poller: #{@worker}")
+    begin
+      existing = db[:interface].where(:device => @device, :index => @index)
+      if existing.update(data) != 1
+        db[:interface].insert(data)
+        $LOG.info("INTERFACE: Adding new interface #{@index} (#{@name}) on #{@device}. Last poller: #{@worker}")
+      end
+    rescue Sequel::NotNullConstraintViolation, Sequel::ForeignKeyConstraintViolation => e
+      $LOG.error("INTERFACE: Save failed. #{e.to_s.gsub(/\n/,'. ')}")
+      return nil
     end
 
     return self

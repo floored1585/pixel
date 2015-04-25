@@ -408,10 +408,15 @@ class Device
     data = JSON.parse(self.to_json)['data'].delete_if { |k,v| not_keys.include?(k) }
 
     # Update the device table
-    existing = db[:device].where(:device => @name)
-    if existing.update(data) != 1
-      db[:device].insert(data)
-      $LOG.info("DEVICE: Created device #{@name}")
+    begin
+      existing = db[:device].where(:device => @name)
+      if existing.update(data) != 1
+        db[:device].insert(data)
+        $LOG.info("DEVICE: Created device #{@name}")
+      end
+    rescue Sequel::NotNullConstraintViolation => e
+      $LOG.error("DEVICE: Save failed. Missing manditory values. #{e.to_s.gsub(/\n/,'. ')}")
+      return nil
     end
 
     expire_time = Time.now.to_i - 300

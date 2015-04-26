@@ -10,7 +10,12 @@ class CPU
 
 
   def self.fetch(device, index)
-    obj = API.get('core', "/v2/device/#{device}/cpu/#{index}", 'CPU', 'cpu data')
+    obj = API.get(
+      src: 'cpu',
+      dst: 'core',
+      resource: "/v2/device/#{device}/cpu/#{index}",
+      what: "cpu #{index} on #{device}",
+    )
     obj.class == CPU ? obj : nil
   end
 

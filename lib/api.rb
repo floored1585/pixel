@@ -1,57 +1,86 @@
 require_relative 'configfile'
 require 'net/http'
-require 'http'
+require 'uri'
 require 'json'
+
+$LOG ||= Logger.new(STDOUT)
 
 module API
 
   @settings = Configfile.retrieve
 
-  def self.get(dst_component, request, src_component, task, retry_limit=5)
-    url = @settings[dst_component] + request
-    response = _execute_request(url, 'GET', src_component, nil, task, retry_limit)
-    response ? JSON.load(response.body) : false
-  end
 
-  def self.post(dst_component, request, rawdata, src_component, task, retry_limit=5)
-    url = @settings[dst_component] + request
-    _execute_request(url, 'POST', src_component, rawdata, task, retry_limit)
-  end
+  def self.get(src:, dst:, resource:, what:, retries: 5, delay: 5)
+    uri, http = get_http(dst, resource)
+    req = Net::HTTP::Get.new(uri.request_uri)
+    response = http.request(req)
 
-  def self._execute_request(url, req_type, src_component, rawdata, task, retry_limit, retry_count=0)
-    retry_delay = @settings["api_retry_delay_#{req_type}"] || 5
-    base_log = "#{src_component}: API request to #{req_type} #{task} failed: #{url}"
+    # Return an object if successful
+    return JSON.load(response.body) if response.kind_of? Net::HTTPSuccess
 
-    begin # Attempt the connection
-      if req_type == 'POST'
-        # Convert the object to JSON unless it's already a string!
-        rawdata = rawdata.to_json unless rawdata.class == String
-        response = HTTP.post(url, :body => rawdata)
-      elsif req_type == 'GET'
-        response = HTTP.get(url)
-      end
-      if response.code.to_i >= 200 && response.code.to_i < 400
-        return response
-      else
-        $LOG.error("#{src_component}: Bad response (#{response.code.to_i}) from #{url}")
-        raise Net::HTTPBadResponse
-      end
-    rescue Timeout::Error, Errno::ETIMEDOUT, Errno::EINVAL, Errno::ECONNRESET, Net::ReadTimeout,
-      Errno::ECONNREFUSED, EOFError, Net::HTTPBadResponse, IOError, Errno::EPIPE,
-      Net::HTTPHeaderSyntaxError, Net::ProtocolError, SocketError, OpenSSL::SSL::SSLError
-      # The request failed; Retry if allowed
-      retry_count += 1
-      if retry_count <= retry_limit
-        retry_log = "Retry ##{retry_count} (limit: #{retry_limit}) in #{retry_delay} seconds."
-        $LOG.error "#{base_log}\n  #{retry_log}"
-        sleep retry_delay
-        _execute_request(url, req_type, src_component, rawdata, task, retry_limit, retry_count)
-      else
-        $LOG.error "#{base_log}\n  Retry limit (#{retry_limit}) exceeded; Aborting."
-        return false
-      end
-
+    # If the request failed, retry after the appropriate delay if there are any retries
+    #   left, otherwise return false
+    if retries > 0
+      $LOG.warn(
+        "#{src.upcase}: API request to GET #{what} from #{dst.upcase} failed. " +
+        "Retries left: #{retries}. Next retry in #{delay} seconds (#{response.code})"
+      )
+      sleep delay
+      get(
+        src: src, dst: dst, resource: resource, what: what,
+        retries: (retries - 1), delay: delay
+      )
+    else
+      $LOG.error(
+        "#{src.upcase}: API request to GET #{what} from #{dst.upcase} failed. " +
+        "No retries left; aborting (#{response.code})"
+      )
+      return false
     end
   end
+
+
+  def self.post(src:, dst:, resource:, what:, data:, retries: 5, delay: 5)
+    # Convert data to JSON if it's not already a string
+    data = data.to_json unless data.class == String
+
+    uri, http = get_http(dst, resource)
+    req = Net::HTTP::Post.new(uri.request_uri, {'Content-Type' =>'application/json'})
+    req.body = data
+
+    response = http.request(req)
+
+    return true if response.kind_of? Net::HTTPSuccess
+
+    # If the request failed, retry after the appropriate delay if there are any retries
+    #   left, otherwise return false
+    if retries > 0
+      $LOG.warn(
+        "#{src.upcase}: API request to POST #{what} from #{dst.upcase} failed. " +
+        "Retries left: #{retries}. Next retry in #{delay} seconds (#{response.code})"
+      )
+      sleep delay
+      post(
+        src: src, dst: dst, resource: resource, what: what,
+        data: data, retries: (retries - 1), delay: delay,
+      )
+    else
+      $LOG.error(
+        "#{src.upcase}: API request to POST #{what} from #{dst.upcase} failed. " +
+        "No retries left; aborting (#{response.code})"
+      )
+      return false
+    end
+  end
+
+
+  def self.get_http(dst, resource)
+    url = @settings[dst].to_s.gsub(/\/$/,'') + resource.to_s
+    uri = URI.parse(url)
+    http = Net::HTTP.new(uri.host, uri.port)
+    http.use_ssl = true if url =~ /^https/
+    return uri, http
+  end
+
 
 end

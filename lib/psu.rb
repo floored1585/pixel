@@ -10,7 +10,12 @@ class PSU
 
 
   def self.fetch(device, index)
-    obj = API.get('core', "/v2/device/#{device}/psu/#{index}", 'PSU', 'psu data')
+    obj = API.get(
+      src: 'psu',
+      dst: 'core',
+      resource: "/v2/device/#{device}/psu/#{index}",
+      what: "psu #{index} on #{device}",
+    )
     obj.class == PSU ? obj : nil
   end
 

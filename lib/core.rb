@@ -391,7 +391,12 @@ module Core
       $LOG.info("CORE: Importing #{devices.size} devices from file: #{device_file}")
     end
 
-    API.post('core', '/v2/devices/replace', devices, 'CORE', 'new devices')
+    API.post(
+      src: 'core',
+      dst: 'core',
+      resource: '/v2/devices/replace',
+      what: "new devices",
+    )
   end
 
 

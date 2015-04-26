@@ -11,7 +11,12 @@ class Interface
 
   # Interface#fetch gets an Interface object from the Pixel API
   def self.fetch(device, index)
-    obj = API.get('core', "/v2/device/#{device}/interface/#{index}", 'Interface', 'interface data')
+    obj = API.get(
+      src: 'interface',
+      dst: 'core',
+      resource: "/v2/device/#{device}/interface/#{index}",
+      what: "interface #{index} on #{device}",
+    )
     obj.class == Interface ? obj : nil
   end
 

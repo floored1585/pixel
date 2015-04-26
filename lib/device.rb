@@ -19,7 +19,12 @@ class Device
 
   def self.fetch(device, opts={})
     # Get the device via API
-    obj = API.get('core', "/v2/device/#{device}", 'Device', 'device data')
+    obj = API.get(
+      src: 'device',
+      dst: 'core',
+      resource: "/v2/device/#{device}",
+      what: "device #{device}"
+    )
     return nil unless obj.class == Device
 
     valid_opts = [ :all, :interfaces, :cpus, :fans, :memory, :psus, :temperatures ]
@@ -310,7 +315,12 @@ class Device
     # Fill in interfaces
     if data == nil && (opts[:interfaces] || opts[:all])
       @interfaces = {}
-      interfaces = API.get('core', "/v2/device/#{@name}/interfaces", 'Device', 'interface data') 
+      interfaces = API.get(
+        src: 'device',
+        dst: 'core',
+        resource: "/v2/device/#{@name}/interfaces",
+        what: "all interfaces on #{@name}",
+      )
       interfaces.each do |index, int|
         next unless int.class == Interface
         @interfaces[int.index] = int
@@ -320,7 +330,12 @@ class Device
     # Fill in CPUs
     if data == nil && (opts[:cpus] || opts[:all])
       @cpus = {}
-      cpus = API.get('core', "/v2/device/#{@name}/cpus", 'Device', 'cpu data')
+      cpus = API.get(
+        src: 'device',
+        dst: 'core',
+        resource: "/v2/device/#{@name}/cpus",
+        what: "all cpus on #{@name}",
+      )
       cpus.each do |index, cpu|
         next unless cpu.class == CPU
         @cpus[cpu.index] = cpu
@@ -330,7 +345,12 @@ class Device
     # Fill in fans
     if data == nil && (opts[:fans] || opts[:all])
       @fans = {}
-      fans = API.get('core', "/v2/device/#{@name}/fans", 'Device', 'fan data')
+      fans = API.get(
+        src: 'device',
+        dst: 'core',
+        resource: "/v2/device/#{@name}/fans",
+        what: "all fans on #{@name}",
+      )
       fans.each do |index, fan|
         next unless fan.class == Fan
         @fans[fan.index] = fan
@@ -340,7 +360,12 @@ class Device
     # Fill in memory
     if data == nil && (opts[:memory] || opts[:all])
       @memory = {}
-      memories = API.get('core', "/v2/device/#{@name}/memory", 'Device', 'memory data')
+      memories = API.get(
+        src: 'device',
+        dst: 'core',
+        resource: "/v2/device/#{@name}/memory",
+        what: "all memory on #{@name}",
+      )
       memories.each do |index, memory|
         next unless memory.class == Memory
         @memory[memory.index] = memory
@@ -350,7 +375,12 @@ class Device
     # Fill in PSUs
     if data == nil && (opts[:psus] || opts[:all])
       @psus = {}
-      psus = API.get('core', "/v2/device/#{@name}/psus", 'Device', 'psu data')
+      psus = API.get(
+        src: 'device',
+        dst: 'core',
+        resource: "/v2/device/#{@name}/psus",
+        what: "all psus on #{@name}",
+      )
       psus.each do |index, psu|
         next unless psu.class == PSU
         @psus[psu.index] = psu
@@ -360,7 +390,12 @@ class Device
     # Fill in temperatures
     if data == nil && (opts[:temperatures] || opts[:all])
       @temps = {}
-      temps = API.get('core', "/v2/device/#{@name}/temperatures", 'Device', 'temperature data')
+      temps = API.get(
+        src: 'device',
+        dst: 'core',
+        resource: "/v2/device/#{@name}/temperatures",
+        what: "all temperatures on #{@name}",
+      )
       temps.each do |index, temp|
         next unless temp.class == Temperature
         @temps[temp.index] = temp
@@ -373,7 +408,13 @@ class Device
 
   def send
     start = Time.now.to_i
-    if API.post('core', '/v2/device', to_json, 'POLLER', 'poll results')
+    if API.post(
+      src: 'device',
+      dst: 'core',
+      resource: '/v2/device',
+      what: "device #{@name}",
+      data: to_json,
+    )
       elapsed = Time.now.to_i - start
       $LOG.info("POLLER: POST successful for #{@name} (#{elapsed} seconds)")
       return true

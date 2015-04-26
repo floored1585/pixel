@@ -7,9 +7,14 @@ module Poller
   def self.check_for_work(settings)
     poll_cfg = settings['poller']
     concurrency = poll_cfg[:concurrency] || 10
-    request = "/v2/fetch_poll/#{Socket.gethostname}/#{concurrency}"
+    hostname = SOcket.gethostname
 
-    if device_names = API.get('core', request, 'POLLER', 'devices to poll', 0)
+    if device_names = API.get(
+      src: 'poller',
+      dst: 'core',
+      resource: "/v2/fetch_poll/#{hostname}/#{concurrency}",
+      what: "devices to poll for #{hostname}",
+    )
       device_names.each { |device_name, uuid| _poll(device_name, uuid) }
       return 200 # Doesn't do any error checking here
     else # HTTP request failed

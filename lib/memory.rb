@@ -10,7 +10,12 @@ class Memory
 
 
   def self.fetch(device, index)
-    obj = API.get('core', "/v2/device/#{device}/memory/#{index}", 'Memory', 'memory data')
+    obj = API.get(
+      src: 'memory',
+      dst: 'core',
+      resource: "/v2/device/#{device}/memory/#{index}",
+      what: "memory #{index} on #{device}",
+    )
     obj.class == Memory ? obj : nil
   end
 

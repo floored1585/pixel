@@ -10,7 +10,12 @@ class Temperature
 
 
   def self.fetch(device, index)
-    obj = API.get('core', "/v2/device/#{device}/temperature/#{index}", 'Temperature', 'temperature data')
+    obj = API.get(
+      src: 'temperature',
+      dst: 'core',
+      resource: "/v2/device/#{device}/temperature/#{index}",
+      what: "temperature #{index} on #{device}",
+    )
     obj.class == Temperature ? obj : nil
   end
 

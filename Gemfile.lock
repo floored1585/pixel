@@ -19,9 +19,6 @@ GEM
     colorize (0.7.3)
     diff-lcs (1.2.5)
     execjs (2.2.1)
-    http (0.6.3)
-      http_parser.rb (~> 0.6.0)
-    http_parser.rb (0.6.0)
     i18n (0.6.11)
     influxdb (0.1.8)
       json
@@ -82,7 +79,6 @@ DEPENDENCIES
   capistrano
   capistrano-bundler
   capistrano-rvm
-  http
   influxdb
   mysql
   pg

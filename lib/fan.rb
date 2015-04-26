@@ -10,7 +10,12 @@ class Fan
 
 
   def self.fetch(device, index)
-    obj = API.get('core', "/v2/device/#{device}/fan/#{index}", 'Fan', 'fan data')
+    obj = API.get(
+      src: 'fan',
+      dst: 'core',
+      resource: "/v2/device/#{device}/fan/#{index}",
+      what: "fan #{index} on #{device}",
+    )
     obj.class == Fan ? obj : nil
   end
 

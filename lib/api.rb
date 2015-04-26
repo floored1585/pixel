@@ -79,6 +79,7 @@ module API
     uri = URI.parse(url)
     http = Net::HTTP.new(uri.host, uri.port)
     http.use_ssl = true if url =~ /^https/
+    http.read_timeout = 300
     return uri, http
   end
 

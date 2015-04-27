@@ -15,8 +15,8 @@ class Pixel < Sinatra::Base
 
     db_elapsed = '%.2f' % (Time.now - beginning)
 
-    erb :dashboard, :locals => {
-      :title => 'Dashboard!',
+    erb :alerts, :locals => {
+      :title => 'Alerts',
       :settings => @@settings,
       :db => @@db,
       :poller_failures => poller_failures,

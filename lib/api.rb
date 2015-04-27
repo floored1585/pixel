@@ -13,7 +13,15 @@ module API
   def self.get(src:, dst:, resource:, what:, retries: 5, delay: 5)
     uri, http = get_http(dst, resource)
     req = Net::HTTP::Get.new(uri.request_uri)
-    response = http.request(req)
+
+    begin
+      response = http.request(req)
+      code = response.code
+    rescue Timeout::Error, Errno::ETIMEDOUT, Errno::EINVAL, Errno::ECONNRESET, Net::ReadTimeout,
+      Errno::ECONNREFUSED, EOFError, Net::HTTPBadResponse, IOError, Errno::EPIPE,
+      Net::HTTPHeaderSyntaxError, Net::ProtocolError, SocketError, OpenSSL::SSL::SSLError => e
+      code = e
+    end
 
     # Return an object if successful
     return JSON.load(response.body) if response.kind_of? Net::HTTPSuccess
@@ -23,7 +31,7 @@ module API
     if retries > 0
       $LOG.warn(
         "#{src.upcase}: API request to GET #{what} from #{dst.upcase} failed. " +
-        "Retries left: #{retries}. Next retry in #{delay} seconds (#{response.code})"
+        "Retries left: #{retries}. Next retry in #{delay} seconds (#{code})"
       )
       sleep delay
       get(
@@ -33,7 +41,7 @@ module API
     else
       $LOG.error(
         "#{src.upcase}: API request to GET #{what} from #{dst.upcase} failed. " +
-        "No retries left; aborting (#{response.code})"
+        "No retries left; aborting (#{code})"
       )
       return false
     end
@@ -48,7 +56,14 @@ module API
     req = Net::HTTP::Post.new(uri.request_uri, {'Content-Type' =>'application/json'})
     req.body = data
 
-    response = http.request(req)
+    begin
+      response = http.request(req)
+      code = response.code
+    rescue Timeout::Error, Errno::ETIMEDOUT, Errno::EINVAL, Errno::ECONNRESET, Net::ReadTimeout,
+      Errno::ECONNREFUSED, EOFError, Net::HTTPBadResponse, IOError, Errno::EPIPE,
+      Net::HTTPHeaderSyntaxError, Net::ProtocolError, SocketError, OpenSSL::SSL::SSLError => e
+      code = e
+    end
 
     return true if response.kind_of? Net::HTTPSuccess
 
@@ -57,7 +72,7 @@ module API
     if retries > 0
       $LOG.warn(
         "#{src.upcase}: API request to POST #{what} from #{dst.upcase} failed. " +
-        "Retries left: #{retries}. Next retry in #{delay} seconds (#{response.code})"
+        "Retries left: #{retries}. Next retry in #{delay} seconds (#{code})"
       )
       sleep delay
       post(
@@ -67,7 +82,7 @@ module API
     else
       $LOG.error(
         "#{src.upcase}: API request to POST #{what} from #{dst.upcase} failed. " +
-        "No retries left; aborting (#{response.code})"
+        "No retries left; aborting (#{code})"
       )
       return false
     end

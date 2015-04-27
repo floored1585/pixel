@@ -7,7 +7,7 @@ module Poller
   def self.check_for_work(settings)
     poll_cfg = settings['poller']
     concurrency = poll_cfg[:concurrency] || 10
-    hostname = SOcket.gethostname
+    hostname = Socket.gethostname
 
     if device_names = API.get(
       src: 'poller',

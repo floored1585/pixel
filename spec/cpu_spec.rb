@@ -72,6 +72,10 @@ describe CPU do
       good = CPU.new(device: 'iad1-bdr-1', index: '1.4.0')
       expect(JSON.parse(good.populate(data1_base).to_json)['data'].keys).to eql json_keys
     end
+    it 'should return nil if no data passed' do
+      good = CPU.new(device: 'iad1-bdr-1', index: '1.4.0')
+      expect(good.populate({})).to eql nil
+    end
   end
 
 
@@ -94,7 +98,7 @@ describe CPU do
 
     # description
     describe '#description' do
-      specify { expect(@cpu.description).to eql nil }
+      specify { expect(@cpu.description).to eql '' }
     end
 
     # util
@@ -104,7 +108,11 @@ describe CPU do
 
     # update
     describe '#update' do
-      specify { expect(@cpu.update(data1_update_ok, worker: 'test')).to be_a CPU }
+      obj = CPU.new(device: 'gar-test-1', index: '103').update(data1_update_ok, worker: 'test')
+      specify { expect(obj).to be_a CPU }
+      specify { expect(obj.description).to eql "Linecard(slot 1)" }
+      specify { expect(obj.util).to eql 10 }
+      specify { expect(obj.last_updated).to be > Time.now.to_i - 1000 }
     end
     
     # last_updated

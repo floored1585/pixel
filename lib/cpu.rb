@@ -2,45 +2,16 @@
 #
 require 'logger'
 require 'json'
-require_relative 'api'
+require_relative 'component'
 require_relative 'core_ext/object'
 $LOG ||= Logger.new(STDOUT)
 
-class CPU
+class CPU < Component
 
 
   def self.fetch(device, index)
-    obj = API.get(
-      src: 'cpu',
-      dst: 'core',
-      resource: "/v2/device/#{device}/cpu/#{index}",
-      what: "cpu #{index} on #{device}",
-    )
+    obj = super(device, index, 'cpu')
     obj.class == CPU ? obj : nil
-  end
-
-
-  def initialize(device:, index:)
-
-    # required
-    @device = device
-    @index = index.to_s
-
-  end
-
-
-  def device
-    @device
-  end
-
-
-  def index
-    @index
-  end
-
-
-  def description
-    @description
   end
 
 
@@ -49,42 +20,27 @@ class CPU
   end
 
 
-  def last_updated
-    @last_updated || 0
-  end
-
-
   def populate(data)
+    # If parent's #populate returns nil, return nil here also
+    return nil unless super
 
     # Required in order to accept symbol and non-symbol keys
     data = data.symbolize
 
-    # Return nil if we didn't find any data
-    # TODO: Raise an exception instead?
-    return nil if data.empty?
-
     @util = data[:util].to_i_if_numeric
-    @description = data[:description]
-    @last_updated = data[:last_updated].to_i_if_numeric
-    @worker = data[:worker]
 
     return self
   end
 
 
   def update(data, worker:)
-
     # TODO: Data validation? See mac class for example
 
+    super
+
     new_util = data['util'].to_i
-    new_description = data['description'] || "CPU #{@index}"
-    current_time = Time.now.to_i
-    new_worker = worker
 
     @util = new_util
-    @description = new_description
-    @last_updated = current_time
-    @worker = new_worker
 
     return self
   end
@@ -137,7 +93,7 @@ class CPU
     }
 
     hash['data']["util"] = util
-    hash['data']["description"] = @description if @description
+    hash['data']["description"] = description
     hash['data']["last_updated"] = @last_updated if @last_updated
     hash['data']["worker"] = @worker if @worker
 

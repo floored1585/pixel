@@ -89,6 +89,10 @@ describe Temperature do
       good = Temperature.new(device: 'iad1-bdr-1', index: '1.4.0')
       expect(JSON.parse(good.populate(data1_base).to_json)['data'].keys).to eql json_keys
     end
+    it 'should return nil if no data passed' do
+      good = Temperature.new(device: 'iad1-bdr-1', index: '1.4.0')
+      expect(good.populate({})).to eql nil
+    end
   end
 
 
@@ -111,7 +115,7 @@ describe Temperature do
 
     # description
     describe '#description' do
-      specify { expect(@temp.description).to eql nil }
+      specify { expect(@temp.description).to eql '' }
     end
 
     # temp
@@ -126,7 +130,11 @@ describe Temperature do
 
     # update
     describe '#update' do
-      specify { expect(@temp.update(data1_update_ok, worker: 'test')).to be_a Temperature }
+      obj = Temperature.new(device: 'gar-test-1', index: '103').update(data1_update_ok, worker: 'test')
+      specify { expect(obj).to be_a Temperature }
+      specify { expect(obj.description).to eql "FPC: EX4300-48T @ 0/*/*" }
+      specify { expect(obj.temp).to eql 44 }
+      specify { expect(obj.last_updated).to be > Time.now.to_i - 1000 }
     end
 
     # last_updated

@@ -102,7 +102,7 @@ module Helper
       port = int.neighbor_port || ''
       port.empty? || opts[:device_only] ? neighbor : "#{neighbor} (#{port})"
     elsif int.type == 'unknown'
-      int.alias || ''
+      int.description || ''
     else
       ''
     end

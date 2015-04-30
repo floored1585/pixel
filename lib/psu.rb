@@ -2,45 +2,16 @@
 #
 require 'logger'
 require 'json'
-require_relative 'api'
+require_relative 'component'
 require_relative 'core_ext/object'
 $LOG ||= Logger.new(STDOUT)
 
-class PSU
+class PSU < Component
 
 
   def self.fetch(device, index)
-    obj = API.get(
-      src: 'psu',
-      dst: 'core',
-      resource: "/v2/device/#{device}/psu/#{index}",
-      what: "psu #{index} on #{device}",
-    )
+    obj = super(device, index, 'psu')
     obj.class == PSU ? obj : nil
-  end
-
-
-  def initialize(device:, index:)
-
-    # required
-    @device = device
-    @index = index.to_s
-
-  end
-
-
-  def device
-    @device
-  end
-
-
-  def index
-    @index
-  end
-
-
-  def description
-    @description
   end
 
 
@@ -49,26 +20,16 @@ class PSU
   end
 
 
-  def last_updated
-    @last_updated || 0
-  end
-
-
   def populate(data)
+    # If parent's #populate returns nil, return nil here also
+    return nil unless super
 
     # Required in order to accept symbol and non-symbol keys
     data = data.symbolize
 
-    # Return nil if we didn't find any data
-    # TODO: Raise an exception instead?
-    return nil if data.empty?
-
-    @description = data[:description]
-    @last_updated = data[:last_updated].to_i_if_numeric
     @status = data[:status].to_i_if_numeric
     @vendor_status = data[:vendor_status].to_i_if_numeric
     @status_text = data[:status_text]
-    @worker = data[:worker]
 
     return self
   end
@@ -78,19 +39,15 @@ class PSU
 
     # TODO: Data validation? See mac class for example
 
-    new_description = data['description'] || "PSU #{@index}"
-    current_time = Time.now.to_i
+    super
+
     new_status = data['status'].to_i_if_numeric
     new_vendor_status = data['vendor_status'].to_i_if_numeric
     new_status_text = data['status_text']
-    new_worker = worker
 
-    @description = new_description
-    @last_updated = current_time
     @status = new_status
     @vendor_status = new_vendor_status
     @status_text = new_status_text
-    @worker = new_worker
 
     return self
   end
@@ -133,7 +90,7 @@ class PSU
       }
     }
 
-    hash['data']["description"] = @description if @description
+    hash['data']["description"] = description
     hash['data']["last_updated"] = @last_updated if @last_updated
     hash['data']["status"] = @status if @status
     hash['data']["vendor_status"] = @vendor_status if @vendor_status

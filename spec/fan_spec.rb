@@ -89,6 +89,10 @@ describe Fan do
       good = Fan.new(device: 'iad1-bdr-1', index: '1.4.0')
       expect(JSON.parse(good.populate(data1_base).to_json)['data'].keys).to eql json_keys
     end
+    it 'should return nil if no data passed' do
+      good = Fan.new(device: 'iad1-bdr-1', index: '1.4.0')
+      expect(good.populate({})).to eql nil
+    end
   end
 
 
@@ -111,7 +115,7 @@ describe Fan do
 
     # description
     describe '#description' do
-      specify { expect(@fan.description).to eql nil }
+      specify { expect(@fan.description).to eql '' }
     end
 
     # status_text
@@ -121,7 +125,10 @@ describe Fan do
 
     # update
     describe '#update' do
-      specify { expect(@fan.update(data1_update_ok, worker: 'test')).to be_a Fan }
+      obj = Fan.new(device: 'gar-test-1', index: '103').update(data1_update_ok, worker: 'test')
+      specify { expect(obj).to be_a Fan }
+      specify { expect(obj.description).to eql "FAN 0 @ 0/0/0" }
+      specify { expect(obj.last_updated).to be > Time.now.to_i - 1000 }
     end
 
     # last_updated

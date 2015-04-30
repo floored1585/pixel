@@ -2,36 +2,29 @@
 #
 require 'logger'
 require 'json'
-require_relative 'api'
+require_relative 'component'
 require_relative 'core_ext/object'
 $LOG ||= Logger.new(STDOUT)
 
-class Interface
+class Interface < Component
 
 
-  # Interface#fetch gets an Interface object from the Pixel API
   def self.fetch(device, index)
-    obj = API.get(
-      src: 'interface',
-      dst: 'core',
-      resource: "/v2/device/#{device}/interface/#{index}",
-      what: "interface #{index} on #{device}",
-    )
+    obj = super(device, index, 'interface')
     obj.class == Interface ? obj : nil
   end
 
 
   def initialize(device:, index:)
-
     # If index doesn't look like an integer, raise an exception.
     unless index.to_s =~ /^[0-9]+$/
       raise TypeError.new("index (#{index}) must look like an Integer!")
     end
 
-    # required
-    @device = device
-    @index = index.to_i
+    super
 
+    # Convert index to integer
+    @index = @index.to_i
   end
 
 
@@ -52,23 +45,8 @@ class Interface
   end
 
 
-  def device
-    @device
-  end
-
-
-  def index
-    @index
-  end
-
-
   def name
     @name
-  end
-
-
-  def alias
-    @alias
   end
 
 
@@ -152,32 +130,33 @@ class Interface
   end
 
 
-  # Returns true unless the interface is name looks logical.  Also returns true if @name is nil.
+  # Returns true unless the interface is name looks logical.  Also returns
+  #   true if @name is nil.
   def physical?
     @name !~ /Po|ae|bond/
   end
 
 
   def child?
-    !!(@alias =~ /^sub\[/)
+    !!(@description =~ /^sub\[/)
   end
 
 
   def parent_name
     return nil unless child?
-    @alias.match(/sub\[([a-zA-Z0-9\/-]+)\]/) { |match| return match[1] }
+    @description.match(/sub\[([a-zA-Z0-9\/-]+)\]/) { |match| return match[1] }
   end
 
 
   def neighbor
-    return nil unless @alias
-    @alias.match(/__([a-zA-Z0-9\-_]+)__/) { |match| return match[1] }
+    return nil unless @description
+    @description.match(/__([a-zA-Z0-9\-_]+)__/) { |match| return match[1] }
   end
 
 
   def neighbor_port
-    return nil unless @alias
-    @alias.match(/__([0-9a-zA-Z\-.: \/]+)$/) { |match| return match[1] }
+    return nil unless @description
+    @description.match(/__([0-9a-zA-Z\-.: \/]+)$/) { |match| return match[1] }
   end
 
 
@@ -231,16 +210,14 @@ class Interface
 
 
   def populate(data)
+    # If parent's #populate returns nil, return nil here also
+    return nil unless super
+    # Convert index to integer
+    @index = @index.to_i
 
     # Required in order to accept symbol and non-symbol keys
     data = data.symbolize
 
-    # Return nil if we didn't find any data
-    # TODO: Raise an exception instead?
-    return nil if data.empty?
-
-    @last_updated = data[:last_updated].to_i_if_numeric
-    @alias = data[:alias]
     @name = data[:name]
     @hc_in_octets = data[:hc_in_octets].to_i_if_numeric
     @hc_out_octets = data[:hc_out_octets].to_i_if_numeric
@@ -265,7 +242,6 @@ class Interface
     @pps_in = data[:pps_in].to_i_if_numeric
     @pps_out = data[:pps_out].to_i_if_numeric
     @type = data[:type]
-    @worker = data[:worker]
 
     return self
 
@@ -273,15 +249,19 @@ class Interface
 
 
   def update(data, worker:)
-    # Save the data we need for deltas as new variables
+    # Save times (@last_updated gets modified by super)
+    old_time = @last_updated
     current_time = Time.now.to_i
+
+    super
+
+    # Save the data we need for deltas as new variables
     new_name = data['name']
     new_hc_in_octets = data['hc_in_octets'].to_i_if_numeric
     new_hc_out_octets = data['hc_out_octets'].to_i_if_numeric
     new_hc_in_ucast_pkts = data['hc_in_ucast_pkts'].to_i_if_numeric
     new_hc_out_ucast_pkts = data['hc_out_ucast_pkts'].to_i_if_numeric
     new_speed = data['high_speed'].to_i_if_numeric * 1000000
-    new_alias = data['alias']
     new_mtu = data['mtu'].to_i_if_numeric
     new_admin_status = data['admin_status'].to_i_if_numeric
     new_oper_status = data['oper_status'].to_i_if_numeric
@@ -289,64 +269,61 @@ class Interface
     new_in_errors = data['in_errors'].to_i_if_numeric
     new_out_discards = data['out_discards'].to_i_if_numeric
     new_out_errors = data['out_errors'].to_i_if_numeric
-    new_worker = worker
 
-    # Determine interface type, by capturing the part of the alias before __ or [
-    if type_match = new_alias.match(/^([a-z]+)(?:__|\[)/)
+    # Determine interface type, by capturing the part of the description before __ or [
+    if type_match = @description.match(/^([a-z]+)(?:__|\[)/)
       @type = type_match[1]
     else
       @type = 'unknown'
     end
 
     # Calcaulate the deltas
-    if @last_updated
+    if old_time
       @bps_in = _calculate_average(
-        old_time: @last_updated, old_value: @hc_in_octets * 8,
+        old_time: old_time, old_value: @hc_in_octets * 8,
         new_time: current_time, new_value: new_hc_in_octets * 8
       )
       @bps_out = _calculate_average(
-        old_time: @last_updated, old_value: @hc_out_octets * 8,
+        old_time: old_time, old_value: @hc_out_octets * 8,
         new_time: current_time, new_value: new_hc_out_octets * 8
       )
       @pps_in = _calculate_average(
-        old_time: @last_updated, old_value: @hc_in_ucast_pkts,
+        old_time: old_time, old_value: @hc_in_ucast_pkts,
         new_time: current_time, new_value: new_hc_in_ucast_pkts
       )
       @pps_out = _calculate_average(
-        old_time: @last_updated, old_value: @hc_out_ucast_pkts,
+        old_time: old_time, old_value: @hc_out_ucast_pkts,
         new_time: current_time, new_value: new_hc_out_ucast_pkts
       )
       @discards_in = _calculate_average(
-        old_time: @last_updated, old_value: @in_discards,
+        old_time: old_time, old_value: @in_discards,
         new_time: current_time, new_value: new_in_discards
       )
       @discards_out = _calculate_average(
-        old_time: @last_updated, old_value: @out_discards,
+        old_time: old_time, old_value: @out_discards,
         new_time: current_time, new_value: new_out_discards
       )
       @errors_in = _calculate_average(
-        old_time: @last_updated, old_value: @in_errors,
+        old_time: old_time, old_value: @in_errors,
         new_time: current_time, new_value: new_in_errors
       )
       @errors_out = _calculate_average(
-        old_time: @last_updated, old_value: @out_errors,
+        old_time: old_time, old_value: @out_errors,
         new_time: current_time, new_value: new_out_errors
       )
     end
 
     # If the admin or oper statuses are changing, update their timestamps
-    @admin_status_time = Time.now.to_i if @admin_status != new_admin_status
-    @oper_status_time = Time.now.to_i if @oper_status != new_oper_status
+    @admin_status_time = current_time if @admin_status != new_admin_status
+    @oper_status_time = current_time if @oper_status != new_oper_status
 
     # Lastly, update all the non-calculated instance variables
-    @last_updated = current_time
     @name = new_name
     @hc_in_octets = new_hc_in_octets
     @hc_out_octets = new_hc_out_octets
     @hc_in_ucast_pkts = new_hc_in_ucast_pkts
     @hc_out_ucast_pkts = new_hc_out_ucast_pkts
     @speed = new_speed
-    @alias = new_alias
     @mtu = new_mtu
     @admin_status = new_admin_status
     @oper_status = new_oper_status
@@ -354,7 +331,6 @@ class Interface
     @in_errors = new_in_errors
     @out_discards = new_out_discards
     @out_errors = new_out_errors
-    @worker = new_worker
 
     return self
 
@@ -423,7 +399,10 @@ class Interface
       existing = db[:interface].where(:device => @device, :index => @index)
       if existing.update(data) != 1
         db[:interface].insert(data)
-        $LOG.info("INTERFACE: Adding new interface #{@index} (#{@name}) on #{@device}. Last poller: #{@worker}")
+        $LOG.info(
+          "INTERFACE: Adding new interface #{@index} (#{@name}) on #{@device}. " +
+          "Last poller: #{@worker}"
+        )
       end
     rescue Sequel::NotNullConstraintViolation, Sequel::ForeignKeyConstraintViolation => e
       $LOG.error("INTERFACE: Save failed. #{e.to_s.gsub(/\n/,'. ')}")
@@ -437,7 +416,10 @@ class Interface
   def delete(db)
     # Delete the interface from the database
     count = db[:interface].where(:device => @device, :index => @index).delete
-    $LOG.info("INTERFACE: Deleted interface #{@index} (#{@name}) on #{@device}. Last poller: #{@worker}")
+    $LOG.info(
+      "INTERFACE: Deleted interface #{@index} (#{@name}) on #{@device}. " +
+      "Last poller: #{@worker}"
+    )
 
     return count
   end
@@ -453,7 +435,7 @@ class Interface
     }
 
     hash['data']["last_updated"] = @last_updated if @last_updated
-    hash['data']["alias"] = @alias if @alias
+    hash['data']["description"] = description
     hash['data']["name"] = @name if @name
     hash['data']["hc_in_octets"] = @hc_in_octets if @hc_in_octets
     hash['data']["hc_out_octets"] = @hc_out_octets if @hc_out_octets

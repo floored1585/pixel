@@ -641,9 +641,9 @@ class Device
     end
 
     if_table.each do |index, oids|
-      # Don't create the interface unless it has an interesting alias or an interesting name
+      # Don't create the interface unless it has an interesting description or name
       next unless (
-        oids['alias'] =~ @poll_cfg[:interesting_alias] ||
+        oids['description'] =~ @poll_cfg[:interesting_description] ||
         oids['name'] =~ @poll_cfg[:interesting_names][@vendor]
       )
       # Don't create the interface if we weren't able to poll the octet information
@@ -946,23 +946,29 @@ class Device
         @interfaces.each do |tmp_index, tmp_interface|
           # Add one to the count and set the child speed for each interface we find
           # containing [xx], where xx is the parent interface name
-          if tmp_interface.alias.match(/\[#{interface.name}\]/) && tmp_interface.status == 'Up'
+          if tmp_interface.description.match(/\[#{interface.name}\]/) && tmp_interface.status == 'Up'
             child_count += 1
             child_speed = tmp_interface.speed
           end
         end
         interface.set_speed(child_count * child_speed)
-        $LOG.warn("POLLER: Bad speed for #{interface.name} (#{index}) on #{@name}. Calculated value from children: #{interface.speed}")
+        $LOG.warn(
+          "POLLER: Bad speed for #{interface.name} (#{index}) on #{@name}. " +
+          "Calculated value from children: #{interface.speed}"
+        )
       end
 
       # TODO: REPLACE THIS WITH SSH!!! This is ALSO retarded!
       # Find the parent interface if it exists, and transfer its type to child.
-      if parent_iface_match = interface.alias.match(/^[a-z]+\[([\w\/\-\s]+)\]/)
+      if parent_iface_match = interface.description.match(/^[a-z]+\[([\w\/\-\s]+)\]/)
         parent_iface = parent_iface_match[1]
         if parent = get_interface(name: parent_iface)
           interface.clone_type(parent)
         else
-          $LOG.error("POLLER: Can't find parent interface #{parent_iface} on #{@name} (child: #{interface.name})")
+          $LOG.error(
+            "POLLER: Can't find parent interface #{parent_iface} on #{@name} " +
+            "(child: #{interface.name})"
+          )
         end
       end
 

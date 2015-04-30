@@ -69,7 +69,7 @@ locations: {
 stale_timeout: 600
 
 # For converting link type abbreviations to formal names.
-# If you change these, make sure you update interesting_alias
+# If you change these, make sure you update interesting_description
 #   in the poller section as well.
 # TODO: This needs to be reversed!
 link_types: { 
@@ -95,9 +95,9 @@ poller: {
   influx_pass: 'pass',
   influx_db: 'snmp_data',
   snmpv2_community: 'public',
-  # interesting_alias is the regex that determines whether or not
+  # interesting_description is the regex that determines whether or not
   # we process & store data, based on the interface description.
-  interesting_alias: !ruby/regexp '/^trn__|^bb__|^acc__|^sub(\[|__)/',
+  interesting_description: !ruby/regexp '/^trn__|^bb__|^acc__|^sub(\[|__)/',
 }
 
 # Where we're gonna get our devices

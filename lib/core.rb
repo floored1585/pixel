@@ -13,8 +13,8 @@ module Core
   def get_ints_down(settings, db)
     ints = []
     int_data = db[:interface].filter(
-      Sequel.like(:alias, 'sub%') |
-      Sequel.like(:alias, 'bb%')
+      Sequel.like(:description, 'sub%') |
+      Sequel.like(:description, 'bb%')
     )
     int_data.exclude(:oper_status => 1).exclude(:type => 'acc').each do |row|
       ints.push Interface.new(device: row[:device], index: row[:index]).populate(row)
@@ -40,7 +40,7 @@ module Core
       Sequel.&(
         pps_out > 0, # Prevent div by zero
         discards_out > 20,
-        ~Sequel.like(:alias, 'sub%'), # Don't look at sub-interfaces
+        ~Sequel.like(:description, 'sub%'), # Don't look at sub-interfaces
         discards_out / (discards_out + pps_out).cast(:float) >= 0.01 # Filter out anything discarding <= 1%
       ),
       discards_out > 500 # Also include anything discarding over 500pps
@@ -497,7 +497,7 @@ module Core
       interfaces = data[:interfaces] || {}
       interfaces.each do |index,oids|
         # Populate 'neighbor' value
-        oids[:alias].to_s.match(/__[a-zA-Z0-9\-_]+__/) do |neighbor|
+        oids[:description].to_s.match(/__[a-zA-Z0-9\-_]+__/) do |neighbor|
           interfaces[index][:neighbor] = neighbor.to_s.gsub('__','')
         end
 
@@ -509,7 +509,7 @@ module Core
         end
 
         # Populate 'link_type' value (Backbone, Access, etc...)
-        if type = oids[:alias].match(/^([a-z]+)(__|\[)/)
+        if type = oids[:description].match(/^([a-z]+)(__|\[)/)
           type = type[1]
         else
           type = 'unknown'
@@ -518,7 +518,7 @@ module Core
         if type == 'sub'
           oids[:is_child] = true
           # This will return po1 from sub[po1]__gar-k11u1-dist__g1/47
-          parent = oids[:alias][/\[[a-zA-Z0-9\/-]+\]/].gsub(/(\[|\])/, '')
+          parent = oids[:description][/\[[a-zA-Z0-9\/-]+\]/].gsub(/(\[|\])/, '')
           if parent && parent_index = name_to_index[device][parent.downcase]
             interfaces[parent_index][:is_parent] = true
             interfaces[parent_index][:children] ||= []

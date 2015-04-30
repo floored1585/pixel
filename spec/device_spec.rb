@@ -171,8 +171,12 @@ describe Device do
   # populate
   describe '#populate' do
     it 'should fill up the object' do
-      dev = Device.new('gar-v11u1-acc-y')
-      expect(JSON.parse(dev.populate(dev_hash).to_json)['data'].keys).to eql json_keys
+      good = Device.new('gar-v11u1-acc-y')
+      expect(JSON.parse(good.populate(dev_hash).to_json)['data'].keys).to eql json_keys
+    end
+    it 'should return nil if no data passed' do
+      good = Device.new('gar-v11u1-acc-y')
+      expect(good.populate({})).to eql nil
     end
   end
 

@@ -406,7 +406,7 @@ module Core
 
     new_devices.each do |device, ip|
       Device.new(device, poll_ip: ip).save(db)
-      $LOG.warn("CORE: Added device #{device}: #{ip}")
+      $LOG.warn("CORE: Updated device #{device}: #{ip}")
     end
 
     if replace

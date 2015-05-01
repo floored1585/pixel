@@ -396,6 +396,7 @@ module Core
       dst: 'core',
       resource: '/v2/devices/replace',
       what: "new devices",
+      data: devices,
     )
   end
 

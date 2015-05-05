@@ -179,7 +179,7 @@ class Device
     # Return nil unless either a name or index was passed
     return nil unless name || index
 
-    return @interfaces[index.to_i_if_numeric] if index
+    return @interfaces[index.to_s] if index
     @interfaces.each { |index, int| return int if name.downcase == int.name.downcase }
 
     return nil # If nothing matched
@@ -189,7 +189,7 @@ class Device
   def get_children(parent_name: nil, parent_index: nil)
     # Return nil unless either a name or index was passed and they match something
     return [] unless parent_name || parent_index
-    return [] unless parent = @interfaces[parent_index.to_i] || get_interface(name: parent_name)
+    return [] unless parent = @interfaces[parent_index.to_s] || get_interface(name: parent_name)
 
     children = []
     @interfaces.each do |index, int|
@@ -281,8 +281,6 @@ class Device
       data = data.symbolize
 
       @interfaces = data[:interfaces] || {}
-      # Convert keys to integers for @interface
-      @interfaces = Hash[@interfaces.map{|key,int|[ key.to_i, int ]}]
       @cpus = data[:cpus] || {}
       @fans = data[:fans] || {}
       @memory = data[:memory] || {}
@@ -634,7 +632,7 @@ class Device
     session.walk(@poll_cfg[:oids][:general].keys) do |row|
       row.each do |vb|
         oid_text = @poll_cfg[:oids][:general][vb.name.to_str.gsub(/\.[0-9]+$/,'')]
-        index = vb.name.to_str[/[0-9]+$/].to_i
+        index = vb.name.to_str[/[0-9]+$/]
         if_table[index] ||= {}
         if_table[index][oid_text] = vb.value.to_s
       end

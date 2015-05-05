@@ -15,6 +15,12 @@ class Memory < Component
   end
 
 
+  def initialize(device:, index:)
+    super
+    @hw_type = 'Memory'
+  end
+
+
   def util
     @util || 0
   end
@@ -57,14 +63,15 @@ class Memory < Component
 
 
   def save(db)
-    data = JSON.parse(self.to_json)['data']
-
-    # Update the memory table
     begin
+      super # Component#save
+
+      data = { :device => @device, :index => @index }
+      data[:util] = util
+
       existing = db[:memory].where(:device => @device, :index => @index)
       if existing.update(data) != 1
         db[:memory].insert(data)
-        $LOG.info("MEMORY: Adding new memory #{@index} on #{@device} from #{@worker}")
       end
     rescue Sequel::NotNullConstraintViolation, Sequel::ForeignKeyConstraintViolation => e
       $LOG.error("MEMORY: Save failed. #{e.to_s.gsub(/\n/,'. ')}")
@@ -75,28 +82,14 @@ class Memory < Component
   end
 
 
-  def delete(db)
-    # Delete the memory from the database
-    count = db[:memory].where(:device => @device, :index => @index).delete
-    $LOG.info("MEMORY: Deleted memory #{@index} (#{@description}) on #{@device}. Last poller: #{@worker}")
-
-    return count
-  end
-
-
   def to_json(*a)
     hash = {
       "json_class" => self.class.name,
-      "data" => {
-        "device" => @device,
-        "index" => @index,
-      }
+      "data" => {}
     }
 
     hash['data']["util"] = util
-    hash['data']["description"] = description
-    hash['data']["last_updated"] = @last_updated if @last_updated
-    hash['data']["worker"] = @worker if @worker
+    hash['data'].merge!( JSON.parse(super)['data'] )
 
     hash.to_json(*a)
   end

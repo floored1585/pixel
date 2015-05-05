@@ -22,9 +22,7 @@ class Interface < Component
     end
 
     super
-
-    # Convert index to integer
-    @index = @index.to_i
+    @hw_type = 'Interface'
   end
 
 
@@ -125,11 +123,6 @@ class Interface < Component
   end
 
 
-  def last_updated
-    @last_updated || 0
-  end
-
-
   # Returns true unless the interface is name looks logical.  Also returns
   #   true if @name is nil.
   def physical?
@@ -212,8 +205,6 @@ class Interface < Component
   def populate(data)
     # If parent's #populate returns nil, return nil here also
     return nil unless super
-    # Convert index to integer
-    @index = @index.to_i
 
     # Required in order to accept symbol and non-symbol keys
     data = data.symbolize
@@ -392,17 +383,40 @@ class Interface < Component
 
 
   def save(db)
-    data = JSON.parse(self.to_json)['data']
-
-    # Update the interface table
     begin
+      super # Component#save
+
+      data = { :device => @device, :index => @index }
+      data[:name] = @name if @name
+      data[:hc_in_octets] = @hc_in_octets if @hc_in_octets
+      data[:hc_out_octets] = @hc_out_octets if @hc_out_octets
+      data[:hc_in_ucast_pkts] = @hc_in_ucast_pkts if @hc_in_ucast_pkts
+      data[:hc_out_ucast_pkts] = @hc_out_ucast_pkts if @hc_out_ucast_pkts
+      data[:speed] = @speed if @speed
+      data[:mtu] = @mtu if @mtu
+      data[:admin_status] = @admin_status if @admin_status
+      data[:admin_status_time] = @admin_status_time if @admin_status_time
+      data[:oper_status] = @oper_status if @oper_status
+      data[:oper_status_time] = @oper_status_time if @oper_status_time
+      data[:in_discards] = @in_discards if @in_discards
+      data[:in_errors] = @in_errors if @in_errors
+      data[:out_discards] = @out_discards if @out_discards
+      data[:out_errors] = @out_errors if @out_errors
+      data[:bps_in] = @bps_in if @bps_in
+      data[:bps_out] = @bps_out if @bps_out
+      data[:discards_in] = @discards_in if @discards_in
+      data[:errors_in] = @errors_in if @errors_in
+      data[:discards_out] = @discards_out if @discards_out
+      data[:errors_out] = @errors_out if @errors_out
+      data[:pps_in] = @pps_in if @pps_in
+      data[:pps_out] = @pps_out if @pps_out
+      data[:bps_util_in] = bps_util_in
+      data[:bps_util_out] = bps_util_out
+      data[:type] = @type if @type
+
       existing = db[:interface].where(:device => @device, :index => @index)
       if existing.update(data) != 1
         db[:interface].insert(data)
-        $LOG.info(
-          "INTERFACE: Adding new interface #{@index} (#{@name}) on #{@device}. " +
-          "Last poller: #{@worker}"
-        )
       end
     rescue Sequel::NotNullConstraintViolation, Sequel::ForeignKeyConstraintViolation => e
       $LOG.error("INTERFACE: Save failed. #{e.to_s.gsub(/\n/,'. ')}")
@@ -413,29 +427,12 @@ class Interface < Component
   end
 
 
-  def delete(db)
-    # Delete the interface from the database
-    count = db[:interface].where(:device => @device, :index => @index).delete
-    $LOG.info(
-      "INTERFACE: Deleted interface #{@index} (#{@name}) on #{@device}. " +
-      "Last poller: #{@worker}"
-    )
-
-    return count
-  end
-
-
   def to_json(*a)
     hash = {
       "json_class" => self.class.name,
-      "data" => {
-        "device" => @device,
-        "index" => @index,
-      }
+      "data" => {}
     }
 
-    hash['data']["last_updated"] = @last_updated if @last_updated
-    hash['data']["description"] = description
     hash['data']["name"] = @name if @name
     hash['data']["hc_in_octets"] = @hc_in_octets if @hc_in_octets
     hash['data']["hc_out_octets"] = @hc_out_octets if @hc_out_octets
@@ -462,7 +459,7 @@ class Interface < Component
     hash['data']["bps_util_in"] = bps_util_in
     hash['data']["bps_util_out"] = bps_util_out
     hash['data']["type"] = @type if @type
-    hash['data']["worker"] = @worker if @worker
+    hash['data'].merge!( JSON.parse(super)['data'] )
 
     hash.to_json(*a)
   end
@@ -475,6 +472,7 @@ class Interface < Component
 
 
   private # All methods below are private!!
+
 
   # PRIVATE!
   def _calculate_average(old_time:, old_value:, new_time:, new_value:)

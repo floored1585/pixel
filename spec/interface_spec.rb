@@ -34,7 +34,7 @@ describe Interface do
     'bps_util_out',
     'type',
     'worker',
-  ]
+  ].sort
 
   interface_1 = JSON.parse(INTERFACE_1)['data']
   data1_update_ok = {
@@ -64,7 +64,7 @@ describe Interface do
     "description"=>"", "mtu"=>"1500", "admin_status"=>"2", "oper_status"=>"2",
     "in_discards"=>"0", "in_errors"=>"0", "out_discards"=>"0", "out_errors"=>"0" }
   imaginary_int = {
-    "device" => "test-test-test-g", "index" => 10119,"last_updated" => 1424752571,"description" => "",
+    "device" => "test-test-test-g", "index" => "10119","last_updated" => 1424752571,"description" => "",
     "name" => "Gi0/19", "hc_in_octets" => "0.0", "hc_out_octets" => "0.2628E4",
     "hc_in_ucast_pkts" => "0.0", "hc_out_ucast_pkts" => "0.2E1", "speed" => 1000000000,
     "mtu" => 1500,"admin_status" => 2,"admin_status_time" => 1415142087, "worker" => "te",
@@ -78,16 +78,20 @@ describe Interface do
   describe '#new' do
 
     it 'should return' do
-      int = Interface.new(device: 'gar-test-1', index: 103)
+      int = Interface.new(device: 'gar-test-1', index: '103')
       expect(int).to be_a Interface
     end
 
     it 'should raise' do
-      expect{Interface.new(device: 'gar-test-1', index: 103.25)}.to raise_error TypeError
+      expect{Interface.new(device: 'gar-test-1', index: '103.25')}.to raise_error TypeError
     end
 
     it 'should raise' do
       expect{Interface.new(device: 'gar-test-1', index: 'string')}.to raise_error TypeError
+    end
+
+    it 'should have hw_type Interface' do
+      expect(Interface.new(device: 'gar-test-1', index: 103).hw_type).to eql 'Interface'
     end
 
   end
@@ -111,7 +115,7 @@ describe Interface do
     end
 
     it 'should fill up the object' do
-      expect(JSON.parse(@good_int.to_json)['data'].keys).to eql json_keys
+      expect(JSON.parse(@good_int.to_json)['data'].keys.sort).to eql json_keys
     end
 
   end
@@ -120,11 +124,11 @@ describe Interface do
   # populate
   describe '#populate' do
     it 'should fill up the object' do
-      good = Interface.new(device: 'iad1-bdr-1', index: 1)
-      expect(JSON.parse(good.populate(interface_1).to_json)['data'].keys).to eql json_keys
+      good = Interface.new(device: 'iad1-bdr-1', index: '1')
+      expect(JSON.parse(good.populate(interface_1).to_json)['data'].keys.sort).to eql json_keys
     end
     it 'should return nil if no data passed' do
-      good = Interface.new(device: 'iad1-bdr-1', index: 1)
+      good = Interface.new(device: 'iad1-bdr-1', index: '1')
       expect(good.populate({})).to eql nil
     end
   end
@@ -144,7 +148,7 @@ describe Interface do
     end
 
     describe '#index' do
-      specify { expect(@int.index).to eql 103 }
+      specify { expect(@int.index).to eql '103' }
     end
 
     describe '#speed' do
@@ -306,10 +310,10 @@ describe Interface do
     end
 
     describe '#index' do
-      specify { expect(@int1.index).to eql 604 }
-      specify { expect(@int2.index).to eql 10040 }
-      specify { expect(@int3.index).to eql 656 }
-      specify { expect(@int4.index).to eql 10119 }
+      specify { expect(@int1.index).to eql '604' }
+      specify { expect(@int2.index).to eql '10040' }
+      specify { expect(@int3.index).to eql '656' }
+      specify { expect(@int4.index).to eql '10119' }
     end
 
     describe '#speed' do
@@ -546,7 +550,7 @@ describe Interface do
       specify { expect(@int4.update(data4_update_ok, worker: 'test').bps_util_out).to eql 0.0 }
       specify { expect(@int1.update(data1_update_ok, worker: 'test').oper_status_time).to equal interface_1['oper_status_time'].to_i }
       specify { expect(@int1.update(data1_update_ok, worker: 'test').device).to eql interface_1['device'] }
-      specify { expect(@int1.update(data1_update_ok, worker: 'test').index).to eql 604 }
+      specify { expect(@int1.update(data1_update_ok, worker: 'test').index).to eql '604' }
       specify { expect(@int1.update(data1_update_ok, worker: 'test').description).to eql 'acc__gar-crmx-2__xe-16/0/3' }
       specify { expect(@int1.update(data1_update_ok, worker: 'test').neighbor).to eql 'gar-crmx-2' }
       specify { expect(@int1.update(data1_update_ok, worker: 'test').neighbor_port).to eql 'xe-16/0/3' }
@@ -581,7 +585,7 @@ describe Interface do
     end
 
     it 'should fail if empty' do
-      int = Interface.new(device: 'test-v11u1-acc-y', index: 10139)
+      int = Interface.new(device: 'test-v11u1-acc-y', index: '10139')
       expect(int.save(DB)).to eql nil
     end
 
@@ -591,22 +595,22 @@ describe Interface do
     end
 
     it 'should exist after being saved' do
-      JSON.load(DEV2_JSON).interfaces[10139].save(DB)
+      JSON.load(DEV2_JSON).interfaces['10139'].save(DB)
       int = Interface.fetch('test-v11u1-acc-y', 10139)
       expect(int).to be_a Interface
     end
 
     it 'should update without error' do
-      JSON.load(DEV2_JSON).interfaces[10139].save(DB)
-      JSON.load(DEV2_JSON).interfaces[10139].save(DB)
+      JSON.load(DEV2_JSON).interfaces['10139'].save(DB)
+      JSON.load(DEV2_JSON).interfaces['10139'].save(DB)
       int = Interface.fetch('test-v11u1-acc-y', 10139)
       expect(int).to be_a Interface
     end
 
     it 'should be identical before and after' do
-      JSON.load(DEV2_JSON).interfaces[10139].save(DB)
+      JSON.load(DEV2_JSON).interfaces['10139'].save(DB)
       int = Interface.fetch('test-v11u1-acc-y', 10139)
-      expect(int.to_json).to eql JSON.load(DEV2_JSON).interfaces[10139].to_json
+      expect(int.to_json).to eql JSON.load(DEV2_JSON).interfaces['10139'].to_json
     end
 
   end
@@ -626,7 +630,7 @@ describe Interface do
 
 
     it 'should return 1 if it exists' do
-      JSON.load(DEV2_JSON).interfaces[10139].save(DB)
+      JSON.load(DEV2_JSON).interfaces['10139'].save(DB)
       object = Interface.new(device: 'test-v11u1-acc-y', index: 10139)
       expect(object.delete(DB)).to eql 1
     end

@@ -9,7 +9,7 @@ describe Device do
    'Cisco 4948' => 'irv-i1u1-dist',
    'Cumulus' => 'aon-cumulus-2',
    'Juniper EX' => 'gar-p1u1-dist',
-   'Juniper MX' => 'iad1-bdr-1',
+   'Juniper MX' => 'gar-bdr-1',
    'Force10 S4810' => 'iad1-trn-1',
   }
 

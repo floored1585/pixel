@@ -15,6 +15,12 @@ class PSU < Component
   end
 
 
+  def initialize(device:, index:)
+    super
+    @hw_type = 'PSU'
+  end
+
+
   def status_text
     @status_text
   end
@@ -54,14 +60,17 @@ class PSU < Component
 
 
   def save(db)
-    data = JSON.parse(self.to_json)['data']
-
-    # Update the psu table
     begin
+      super # Component#save
+
+      data = { :device => @device, :index => @index }
+      data[:status] = @status if @status
+      data[:vendor_status] = @vendor_status if @vendor_status
+      data[:status_text] = @status_text if @status_text
+
       existing = db[:psu].where(:device => @device, :index => @index)
       if existing.update(data) != 1
         db[:psu].insert(data)
-        $LOG.info("PSU: Adding new psu #{@index} on #{@device} from #{@worker}")
       end
     rescue Sequel::NotNullConstraintViolation, Sequel::ForeignKeyConstraintViolation => e
       $LOG.error("PSU: Save failed. #{e.to_s.gsub(/\n/,'. ')}")
@@ -72,30 +81,16 @@ class PSU < Component
   end
 
 
-  def delete(db)
-    # Delete the psu from the database
-    count = db[:psu].where(:device => @device, :index => @index).delete
-    $LOG.info("PSU: Deleted psu #{@index} (#{@description}) on #{@device}. Last poller: #{@worker}")
-
-    return count
-  end
-
-
   def to_json(*a)
     hash = {
       "json_class" => self.class.name,
-      "data" => {
-        "device" => @device,
-        "index" => @index,
-      }
+      "data" => {}
     }
 
-    hash['data']["description"] = description
-    hash['data']["last_updated"] = @last_updated if @last_updated
     hash['data']["status"] = @status if @status
     hash['data']["vendor_status"] = @vendor_status if @vendor_status
     hash['data']["status_text"] = @status_text if @status_text
-    hash['data']["worker"] = @worker if @worker
+    hash['data'].merge!( JSON.parse(super)['data'] )
 
     hash.to_json(*a)
   end

@@ -117,10 +117,12 @@ module Core
 
   def get_interface(settings, db, device, index: nil, name: nil)
     if index
-      row = db[:interface].where(:device => device, :index => index).all[0]
+      row = db[:interface].where(:device => device, :index => index.to_s).
+        natural_join(:component).first
     elsif name
-      row = db[:interface].where(:device => device)
-      row = row.where(Sequel.function(:lower, :name) => name.downcase).all[0]
+      row = db[:interface].where(:device => device).
+        where(Sequel.function(:lower, :name) => name.downcase).
+        natural_join(:component).first
     else
       row = nil
     end
@@ -135,8 +137,8 @@ module Core
 
   def get_interfaces(settings, db, device)
     ints = {}
-    db[:interface].where(:device => device).each do |row|
-      index = row[:index].to_i
+    db[:interface].where(:device => device).natural_join(:component).each do |row|
+      index = row[:index]
       ints[index] = Interface.new(device: row[:device], index: index).populate(row)
     end
     return ints
@@ -144,7 +146,7 @@ module Core
 
 
   def get_cpu(settings, db, device, index)
-    row = db[:cpu].where(:device => device, :index => index.to_s).all[0]
+    row = db[:cpu].where(:device => device, :index => index.to_s).natural_join(:component).first
     if row
       return CPU.new(device: row[:device], index: row[:index]).populate(row)
     else
@@ -155,8 +157,8 @@ module Core
 
   def get_cpus(settings, db, device)
     cpus = {}
-    db[:cpu].where(:device => device).each do |row|
-      index = row[:index].to_i
+    db[:cpu].where(:device => device).natural_join(:component).each do |row|
+      index = row[:index]
       cpus[index] = CPU.new(device: row[:device], index: index).populate(row)
     end
     return cpus
@@ -164,7 +166,7 @@ module Core
 
 
   def get_fan(settings, db, device, index)
-    row = db[:fan].where(:device => device, :index => index.to_s).all[0]
+    row = db[:fan].where(:device => device, :index => index.to_s).natural_join(:component).first
     if row
       return Fan.new(device: row[:device], index: row[:index]).populate(row)
     else
@@ -175,8 +177,8 @@ module Core
 
   def get_fans(settings, db, device)
     fans = {}
-    db[:fan].where(:device => device).each do |row|
-      index = row[:index].to_i
+    db[:fan].where(:device => device).natural_join(:component).each do |row|
+      index = row[:index]
       fans[index] = Fan.new(device: row[:device], index: index).populate(row)
     end
     return fans
@@ -184,7 +186,7 @@ module Core
 
 
   def get_memory(settings, db, device, index)
-    row = db[:memory].where(:device => device, :index => index.to_s).all[0]
+    row = db[:memory].where(:device => device, :index => index.to_s).natural_join(:component).first
     if row
       return Memory.new(device: row[:device], index: row[:index]).populate(row)
     else
@@ -195,8 +197,8 @@ module Core
 
   def get_memories(settings, db, device)
     memories = {}
-    db[:memory].where(:device => device).each do |row|
-      index = row[:index].to_i
+    db[:memory].where(:device => device).natural_join(:component).each do |row|
+      index = row[:index]
       memories[index] = Memory.new(device: row[:device], index: index).populate(row)
     end
     return memories
@@ -204,7 +206,7 @@ module Core
 
 
   def get_psu(settings, db, device, index)
-    row = db[:psu].where(:device => device, :index => index.to_s).all[0]
+    row = db[:psu].where(:device => device, :index => index.to_s).natural_join(:component).first
     if row
       return PSU.new(device: row[:device], index: row[:index]).populate(row)
     else
@@ -215,8 +217,8 @@ module Core
 
   def get_psus(settings, db, device)
     psus = {}
-    db[:psu].where(:device => device).each do |row|
-      index = row[:index].to_i
+    db[:psu].where(:device => device).natural_join(:component).each do |row|
+      index = row[:index]
       psus[index] = PSU.new(device: row[:device], index: index).populate(row)
     end
     return psus
@@ -224,7 +226,7 @@ module Core
 
 
   def get_temperature(settings, db, device, index)
-    row = db[:temperature].where(:device => device, :index => index.to_s).all[0]
+    row = db[:temperature].where(:device => device, :index => index.to_s).natural_join(:component).first
     if row
       return Temperature.new(device: row[:device], index: row[:index]).populate(row)
     else
@@ -235,8 +237,8 @@ module Core
 
   def get_temperatures(settings, db, device)
     temperatures = {}
-    db[:temperature].where(:device => device).each do |row|
-      index = row[:index].to_i
+    db[:temperature].where(:device => device).natural_join(:component).each do |row|
+      index = row[:index]
       temperatures[index] = Temperature.new(device: row[:device], index: index).populate(row)
     end
     return temperatures

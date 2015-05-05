@@ -100,11 +100,9 @@ module Helper
     if int.neighbor
       neighbor = "<a href='/device/#{int.neighbor}'>#{int.neighbor}</a>"
       port = int.neighbor_port || ''
-      port.empty? || opts[:device_only] ? neighbor : "#{neighbor} (#{port})"
-    elsif int.type == 'unknown'
-      int.description || ''
+      return port.empty? || opts[:device_only] ? neighbor : "#{neighbor} (#{port})"
     else
-      ''
+      return int.description
     end
   end
 

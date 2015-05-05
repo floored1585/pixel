@@ -15,6 +15,12 @@ class Fan < Component
   end
 
 
+  def initialize(device:, index:)
+    super
+    @hw_type = 'Fan'
+  end
+
+
   def status_text
     @status_text
   end
@@ -53,14 +59,17 @@ class Fan < Component
 
 
   def save(db)
-    data = JSON.parse(self.to_json)['data']
-
-    # Update the fan table
     begin
+      super # Component#save
+
+      data = { :device => @device, :index => @index }
+      data[:status] = @status if @status
+      data[:vendor_status] = @vendor_status if @vendor_status
+      data[:status_text] = @status_text if @status_text
+
       existing = db[:fan].where(:device => @device, :index => @index)
       if existing.update(data) != 1
         db[:fan].insert(data)
-        $LOG.info("FAN: Adding new fan #{@index} on #{@device} from #{@worker}")
       end
     rescue Sequel::NotNullConstraintViolation, Sequel::ForeignKeyConstraintViolation => e
       $LOG.error("FAN: Save failed. #{e.to_s.gsub(/\n/,'. ')}")
@@ -68,15 +77,6 @@ class Fan < Component
     end
 
     return self
-  end
-
-
-  def delete(db)
-    # Delete the fan from the database
-    count = db[:fan].where(:device => @device, :index => @index).delete
-    $LOG.info("FAN: Deleted fan #{@index} (#{@description}) on #{@device}. Last poller: #{@worker}")
-
-    return count
   end
 
 
@@ -89,12 +89,10 @@ class Fan < Component
       }
     }
 
-    hash['data']["description"] = description
-    hash['data']["last_updated"] = @last_updated if @last_updated
     hash['data']["status"] = @status if @status
     hash['data']["vendor_status"] = @vendor_status if @vendor_status
     hash['data']["status_text"] = @status_text if @status_text
-    hash['data']["worker"] = @worker if @worker
+    hash['data'].merge!( JSON.parse(super)['data'] )
 
     hash.to_json(*a)
   end

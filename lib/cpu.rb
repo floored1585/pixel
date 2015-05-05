@@ -15,6 +15,12 @@ class CPU < Component
   end
 
 
+  def initialize(device:, index:)
+    super
+    @hw_type = 'CPU'
+  end
+
+
   def util
     @util || 0
   end
@@ -56,14 +62,15 @@ class CPU < Component
 
 
   def save(db)
-    data = JSON.parse(self.to_json)['data']
-
-    # Update the cpu table
     begin
-      existing = db[:cpu].where(:device => @device, :index => @index)
+      super # Component#save
+
+      data = { :device => @device, :index => @index }
+      data[:util] = util
+
+      existing = db[:cpu].where(:device=>@device, :index=>@index)
       if existing.update(data) != 1
         db[:cpu].insert(data)
-        $LOG.info("CPU: Adding new cpu #{@index} on #{@device} from #{@worker}")
       end
     rescue Sequel::NotNullConstraintViolation, Sequel::ForeignKeyConstraintViolation => e
       $LOG.error("CPU: Save failed. #{e.to_s.gsub(/\n/,'. ')}")
@@ -74,28 +81,14 @@ class CPU < Component
   end
 
 
-  def delete(db)
-    # Delete the cpu from the database
-    count = db[:cpu].where(:device => @device, :index => @index).delete
-    $LOG.info("CPU: Deleted cpu #{@index} (#{@description}) on #{@device}. Last poller: #{@worker}")
-
-    return count
-  end
-
-
   def to_json(*a)
     hash = {
       "json_class" => self.class.name,
-      "data" => {
-        "device" => @device,
-        "index" => @index,
-      }
+      "data" => {}
     }
 
     hash['data']["util"] = util
-    hash['data']["description"] = description
-    hash['data']["last_updated"] = @last_updated if @last_updated
-    hash['data']["worker"] = @worker if @worker
+    hash['data'].merge!( JSON.parse(super)['data'] )
 
     hash.to_json(*a)
   end

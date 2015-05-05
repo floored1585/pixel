@@ -3,7 +3,7 @@ require_relative 'rspec'
 describe PSU do
 
   json_keys = [ 'device', 'index', 'description', 'last_updated',
-                'status', 'vendor_status', 'status_text', 'worker' ]
+                'status', 'vendor_status', 'status_text', 'worker' ].sort
 
   data1_base = {
     "device" => "gar-b11u1-dist", "index" => "4.1.1.1", "description" => "PSU 0 @ 0/0/0",
@@ -49,10 +49,16 @@ describe PSU do
   describe '#new' do
 
     context 'with good data' do
+
       it 'should return a PSU object' do
         psu = PSU.new(device: 'gar-test-1', index: 103)
         expect(psu).to be_a PSU
       end
+
+      it 'should have hw_type PSU' do
+        expect(PSU.new(device: 'gar-test-1', index: 103).hw_type).to eql 'PSU'
+      end
+
     end
 
   end
@@ -76,7 +82,7 @@ describe PSU do
     end
 
     it 'should fill up the object' do
-      expect(JSON.parse(@good_psu.to_json)['data'].keys).to eql json_keys
+      expect(JSON.parse(@good_psu.to_json)['data'].keys.sort).to eql json_keys
     end
 
   end
@@ -86,7 +92,7 @@ describe PSU do
   describe '#populate' do
     it 'should fill up the object' do
       good = PSU.new(device: 'iad1-bdr-1', index: '1.4.0')
-      expect(JSON.parse(good.populate(data1_base).to_json)['data'].keys).to eql json_keys
+      expect(JSON.parse(good.populate(data1_base).to_json)['data'].keys.sort).to eql json_keys
     end
     it 'should return nil if no data passed' do
       good = PSU.new(device: 'iad1-bdr-1', index: '1.4.0')

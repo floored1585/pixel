@@ -3,7 +3,7 @@ require_relative 'rspec'
 describe Fan do
 
   json_keys = [ 'device', 'index', 'description', 'last_updated',
-                'status', 'vendor_status', 'status_text', 'worker' ]
+                'status', 'vendor_status', 'status_text', 'worker' ].sort
 
   data1_base = {
     "device" => "gar-b11u1-dist", "index" => "1.1.1", "description" => "FAN 0 @ 0/0/0",
@@ -49,10 +49,16 @@ describe Fan do
   describe '#new' do
 
     context 'with good data' do
+
       it 'should return a Fan object' do
         fan = Fan.new(device: 'gar-test-1', index: 103)
         expect(fan).to be_a Fan
       end
+
+      it 'should have hw_type Fan' do
+        expect(Fan.new(device: 'gar-test-1', index: 103).hw_type).to eql 'Fan'
+      end
+
     end
 
   end
@@ -63,7 +69,7 @@ describe Fan do
 
     before :each do
       @bad_fan = Fan.fetch('gar-test-1', 'test')
-      @good_fan = Fan.fetch('iad1-bdr-1', '1.4.0')
+      @good_fan = Fan.fetch('gar-bdr-1', '1.4.0')
     end
 
 
@@ -76,7 +82,7 @@ describe Fan do
     end
 
     it 'should fill up the object' do
-      expect(JSON.parse(@good_fan.to_json)['data'].keys).to eql json_keys
+      expect(JSON.parse(@good_fan.to_json)['data'].keys.sort).to eql json_keys
     end
 
 
@@ -87,7 +93,7 @@ describe Fan do
   describe '#populate' do
     it 'should fill up the object' do
       good = Fan.new(device: 'iad1-bdr-1', index: '1.4.0')
-      expect(JSON.parse(good.populate(data1_base).to_json)['data'].keys).to eql json_keys
+      expect(JSON.parse(good.populate(data1_base).to_json)['data'].keys.sort).to eql json_keys
     end
     it 'should return nil if no data passed' do
       good = Fan.new(device: 'iad1-bdr-1', index: '1.4.0')

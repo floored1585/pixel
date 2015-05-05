@@ -15,6 +15,12 @@ class Temperature < Component
   end
 
 
+  def initialize(device:, index:)
+    super
+    @hw_type = 'Temperature'
+  end
+
+
   def temp
     @temperature
   end
@@ -73,14 +79,19 @@ class Temperature < Component
 
 
   def save(db)
-    data = JSON.parse(self.to_json)['data']
-
-    # Update the temperature table
     begin
+      super # Component#save
+
+      data = { :device => @device, :index => @index }
+      data[:temperature] = @temperature if @temperature
+      data[:status] = @status if @status
+      data[:threshold] = @threshold if @threshold
+      data[:vendor_status] = @vendor_status if @vendor_status
+      data[:status_text] = @status_text if @status_text
+
       existing = db[:temperature].where(:device => @device, :index => @index)
       if existing.update(data) != 1
         db[:temperature].insert(data)
-        $LOG.info("TEMPERATURE: Adding new temperature #{@index} on #{@device} from #{@worker}")
       end
     rescue Sequel::NotNullConstraintViolation, Sequel::ForeignKeyConstraintViolation => e
       $LOG.error("PSU: Save failed. #{e.to_s.gsub(/\n/,'. ')}")
@@ -91,32 +102,18 @@ class Temperature < Component
   end
 
 
-  def delete(db)
-    # Delete the temperature from the database
-    count = db[:temperature].where(:device => @device, :index => @index).delete
-    $LOG.info("TEMPERATURE: Deleted temperature #{@index} (#{@description}) on #{@device}. Last poller: #{@worker}")
-
-    return count
-  end
-
-
   def to_json(*a)
     hash = {
       "json_class" => self.class.name,
-      "data" => {
-        "device" => @device,
-        "index" => @index,
-      }
+      "data" => {}
     }
 
     hash['data']["temperature"] = @temperature if @temperature
-    hash['data']["last_updated"] = @last_updated if @last_updated
-    hash['data']["description"] = description
     hash['data']["status"] = @status if @status
     hash['data']["threshold"] = @threshold if @threshold
     hash['data']["vendor_status"] = @vendor_status if @vendor_status
     hash['data']["status_text"] = @status_text if @status_text
-    hash['data']["worker"] = @worker if @worker
+    hash['data'].merge!( JSON.parse(super)['data'] )
 
     hash.to_json(*a)
   end

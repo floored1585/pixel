@@ -2,7 +2,7 @@ require_relative 'rspec'
 
 describe CPU do
 
-  json_keys = [ 'device', 'index', 'util', 'description', 'last_updated', 'worker' ]
+  json_keys = [ 'device', 'index', 'util', 'description', 'last_updated', 'worker' ].sort
 
   data1_base = { "device" => "irv-i1u1-dist", "index" => "1", "util" => 8.0, "description" => "Linecard(slot 1)", "last_updated" => 1427224290, "worker" => "test" }
   data2_base = { "device" => "gar-b11u1-dist", "index" => "7.2.0.0", "util" => 54.0, "description" => "FPC: EX4300-48T @ 1/*/*", "last_updated" => 1427224144, "worker" => "test" }
@@ -32,10 +32,16 @@ describe CPU do
   describe '#new' do
 
     context 'with good data' do
+
       it 'should return a CPU object' do
         cpu = CPU.new(device: 'gar-test-1', index: 103)
         expect(cpu).to be_a CPU
       end
+
+      it 'should have hw_type CPU' do
+        expect(CPU.new(device: 'gar-test-1', index: 103).hw_type).to eql 'CPU'
+      end
+
     end
 
   end
@@ -59,7 +65,7 @@ describe CPU do
     end
 
     it 'should fill up the object' do
-      expect(JSON.parse(@good_cpu.to_json)['data'].keys).to eql json_keys
+      expect(JSON.parse(@good_cpu.to_json)['data'].keys.sort).to eql json_keys
     end
 
 
@@ -70,7 +76,7 @@ describe CPU do
   describe '#populate' do
     it 'should fill up the object' do
       good = CPU.new(device: 'iad1-bdr-1', index: '1.4.0')
-      expect(JSON.parse(good.populate(data1_base).to_json)['data'].keys).to eql json_keys
+      expect(JSON.parse(good.populate(data1_base).to_json)['data'].keys.sort).to eql json_keys
     end
     it 'should return nil if no data passed' do
       good = CPU.new(device: 'iad1-bdr-1', index: '1.4.0')

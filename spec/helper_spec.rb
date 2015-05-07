@@ -153,7 +153,7 @@ end
 describe '#interface_link' do
 
   it 'should generate a link' do
-    int = JSON.load(DEV1_JSON).interfaces[10102]
+    int = JSON.load(DEV1_JSON).interfaces['10102']
     link = interface_link(settings, int)
     correct_link = "<a href='#{settings['grafana_if_dash']}" +
     "?title=gar-v11u1-acc-y%20::%20Gi0%2F2" +

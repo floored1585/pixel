@@ -6,7 +6,7 @@ describe Interface do
     'device',
     'index',
     'last_updated',
-    'alias',
+    'description',
     'name',
     'hc_in_octets',
     'hc_out_octets',
@@ -34,37 +34,37 @@ describe Interface do
     'bps_util_out',
     'type',
     'worker',
-  ]
+  ].sort
 
   interface_1 = JSON.parse(INTERFACE_1)['data']
-  int1_update = {
+  data1_update_ok = {
     "name" => "xe-0/2/0", "hc_in_octets" => "3959713831274390",
     "hc_out_octets" => "3281311197965730", "hc_in_ucast_pkts" => "4417738539412",
     "hc_out_ucast_pkts" => "3848146448961", "high_speed" => "10000",
-    "alias" => "acc__gar-crmx-2__xe-16/0/3", "mtu" => "1522", "admin_status" => "1",
+    "description" => "acc__gar-crmx-2__xe-16/0/3", "mtu" => "1522", "admin_status" => "1",
     "oper_status" => "1", "in_discards" => "0", "in_errors" => "0",
     "out_discards" => "0", "out_errors" => "0" }
   interface_2 = JSON.parse(INTERFACE_2)['data']
-  int2_update = {
+  data2_update_ok = {
     "name"=>"Fa0/40", "hc_in_octets"=>"0", "hc_out_octets"=>"0",
     "hc_in_ucast_pkts"=>"0", "hc_out_ucast_pkts"=>"0", "high_speed"=>"10",
-    "alias"=>"acc__", "mtu"=>"1500", "admin_status"=>"1", "oper_status"=>"2",
+    "description"=>"acc__", "mtu"=>"1500", "admin_status"=>"1", "oper_status"=>"2",
     "in_discards"=>"0", "in_errors"=>"0", "out_discards"=>"0", "out_errors"=>"0" }
   interface_3 = JSON.parse(INTERFACE_3)['data']
-  int3_update = {
+  data3_update_ok = {
     "name"=>"ae0", "hc_in_octets"=>"493124877631750", "hc_out_octets"=>"1135292119081151",
     "hc_in_ucast_pkts"=>"895162904912", "hc_out_ucast_pkts"=>"1198370633351",
-    "high_speed"=>"20000", "alias"=>"bb__gar-cr-1__ae3", "mtu"=>"1514",
+    "high_speed"=>"20000", "description"=>"bb__gar-cr-1__ae3", "mtu"=>"1514",
     "admin_status"=>"1", "oper_status"=>"1", "in_discards"=>"0", "in_errors"=>"0",
     "out_discards"=>"0", "out_errors"=>"0" }
   interface_4 = JSON.parse(INTERFACE_4)['data']
-  int4_update = {
+  data4_update_ok = {
     "name"=>"Gi0/19", "hc_in_octets"=>"0", "hc_out_octets"=>"2628",
     "hc_in_ucast_pkts"=>"0", "hc_out_ucast_pkts"=>"2", "high_speed"=>"1000",
-    "alias"=>"", "mtu"=>"1500", "admin_status"=>"2", "oper_status"=>"2",
+    "description"=>"", "mtu"=>"1500", "admin_status"=>"2", "oper_status"=>"2",
     "in_discards"=>"0", "in_errors"=>"0", "out_discards"=>"0", "out_errors"=>"0" }
   imaginary_int = {
-    "device" => "test-test-test-g", "index" => 10119,"last_updated" => 1424752571,"alias" => "",
+    "device" => "test-test-test-g", "index" => "10119","last_updated" => 1424752571,"description" => "",
     "name" => "Gi0/19", "hc_in_octets" => "0.0", "hc_out_octets" => "0.2628E4",
     "hc_in_ucast_pkts" => "0.0", "hc_out_ucast_pkts" => "0.2E1", "speed" => 1000000000,
     "mtu" => 1500,"admin_status" => 2,"admin_status_time" => 1415142087, "worker" => "te",
@@ -78,16 +78,20 @@ describe Interface do
   describe '#new' do
 
     it 'should return' do
-      int = Interface.new(device: 'gar-test-1', index: 103)
+      int = Interface.new(device: 'gar-test-1', index: '103')
       expect(int).to be_a Interface
     end
 
     it 'should raise' do
-      expect{Interface.new(device: 'gar-test-1', index: 103.25)}.to raise_error TypeError
+      expect{Interface.new(device: 'gar-test-1', index: '103.25')}.to raise_error TypeError
     end
 
     it 'should raise' do
       expect{Interface.new(device: 'gar-test-1', index: 'string')}.to raise_error TypeError
+    end
+
+    it 'should have hw_type Interface' do
+      expect(Interface.new(device: 'gar-test-1', index: 103).hw_type).to eql 'Interface'
     end
 
   end
@@ -111,7 +115,7 @@ describe Interface do
     end
 
     it 'should fill up the object' do
-      expect(JSON.parse(@good_int.to_json)['data'].keys).to eql json_keys
+      expect(JSON.parse(@good_int.to_json)['data'].keys.sort).to eql json_keys
     end
 
   end
@@ -120,8 +124,12 @@ describe Interface do
   # populate
   describe '#populate' do
     it 'should fill up the object' do
-      good = Interface.new(device: 'iad1-bdr-1', index: 1)
-      expect(JSON.parse(good.populate(interface_1).to_json)['data'].keys).to eql json_keys
+      good = Interface.new(device: 'iad1-bdr-1', index: '1')
+      expect(JSON.parse(good.populate(interface_1).to_json)['data'].keys.sort).to eql json_keys
+    end
+    it 'should return nil if no data passed' do
+      good = Interface.new(device: 'iad1-bdr-1', index: '1')
+      expect(good.populate({})).to eql nil
     end
   end
 
@@ -140,7 +148,7 @@ describe Interface do
     end
 
     describe '#index' do
-      specify { expect(@int.index).to eql 103 }
+      specify { expect(@int.index).to eql '103' }
     end
 
     describe '#speed' do
@@ -163,8 +171,8 @@ describe Interface do
       specify { expect(@int.substitute_name(subs)).to eql nil }
     end
 
-    describe '#alias' do
-      specify { expect(@int.alias).to eql nil }
+    describe '#description' do
+      specify { expect(@int.description).to eql '' }
     end
 
     describe '#type' do
@@ -264,15 +272,17 @@ describe Interface do
     end
 
     describe '#update' do
-      specify { expect(@int.update(int1_update, worker: 'test')).to equal @int }
-      specify { expect(@int.update(int1_update, worker: 'test').device).to eql 'gar-test-1' }
-      specify { expect(@int.update(int1_update, worker: 'test').alias).to eql 'acc__gar-crmx-2__xe-16/0/3' }
-      specify { expect(@int.update(int1_update, worker: 'test').neighbor).to eql 'gar-crmx-2' }
-      specify { expect(@int.update(int1_update, worker: 'test').neighbor_port).to eql 'xe-16/0/3' }
-      specify { expect(@int.update(int1_update, worker: 'test').type_raw).to eql 'acc' }
-      specify { expect(@int.update(int1_update, worker: 'test').type).to eql 'Access' }
+      obj = Interface.new(device: 'gar-test-1', index: '103').update(data1_update_ok, worker: 'test')
+      specify { expect(obj).to be_a Interface }
+      specify { expect(obj.last_updated).to be > Time.now.to_i - 1000 }
+      specify { expect(obj.device).to eql 'gar-test-1' }
+      specify { expect(obj.description).to eql 'acc__gar-crmx-2__xe-16/0/3' }
+      specify { expect(obj.neighbor).to eql 'gar-crmx-2' }
+      specify { expect(obj.neighbor_port).to eql 'xe-16/0/3' }
+      specify { expect(obj.type_raw).to eql 'acc' }
+      specify { expect(obj.type).to eql 'Access' }
     end
-
+    
     describe '#write_to_influxdb' do
       #TODO
     end
@@ -300,10 +310,10 @@ describe Interface do
     end
 
     describe '#index' do
-      specify { expect(@int1.index).to eql 604 }
-      specify { expect(@int2.index).to eql 10040 }
-      specify { expect(@int3.index).to eql 656 }
-      specify { expect(@int4.index).to eql 10119 }
+      specify { expect(@int1.index).to eql '604' }
+      specify { expect(@int2.index).to eql '10040' }
+      specify { expect(@int3.index).to eql '656' }
+      specify { expect(@int4.index).to eql '10119' }
     end
 
     describe '#speed' do
@@ -336,11 +346,11 @@ describe Interface do
       specify { expect(@int4.substitute_name(subs)).to eql 'GigabitEthernet0/19' }
     end
 
-    describe '#alias' do
-      specify { expect(@int1.alias).to eql 'bb__gar-crmx-1__xe-1/0/3' }
-      specify { expect(@int2.alias).to eql 'acc__' }
-      specify { expect(@int3.alias).to eql 'sub[ae12]__gar-cr-1__ae3' }
-      specify { expect(@int4.alias).to eql '' }
+    describe '#description' do
+      specify { expect(@int1.description).to eql 'bb__gar-crmx-1__xe-1/0/3' }
+      specify { expect(@int2.description).to eql 'acc__' }
+      specify { expect(@int3.description).to eql 'sub[ae12]__gar-cr-1__ae3' }
+      specify { expect(@int4.description).to eql '' }
     end
 
     describe '#type' do
@@ -524,30 +534,30 @@ describe Interface do
     end
 
     describe '#update' do
-      # The interface_1 and int1_update are specicially crated to give these
+      # The interface_1 and data1_update_ok are specicially crated to give these
       #   outputs, ensuring accurate calcuation of bps and bps_util
-      specify { expect(@int1.update(int1_update, worker: 'test')).to equal @int1 }
-      specify { expect(@int1.update(int1_update, worker: 'test').bps_util_in).to eql 10.0 }
-      specify { expect(@int1.update(int1_update, worker: 'test').bps_util_out).to eql 20.0 }
-      specify { expect(@int1.update(int1_update, worker: 'test').bps_in).to eql 999_999_999 }
-      specify { expect(@int1.update(int1_update, worker: 'test').bps_out).to eql 1_999_999_999 }
-      specify { expect(@int2.update(int2_update, worker: 'test')).to equal @int2 }
-      specify { expect(@int2.update(int2_update, worker: 'test').bps_util_in).to eql 0.0 }
-      specify { expect(@int2.update(int2_update, worker: 'test').bps_util_out).to eql 0.0 }
-      specify { expect(@int3.update(int3_update, worker: 'test')).to equal @int3 }
-      specify { expect(@int4.update(int4_update, worker: 'test')).to equal @int4 }
-      specify { expect(@int4.update(int4_update, worker: 'test').bps_util_in).to eql 0.0 }
-      specify { expect(@int4.update(int4_update, worker: 'test').bps_util_out).to eql 0.0 }
-      specify { expect(@int1.update(int1_update, worker: 'test').oper_status_time).to equal interface_1['oper_status_time'].to_i }
-      specify { expect(@int1.update(int1_update, worker: 'test').device).to eql interface_1['device'] }
-      specify { expect(@int1.update(int1_update, worker: 'test').index).to eql 604 }
-      specify { expect(@int1.update(int1_update, worker: 'test').alias).to eql 'acc__gar-crmx-2__xe-16/0/3' }
-      specify { expect(@int1.update(int1_update, worker: 'test').neighbor).to eql 'gar-crmx-2' }
-      specify { expect(@int1.update(int1_update, worker: 'test').neighbor_port).to eql 'xe-16/0/3' }
-      specify { expect(@int1.update(int1_update, worker: 'test').type).to eql 'Access' }
-      specify { expect(@int3.update(int3_update, worker: 'test').type).to eql 'Backbone' }
-      specify { expect(@int1.update(int1_update, worker: 'test').type_raw).to eql 'acc' }
-      specify { expect(@int3.update(int3_update, worker: 'test').type_raw).to eql 'bb' }
+      specify { expect(@int1.update(data1_update_ok, worker: 'test')).to equal @int1 }
+      specify { expect(@int1.update(data1_update_ok, worker: 'test').bps_util_in).to eql 10.0 }
+      specify { expect(@int1.update(data1_update_ok, worker: 'test').bps_util_out).to eql 20.0 }
+      specify { expect(@int1.update(data1_update_ok, worker: 'test').bps_in).to eql 999_999_999 }
+      specify { expect(@int1.update(data1_update_ok, worker: 'test').bps_out).to eql 1_999_999_999 }
+      specify { expect(@int2.update(data2_update_ok, worker: 'test')).to equal @int2 }
+      specify { expect(@int2.update(data2_update_ok, worker: 'test').bps_util_in).to eql 0.0 }
+      specify { expect(@int2.update(data2_update_ok, worker: 'test').bps_util_out).to eql 0.0 }
+      specify { expect(@int3.update(data3_update_ok, worker: 'test')).to equal @int3 }
+      specify { expect(@int4.update(data4_update_ok, worker: 'test')).to equal @int4 }
+      specify { expect(@int4.update(data4_update_ok, worker: 'test').bps_util_in).to eql 0.0 }
+      specify { expect(@int4.update(data4_update_ok, worker: 'test').bps_util_out).to eql 0.0 }
+      specify { expect(@int1.update(data1_update_ok, worker: 'test').oper_status_time).to equal interface_1['oper_status_time'].to_i }
+      specify { expect(@int1.update(data1_update_ok, worker: 'test').device).to eql interface_1['device'] }
+      specify { expect(@int1.update(data1_update_ok, worker: 'test').index).to eql '604' }
+      specify { expect(@int1.update(data1_update_ok, worker: 'test').description).to eql 'acc__gar-crmx-2__xe-16/0/3' }
+      specify { expect(@int1.update(data1_update_ok, worker: 'test').neighbor).to eql 'gar-crmx-2' }
+      specify { expect(@int1.update(data1_update_ok, worker: 'test').neighbor_port).to eql 'xe-16/0/3' }
+      specify { expect(@int1.update(data1_update_ok, worker: 'test').type).to eql 'Access' }
+      specify { expect(@int3.update(data3_update_ok, worker: 'test').type).to eql 'Backbone' }
+      specify { expect(@int1.update(data1_update_ok, worker: 'test').type_raw).to eql 'acc' }
+      specify { expect(@int3.update(data3_update_ok, worker: 'test').type_raw).to eql 'bb' }
     end
 
     describe '#write_to_influxdb' do
@@ -575,7 +585,7 @@ describe Interface do
     end
 
     it 'should fail if empty' do
-      int = Interface.new(device: 'test-v11u1-acc-y', index: 10139)
+      int = Interface.new(device: 'test-v11u1-acc-y', index: '10139')
       expect(int.save(DB)).to eql nil
     end
 
@@ -585,22 +595,22 @@ describe Interface do
     end
 
     it 'should exist after being saved' do
-      JSON.load(DEV2_JSON).interfaces[10139].save(DB)
+      JSON.load(DEV2_JSON).interfaces['10139'].save(DB)
       int = Interface.fetch('test-v11u1-acc-y', 10139)
       expect(int).to be_a Interface
     end
 
     it 'should update without error' do
-      JSON.load(DEV2_JSON).interfaces[10139].save(DB)
-      JSON.load(DEV2_JSON).interfaces[10139].save(DB)
+      JSON.load(DEV2_JSON).interfaces['10139'].save(DB)
+      JSON.load(DEV2_JSON).interfaces['10139'].save(DB)
       int = Interface.fetch('test-v11u1-acc-y', 10139)
       expect(int).to be_a Interface
     end
 
     it 'should be identical before and after' do
-      JSON.load(DEV2_JSON).interfaces[10139].save(DB)
+      JSON.load(DEV2_JSON).interfaces['10139'].save(DB)
       int = Interface.fetch('test-v11u1-acc-y', 10139)
-      expect(int.to_json).to eql JSON.load(DEV2_JSON).interfaces[10139].to_json
+      expect(int.to_json).to eql JSON.load(DEV2_JSON).interfaces['10139'].to_json
     end
 
   end
@@ -620,7 +630,7 @@ describe Interface do
 
 
     it 'should return 1 if it exists' do
-      JSON.load(DEV2_JSON).interfaces[10139].save(DB)
+      JSON.load(DEV2_JSON).interfaces['10139'].save(DB)
       object = Interface.new(device: 'test-v11u1-acc-y', index: 10139)
       expect(object.delete(DB)).to eql 1
     end

@@ -1,3 +1,4 @@
+require 'hashdiff'
 require_relative 'rspec'
 
 describe Device do
@@ -8,7 +9,7 @@ describe Device do
     'Cisco 4948' => 'irv-i1u1-dist',
     'Cumulus' => 'aon-cumulus-2',
     'Juniper EX' => 'gar-p1u1-dist',
-    'Juniper MX' => 'iad1-bdr-1',
+    'Juniper MX' => 'gar-bdr-1',
     'Force10 S4810' => 'iad1-trn-1',
   }
 
@@ -171,8 +172,12 @@ describe Device do
   # populate
   describe '#populate' do
     it 'should fill up the object' do
-      dev = Device.new('gar-v11u1-acc-y')
-      expect(JSON.parse(dev.populate(dev_hash).to_json)['data'].keys).to eql json_keys
+      good = Device.new('gar-v11u1-acc-y')
+      expect(JSON.parse(good.populate(dev_hash).to_json)['data'].keys).to eql json_keys
+    end
+    it 'should return nil if no data passed' do
+      good = Device.new('gar-v11u1-acc-y')
+      expect(good.populate({})).to eql nil
     end
   end
 
@@ -566,8 +571,17 @@ describe Device do
       specify { expect(JSON.load(json_mx).to_json).to eql json_mx }
       specify { expect(JSON.load(json_f10_s4810).to_json).to eql json_f10_s4810 }
 
-      specify { expect(JSON.load(DEV1_JSON).to_json).to eql DEV1_JSON }
-      specify { expect(JSON.load(DEV2_JSON).to_json).to eql DEV2_JSON }
+      it 'should not change' do
+        hash = JSON.parse(JSON.load(DEV1_JSON).to_json)
+        hash_expected = JSON.parse(DEV1_JSON)
+        expect(HashDiff.diff(hash, hash_expected)).to be_empty
+      end
+
+      it 'should not change' do
+        hash = JSON.parse(JSON.load(DEV2_JSON).to_json)
+        hash_expected = JSON.parse(DEV2_JSON)
+        expect(HashDiff.diff(hash, hash_expected)).to be_empty
+      end
 
     end
 

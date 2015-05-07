@@ -3,7 +3,7 @@ require_relative 'rspec'
 describe Temperature do
 
   json_keys = [ 'device', 'index', 'temperature', 'last_updated', 'description',
-                'status', 'threshold', 'vendor_status', 'status_text', 'worker' ]
+                'status', 'threshold', 'vendor_status', 'status_text', 'worker' ].sort
 
   data1_base = {
     "device" => "gar-b11u1-dist", "index" => "7.1.0.0", "temperature" => 52, "worker" => "test123",
@@ -50,10 +50,16 @@ describe Temperature do
   describe '#new' do
 
     context 'with good data' do
+
       it 'should return a Temperature object' do
         temp = Temperature.new(device: 'gar-test-1', index: 103)
         expect(temp).to be_a Temperature
       end
+
+      it 'should have hw_type Temperature' do
+        expect(Temperature.new(device: 'gar-test-1', index: 103).hw_type).to eql 'Temperature'
+      end
+
     end
 
   end
@@ -64,7 +70,7 @@ describe Temperature do
 
     before :each do
       @bad_temp = Temperature.fetch('gar-test-1', 'test')
-      @good_temp = Temperature.fetch('gar-c11u1-dist', '1')
+      @good_temp = Temperature.fetch('irv-i1u1-dist', '1')
     end
 
 
@@ -77,7 +83,7 @@ describe Temperature do
     end
 
     it 'should fill up the object' do
-      expect(JSON.parse(@good_temp.to_json)['data'].keys).to eql json_keys
+      expect(JSON.parse(@good_temp.to_json)['data'].keys.sort).to eql json_keys
     end
 
   end
@@ -87,7 +93,11 @@ describe Temperature do
   describe '#populate' do
     it 'should fill up the object' do
       good = Temperature.new(device: 'iad1-bdr-1', index: '1.4.0')
-      expect(JSON.parse(good.populate(data1_base).to_json)['data'].keys).to eql json_keys
+      expect(JSON.parse(good.populate(data1_base).to_json)['data'].keys.sort).to eql json_keys
+    end
+    it 'should return nil if no data passed' do
+      good = Temperature.new(device: 'iad1-bdr-1', index: '1.4.0')
+      expect(good.populate({})).to eql nil
     end
   end
 
@@ -111,7 +121,7 @@ describe Temperature do
 
     # description
     describe '#description' do
-      specify { expect(@temp.description).to eql nil }
+      specify { expect(@temp.description).to eql '' }
     end
 
     # temp
@@ -126,7 +136,11 @@ describe Temperature do
 
     # update
     describe '#update' do
-      specify { expect(@temp.update(data1_update_ok, worker: 'test')).to be_a Temperature }
+      obj = Temperature.new(device: 'gar-test-1', index: '103').update(data1_update_ok, worker: 'test')
+      specify { expect(obj).to be_a Temperature }
+      specify { expect(obj.description).to eql "FPC: EX4300-48T @ 0/*/*" }
+      specify { expect(obj.temp).to eql 44 }
+      specify { expect(obj.last_updated).to be > Time.now.to_i - 1000 }
     end
 
     # last_updated

@@ -13,10 +13,13 @@ module Core
   def get_ints_down(settings, db)
     ints = []
     int_data = db[:interface].filter(
-      Sequel.like(:alias, 'sub%') |
-      Sequel.like(:alias, 'bb%')
+      Sequel.like(:description, 'sub%') |
+      Sequel.like(:description, 'bb%')
     )
-    int_data.exclude(:oper_status => 1).exclude(:type => 'acc').each do |row|
+    int_data = int_data.exclude(:oper_status => 1).exclude(:type => 'acc').
+      natural_join(:component)
+
+    int_data.each do |row|
       ints.push Interface.new(device: row[:device], index: row[:index]).populate(row)
     end
 
@@ -26,7 +29,9 @@ module Core
 
   def get_ints_saturated(settings, db)
     ints = []
-    db[:interface].filter{ (bps_util_in > 90) | (bps_util_out > 90) }.each do |row|
+    rows = db[:interface].filter{ (bps_util_in > 90) | (bps_util_out > 90) }.
+      natural_join(:component)
+    rows.each do |row|
       ints.push Interface.new(device: row[:device], index: row[:index]).populate(row)
     end
 
@@ -36,11 +41,11 @@ module Core
 
   def get_ints_discarding(settings, db)
     ints = []
-    int_data = db[:interface].where{Sequel.|(
+    int_data = db[:interface].natural_join(:component).where{Sequel.|(
       Sequel.&(
         pps_out > 0, # Prevent div by zero
         discards_out > 20,
-        ~Sequel.like(:alias, 'sub%'), # Don't look at sub-interfaces
+        ~Sequel.like(:description, 'sub%'), # Don't look at sub-interfaces
         discards_out / (discards_out + pps_out).cast(:float) >= 0.01 # Filter out anything discarding <= 1%
       ),
       discards_out > 500 # Also include anything discarding over 500pps
@@ -56,7 +61,7 @@ module Core
 
   def get_cpus_high(settings, db)
     cpus = []
-    db[:cpu].filter{ util > 85 }.each do |row|
+    db[:cpu].filter{ util > 85 }.natural_join(:component).each do |row|
       cpus.push CPU.new(device: row[:device], index: row[:index]).populate(row)
     end
 
@@ -66,7 +71,7 @@ module Core
 
   def get_memory_high(settings, db)
     memory = []
-    db[:memory].filter{ util > 90 }.each do |row|
+    db[:memory].filter{ util > 90 }.natural_join(:component).each do |row|
       memory.push Memory.new(device: row[:device], index: row[:index]).populate(row)
     end
 
@@ -77,13 +82,13 @@ module Core
   def get_hw_problems(settings, db)
     hw = { :fans => [], :psus => [], :temps => [] }
 
-    db[:fan].filter(:status => [2,3]).each do |row|
+    db[:fan].where(:status => [2,3]).natural_join(:component).each do |row|
       hw[:fans].push Fan.new(device: row[:device], index: row[:index]).populate(row)
     end
-    db[:psu].filter(:status => [2,3]).each do |row|
+    db[:psu].where(:status => [2,3]).natural_join(:component).each do |row|
       hw[:psus].push PSU.new(device: row[:device], index: row[:index]).populate(row)
     end
-    db[:temperature].filter(:status => 2).each do |row|
+    db[:temperature].where(:status => 2).natural_join(:component).each do |row|
       hw[:temps].push Temperature.new(device: row[:device], index: row[:index]).populate(row)
     end
 
@@ -117,10 +122,12 @@ module Core
 
   def get_interface(settings, db, device, index: nil, name: nil)
     if index
-      row = db[:interface].where(:device => device, :index => index).all[0]
+      row = db[:interface].where(:device => device, :index => index.to_s).
+        natural_join(:component).first
     elsif name
-      row = db[:interface].where(:device => device)
-      row = row.where(Sequel.function(:lower, :name) => name.downcase).all[0]
+      row = db[:interface].where(:device => device).
+        where(Sequel.function(:lower, :name) => name.downcase).
+        natural_join(:component).first
     else
       row = nil
     end
@@ -135,8 +142,8 @@ module Core
 
   def get_interfaces(settings, db, device)
     ints = {}
-    db[:interface].where(:device => device).each do |row|
-      index = row[:index].to_i
+    db[:interface].where(:device => device).natural_join(:component).each do |row|
+      index = row[:index]
       ints[index] = Interface.new(device: row[:device], index: index).populate(row)
     end
     return ints
@@ -144,7 +151,7 @@ module Core
 
 
   def get_cpu(settings, db, device, index)
-    row = db[:cpu].where(:device => device, :index => index.to_s).all[0]
+    row = db[:cpu].where(:device => device, :index => index.to_s).natural_join(:component).first
     if row
       return CPU.new(device: row[:device], index: row[:index]).populate(row)
     else
@@ -155,8 +162,8 @@ module Core
 
   def get_cpus(settings, db, device)
     cpus = {}
-    db[:cpu].where(:device => device).each do |row|
-      index = row[:index].to_i
+    db[:cpu].where(:device => device).natural_join(:component).each do |row|
+      index = row[:index]
       cpus[index] = CPU.new(device: row[:device], index: index).populate(row)
     end
     return cpus
@@ -164,7 +171,7 @@ module Core
 
 
   def get_fan(settings, db, device, index)
-    row = db[:fan].where(:device => device, :index => index.to_s).all[0]
+    row = db[:fan].where(:device => device, :index => index.to_s).natural_join(:component).first
     if row
       return Fan.new(device: row[:device], index: row[:index]).populate(row)
     else
@@ -175,8 +182,8 @@ module Core
 
   def get_fans(settings, db, device)
     fans = {}
-    db[:fan].where(:device => device).each do |row|
-      index = row[:index].to_i
+    db[:fan].where(:device => device).natural_join(:component).each do |row|
+      index = row[:index]
       fans[index] = Fan.new(device: row[:device], index: index).populate(row)
     end
     return fans
@@ -184,7 +191,7 @@ module Core
 
 
   def get_memory(settings, db, device, index)
-    row = db[:memory].where(:device => device, :index => index.to_s).all[0]
+    row = db[:memory].where(:device => device, :index => index.to_s).natural_join(:component).first
     if row
       return Memory.new(device: row[:device], index: row[:index]).populate(row)
     else
@@ -195,8 +202,8 @@ module Core
 
   def get_memories(settings, db, device)
     memories = {}
-    db[:memory].where(:device => device).each do |row|
-      index = row[:index].to_i
+    db[:memory].where(:device => device).natural_join(:component).each do |row|
+      index = row[:index]
       memories[index] = Memory.new(device: row[:device], index: index).populate(row)
     end
     return memories
@@ -204,7 +211,7 @@ module Core
 
 
   def get_psu(settings, db, device, index)
-    row = db[:psu].where(:device => device, :index => index.to_s).all[0]
+    row = db[:psu].where(:device => device, :index => index.to_s).natural_join(:component).first
     if row
       return PSU.new(device: row[:device], index: row[:index]).populate(row)
     else
@@ -215,8 +222,8 @@ module Core
 
   def get_psus(settings, db, device)
     psus = {}
-    db[:psu].where(:device => device).each do |row|
-      index = row[:index].to_i
+    db[:psu].where(:device => device).natural_join(:component).each do |row|
+      index = row[:index]
       psus[index] = PSU.new(device: row[:device], index: index).populate(row)
     end
     return psus
@@ -224,7 +231,7 @@ module Core
 
 
   def get_temperature(settings, db, device, index)
-    row = db[:temperature].where(:device => device, :index => index.to_s).all[0]
+    row = db[:temperature].where(:device => device, :index => index.to_s).natural_join(:component).first
     if row
       return Temperature.new(device: row[:device], index: row[:index]).populate(row)
     else
@@ -235,8 +242,8 @@ module Core
 
   def get_temperatures(settings, db, device)
     temperatures = {}
-    db[:temperature].where(:device => device).each do |row|
-      index = row[:index].to_i
+    db[:temperature].where(:device => device).natural_join(:component).each do |row|
+      index = row[:index]
       temperatures[index] = Temperature.new(device: row[:device], index: index).populate(row)
     end
     return temperatures
@@ -498,7 +505,7 @@ module Core
       interfaces = data[:interfaces] || {}
       interfaces.each do |index,oids|
         # Populate 'neighbor' value
-        oids[:alias].to_s.match(/__[a-zA-Z0-9\-_]+__/) do |neighbor|
+        oids[:description].to_s.match(/__[a-zA-Z0-9\-_]+__/) do |neighbor|
           interfaces[index][:neighbor] = neighbor.to_s.gsub('__','')
         end
 
@@ -510,7 +517,7 @@ module Core
         end
 
         # Populate 'link_type' value (Backbone, Access, etc...)
-        if type = oids[:alias].match(/^([a-z]+)(__|\[)/)
+        if type = oids[:description].match(/^([a-z]+)(__|\[)/)
           type = type[1]
         else
           type = 'unknown'
@@ -519,7 +526,7 @@ module Core
         if type == 'sub'
           oids[:is_child] = true
           # This will return po1 from sub[po1]__gar-k11u1-dist__g1/47
-          parent = oids[:alias][/\[[a-zA-Z0-9\/-]+\]/].gsub(/(\[|\])/, '')
+          parent = oids[:description][/\[[a-zA-Z0-9\/-]+\]/].gsub(/(\[|\])/, '')
           if parent && parent_index = name_to_index[device][parent.downcase]
             interfaces[parent_index][:is_parent] = true
             interfaces[parent_index][:children] ||= []

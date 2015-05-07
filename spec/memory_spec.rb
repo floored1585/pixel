@@ -2,7 +2,7 @@ require_relative 'rspec'
 
 describe Memory do
 
-  json_keys = [ 'device', 'index', 'util', 'description', 'last_updated', 'worker' ]
+  json_keys = [ 'device', 'index', 'util', 'description', 'last_updated', 'worker' ].sort
 
   data1_base = {
     "device" => "irv-i1u1-dist", "index" => "1", "util" => 8, "worker" => "test123",
@@ -40,10 +40,16 @@ describe Memory do
   describe '#new' do
 
     context 'with good data' do
+
       it 'should return a Memory object' do
         memory = Memory.new(device: 'gar-test-1', index: 103)
         expect(memory).to be_a Memory
       end
+
+      it 'should have hw_type Memory' do
+        expect(Memory.new(device: 'gar-test-1', index: 103).hw_type).to eql 'Memory'
+      end
+
     end
 
   end
@@ -67,7 +73,7 @@ describe Memory do
     end
 
     it 'should fill up the object' do
-      expect(JSON.parse(@good_memory.to_json)['data'].keys).to eql json_keys
+      expect(JSON.parse(@good_memory.to_json)['data'].keys.sort).to eql json_keys
     end
 
 
@@ -78,7 +84,11 @@ describe Memory do
   describe '#populate' do
     it 'should fill up the object' do
       good = Memory.new(device: 'iad1-bdr-1', index: '1.4.0')
-      expect(JSON.parse(good.populate(data1_base).to_json)['data'].keys).to eql json_keys
+      expect(JSON.parse(good.populate(data1_base).to_json)['data'].keys.sort).to eql json_keys
+    end
+    it 'should return nil if no data passed' do
+      good = Memory.new(device: 'iad1-bdr-1', index: '1.4.0')
+      expect(good.populate({})).to eql nil
     end
   end
 
@@ -102,7 +112,7 @@ describe Memory do
 
     # description
     describe '#description' do
-      specify { expect(@memory.description).to eql nil }
+      specify { expect(@memory.description).to eql '' }
     end
 
     # util
@@ -112,7 +122,11 @@ describe Memory do
 
     # update
     describe '#update' do
-      specify { expect(@memory.update(data1_update_ok, worker: 'test')).to be_a Memory }
+      obj = Memory.new(device: 'gar-test-1', index: '103').update(data1_update_ok, worker: 'test')
+      specify { expect(obj).to be_a Memory }
+      specify { expect(obj.description).to eql "Linecard(slot 1)" }
+      specify { expect(obj.util).to eql 10 }
+      specify { expect(obj.last_updated).to be > Time.now.to_i - 1000 }
     end
 
     # last_updated

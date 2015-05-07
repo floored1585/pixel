@@ -179,7 +179,7 @@ class Device
     # Return nil unless either a name or index was passed
     return nil unless name || index
 
-    return @interfaces[index.to_i_if_numeric] if index
+    return @interfaces[index.to_s] if index
     @interfaces.each { |index, int| return int if name.downcase == int.name.downcase }
 
     return nil # If nothing matched
@@ -189,7 +189,7 @@ class Device
   def get_children(parent_name: nil, parent_index: nil)
     # Return nil unless either a name or index was passed and they match something
     return [] unless parent_name || parent_index
-    return [] unless parent = @interfaces[parent_index.to_i] || get_interface(name: parent_name)
+    return [] unless parent = @interfaces[parent_index.to_s] || get_interface(name: parent_name)
 
     children = []
     @interfaces.each do |index, int|
@@ -281,8 +281,6 @@ class Device
       data = data.symbolize
 
       @interfaces = data[:interfaces] || {}
-      # Convert keys to integers for @interface
-      @interfaces = Hash[@interfaces.map{|key,int|[ key.to_i, int ]}]
       @cpus = data[:cpus] || {}
       @fans = data[:fans] || {}
       @memory = data[:memory] || {}
@@ -634,16 +632,16 @@ class Device
     session.walk(@poll_cfg[:oids][:general].keys) do |row|
       row.each do |vb|
         oid_text = @poll_cfg[:oids][:general][vb.name.to_str.gsub(/\.[0-9]+$/,'')]
-        index = vb.name.to_str[/[0-9]+$/].to_i
+        index = vb.name.to_str[/[0-9]+$/]
         if_table[index] ||= {}
         if_table[index][oid_text] = vb.value.to_s
       end
     end
 
     if_table.each do |index, oids|
-      # Don't create the interface unless it has an interesting alias or an interesting name
+      # Don't create the interface unless it has an interesting description or name
       next unless (
-        oids['alias'] =~ @poll_cfg[:interesting_alias] ||
+        oids['description'] =~ @poll_cfg[:interesting_description] ||
         oids['name'] =~ @poll_cfg[:interesting_names][@vendor]
       )
       # Don't create the interface if we weren't able to poll the octet information
@@ -946,23 +944,29 @@ class Device
         @interfaces.each do |tmp_index, tmp_interface|
           # Add one to the count and set the child speed for each interface we find
           # containing [xx], where xx is the parent interface name
-          if tmp_interface.alias.match(/\[#{interface.name}\]/) && tmp_interface.status == 'Up'
+          if tmp_interface.description.match(/\[#{interface.name}\]/) && tmp_interface.status == 'Up'
             child_count += 1
             child_speed = tmp_interface.speed
           end
         end
         interface.set_speed(child_count * child_speed)
-        $LOG.warn("POLLER: Bad speed for #{interface.name} (#{index}) on #{@name}. Calculated value from children: #{interface.speed}")
+        $LOG.warn(
+          "POLLER: Bad speed for #{interface.name} (#{index}) on #{@name}. " +
+          "Calculated value from children: #{interface.speed}"
+        )
       end
 
       # TODO: REPLACE THIS WITH SSH!!! This is ALSO retarded!
       # Find the parent interface if it exists, and transfer its type to child.
-      if parent_iface_match = interface.alias.match(/^[a-z]+\[([\w\/\-\s]+)\]/)
+      if parent_iface_match = interface.description.match(/^[a-z]+\[([\w\/\-\s]+)\]/)
         parent_iface = parent_iface_match[1]
         if parent = get_interface(name: parent_iface)
           interface.clone_type(parent)
         else
-          $LOG.error("POLLER: Can't find parent interface #{parent_iface} on #{@name} (child: #{interface.name})")
+          $LOG.error(
+            "POLLER: Can't find parent interface #{parent_iface} on #{@name} " +
+            "(child: #{interface.name})"
+          )
         end
       end
 

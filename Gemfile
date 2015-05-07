@@ -12,6 +12,7 @@ gem 'snmp'
 gem 'rvm-capistrano'
 
 group :development do
+  gem 'hashdiff'
   gem 'rspec'
   gem 'capistrano'
   gem 'capistrano-rvm'

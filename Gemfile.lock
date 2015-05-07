@@ -19,6 +19,7 @@ GEM
     colorize (0.7.3)
     diff-lcs (1.2.5)
     execjs (2.2.1)
+    hashdiff (0.2.2)
     i18n (0.6.11)
     influxdb (0.1.8)
       json
@@ -79,6 +80,7 @@ DEPENDENCIES
   capistrano
   capistrano-bundler
   capistrano-rvm
+  hashdiff
   influxdb
   mysql
   pg

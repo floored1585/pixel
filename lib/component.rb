@@ -1,6 +1,7 @@
 # component.rb
 #
 require 'logger'
+require_relative 'api'
 
 $LOG ||= Logger.new(STDOUT)
 

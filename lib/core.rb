@@ -16,7 +16,10 @@ module Core
       Sequel.like(:description, 'sub%') |
       Sequel.like(:description, 'bb%')
     )
-    int_data.exclude(:oper_status => 1).exclude(:type => 'acc').each do |row|
+    int_data = int_data.exclude(:oper_status => 1).exclude(:type => 'acc').
+      natural_join(:component)
+
+    int_data.each do |row|
       ints.push Interface.new(device: row[:device], index: row[:index]).populate(row)
     end
 
@@ -26,7 +29,9 @@ module Core
 
   def get_ints_saturated(settings, db)
     ints = []
-    db[:interface].filter{ (bps_util_in > 90) | (bps_util_out > 90) }.each do |row|
+    rows = db[:interface].filter{ (bps_util_in > 90) | (bps_util_out > 90) }.
+      natural_join(:component)
+    rows.each do |row|
       ints.push Interface.new(device: row[:device], index: row[:index]).populate(row)
     end
 
@@ -36,7 +41,7 @@ module Core
 
   def get_ints_discarding(settings, db)
     ints = []
-    int_data = db[:interface].where{Sequel.|(
+    int_data = db[:interface].natural_join(:component).where{Sequel.|(
       Sequel.&(
         pps_out > 0, # Prevent div by zero
         discards_out > 20,
@@ -56,7 +61,7 @@ module Core
 
   def get_cpus_high(settings, db)
     cpus = []
-    db[:cpu].filter{ util > 85 }.each do |row|
+    db[:cpu].filter{ util > 85 }.natural_join(:component).each do |row|
       cpus.push CPU.new(device: row[:device], index: row[:index]).populate(row)
     end
 
@@ -66,7 +71,7 @@ module Core
 
   def get_memory_high(settings, db)
     memory = []
-    db[:memory].filter{ util > 90 }.each do |row|
+    db[:memory].filter{ util > 90 }.natural_join(:component).each do |row|
       memory.push Memory.new(device: row[:device], index: row[:index]).populate(row)
     end
 
@@ -77,13 +82,13 @@ module Core
   def get_hw_problems(settings, db)
     hw = { :fans => [], :psus => [], :temps => [] }
 
-    db[:fan].filter(:status => [2,3]).each do |row|
+    db[:fan].where(:status => [2,3]).natural_join(:component).each do |row|
       hw[:fans].push Fan.new(device: row[:device], index: row[:index]).populate(row)
     end
-    db[:psu].filter(:status => [2,3]).each do |row|
+    db[:psu].where(:status => [2,3]).natural_join(:component).each do |row|
       hw[:psus].push PSU.new(device: row[:device], index: row[:index]).populate(row)
     end
-    db[:temperature].filter(:status => 2).each do |row|
+    db[:temperature].where(:status => 2).natural_join(:component).each do |row|
       hw[:temps].push Temperature.new(device: row[:device], index: row[:index]).populate(row)
     end
 

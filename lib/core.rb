@@ -26,7 +26,7 @@ module Core
 
   def get_ints_saturated(settings, db)
     ints = []
-    db[:interface].filter{ (bps_util_in > 90) | (bps_util_out > 90) }.each do |row|
+    db[:interface].filter{ (bps_util_in > 70) | (bps_util_out > 70) }.each do |row|
       ints.push Interface.new(device: row[:device], index: row[:index]).populate(row)
     end
 

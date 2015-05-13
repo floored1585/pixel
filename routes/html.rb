@@ -31,10 +31,35 @@ class Pixel < Sinatra::Base
     }
   end
 
+
+  get '/saturation' do
+    util = params[:util] || 90
+    util = util.to_i
+    speed = params[:speed].to_i if params[:speed]
+
+    # Start timer
+    beginning = Time.now
+    interfaces = get_ints_saturated(@@settings, @@db, util: util, speed: speed)
+    db_elapsed = '%.2f' % (Time.now - beginning)
+
+    erb :saturation, :locals => {
+      :title => 'Saturation Data',
+      :settings => @@settings,
+      :db => @@db,
+      :interfaces => interfaces,
+      :util => util,
+      :speed => speed,
+      :db_elapsed => db_elapsed,
+    }
+
+  end
+
+
   get '/device/search' do
     target = params[:device_input] || 'Enter a device in the search box'
     redirect to(target.empty? ? '/' : "/device/#{target}")
   end
+
 
   get '/device/*' do |device_name|
     # Start timer
@@ -52,5 +77,6 @@ class Pixel < Sinatra::Base
       :db_elapsed => db_elapsed,
     }
   end
+
 
 end

@@ -75,12 +75,12 @@ module Helper
   end
 
 
-  def total_bps_cell(int, parent)
+  def total_bps_cell(int, parent=nil)
     # If interface is child, set total to just under parent total,
     # so that the interface is sorted to sit directly under parent
     # when tablesorter runs.
     total = int.bps_in + int.bps_out
-    if parent.class == Interface
+    if parent && parent.class == Interface
       parent_total = parent.bps_in + parent.bps_out
       offset = total / (int.speed.to_f) * 10
       return parent_total - 20 + offset

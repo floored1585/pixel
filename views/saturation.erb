@@ -1,0 +1,49 @@
+<h1 class='pxl-h1'>Saturated Interfaces</h1>
+<h5 class='pxl-h5-device'>
+  <% h_speed = number_to_human(speed, units: :bps, sigfigs: 2) if speed %>
+  Interfaces with > <%= util %>% utilization<%= speed ? " and link speed of #{h_speed}" : '.' %>
+</h5>
+
+<div class='row'>
+  <% if interfaces.size > 0 %>
+    <table id='ifTable' class='table table-hover table-condensed tablesorter'>
+    <thead>
+      <tr>
+        <th class='pxl-hidden'>Total</th>
+        <th class='pxl-th'>Device <span class='glyphicon glyphicon-sort pxl-sort-icon pxl-hidden'></span></th>
+        <th class='pxl-th'>Name <span class='glyphicon glyphicon-sort pxl-sort-icon pxl-hidden'></span></th>
+        <th class='pxl-th'>Type  <span class='glyphicon glyphicon-sort pxl-sort-icon pxl-hidden'></span></th>
+        <th class='pxl-th'>Neighbor <span class='glyphicon glyphicon-sort pxl-sort-icon pxl-hidden'></span></th>
+        <th class='pxl-th'>Ingress <span class='glyphicon glyphicon-sort pxl-sort-icon pxl-hidden'></span></th>
+        <th class='pxl-th'>Egress <span class='glyphicon glyphicon-sort pxl-sort-icon pxl-hidden'></span></th>
+        <th class='pxl-th'>Speed <span class='glyphicon glyphicon-sort pxl-sort-icon pxl-hidden'></span></th>
+      </tr>
+    </thead>
+    <tbody>
+    <% interfaces.each do |int| %>
+      <tr <%= tr_attributes(int) %>>
+        <td class='pxl-hidden'><%= total_bps_cell(int) %></td>
+        <td class='pxl-td-shrink'><%= device_link(int.device) %></td>
+        <td class='pxl-td-shrink'><%= interface_link(settings, int) %></td>
+        <td><%= int.type %></td>
+        <td><%= neighbor_link(int) %></td>
+        <td class='pxl-histogram pxl-meta' data-pxl-meta='<%= int.bps_util_in %>'><%= bps_cell(:in, int) %></td>
+        <td class='pxl-histogram pxl-meta' data-pxl-meta='<%= int.bps_util_out %>'><%= bps_cell(:out, int) %></td>
+        <td><%= speed_cell(int) %>&nbsp;&nbsp;&nbsp;&nbsp;</td>
+      </tr>
+    <% end %>
+    </tbody>
+  </table>
+  <% else # This means we don't have any interfaces, or the device doesn't exist %>
+    <div class='col-md-2'></div>
+    <div class='col-md-8'>
+      <br \>
+      <ul class='list-group'>
+        <li class='center list-group-item list-group-item-danger'>
+        <b>No interfaces match this criteria, yay!</b>
+        </li>
+      </ul>
+    </div>
+    <div class='col-md-2'></div>
+  <% end %>
+</div>

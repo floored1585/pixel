@@ -27,10 +27,11 @@ module Core
   end
 
 
-  def get_ints_saturated(settings, db)
+  def get_ints_saturated(settings, db, util: 90, speed: nil)
     ints = []
-    rows = db[:interface].filter{ (bps_util_in > 90) | (bps_util_out > 90) }.
+    rows = db[:interface].filter{ (bps_util_in > util) | (bps_util_out > util) }.
       natural_join(:component)
+    rows = rows.where(:speed => speed) if speed
     rows.each do |row|
       ints.push Interface.new(device: row[:device], index: row[:index]).populate(row)
     end

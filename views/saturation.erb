@@ -1,7 +1,7 @@
 <h1 class='pxl-h1'>Saturated Interfaces</h1>
 <h5 class='pxl-h5-device'>
   <% h_speed = number_to_human(speed, units: :bps, sigfigs: 2) if speed %>
-  Interfaces with > <%= util %>% utilization<%= speed ? " and link speed of #{h_speed}" : '.' %>
+  Interfaces with > <%= util %>% utilization<%= " and link speed of #{h_speed}" if speed %>
 </h5>
 
 <div class='row'>

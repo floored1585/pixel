@@ -4,14 +4,14 @@ class Pixel < Sinatra::Base
     # Start timer
     beginning = Time.now
 
-    poller_failures = get_poller_failures(@@settings, @@db)
+    ints_down = get_ints_down(@@settings, @@db)
     ints_saturated = get_ints_saturated(@@settings, @@db)
     ints_discarding = get_ints_discarding(@@settings, @@db)
-    ints_down = get_ints_down(@@settings, @@db)
     cpus_high = get_cpus_high(@@settings, @@db)
     memory_high = get_memory_high(@@settings, @@db)
     hw_problems = get_hw_problems(@@settings, @@db)
     alarms = get_alarms(@@settings, @@db)
+    poller_failures = get_poller_failures(@@settings, @@db)
 
     db_elapsed = '%.2f' % (Time.now - beginning)
 

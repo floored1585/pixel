@@ -11,6 +11,7 @@ module Core
 
 
   def get_ints_down(settings, db)
+    #start = Time.now
     ints = []
     int_data = db[:interface].filter(
       Sequel.like(:description, 'sub%') |
@@ -22,12 +23,14 @@ module Core
     int_data.each do |row|
       ints.push Interface.new(device: row[:device], index: row[:index]).populate(row)
     end
+    #puts "get_ints_down: #{'%.2f' % (Time.now - start) }s"
 
     return ints
   end
 
 
   def get_ints_saturated(settings, db, util: 90, speed: nil)
+    #start = Time.now
     ints = []
     rows = db[:interface].filter{ (bps_util_in > util) | (bps_util_out > util) }.
       natural_join(:component)
@@ -35,52 +38,52 @@ module Core
     rows.each do |row|
       ints.push Interface.new(device: row[:device], index: row[:index]).populate(row)
     end
+    #puts "get_ints_saturated: #{'%.2f' % (Time.now - start) }s"
 
     return ints
   end
 
 
   def get_ints_discarding(settings, db)
+    #start = Time.now
     ints = []
-    int_data = db[:interface].natural_join(:component).where{Sequel.|(
-      Sequel.&(
-        pps_out > 0, # Prevent div by zero
-        discards_out > 20,
-        ~Sequel.like(:description, 'sub%'), # Don't look at sub-interfaces
-        discards_out / (discards_out + pps_out).cast(:float) >= 0.01 # Filter out anything discarding <= 1%
-      ),
-      discards_out > 500 # Also include anything discarding over 500pps
-    )}
+    int_data = db[:interface].natural_join(:component).where{ discards_out > 500 }
 
     int_data.select_all.each do |row|
       ints.push Interface.new(device: row[:device], index: row[:index]).populate(row)
     end
+    #puts "get_ints_discarding: #{'%.2f' % (Time.now - start) }s"
 
     return ints
   end
 
 
   def get_cpus_high(settings, db)
+    #start = Time.now
     cpus = []
     db[:cpu].filter{ util > 85 }.natural_join(:component).each do |row|
       cpus.push CPU.new(device: row[:device], index: row[:index]).populate(row)
     end
+    #puts "get_cpus_high: #{'%.2f' % (Time.now - start) }s"
 
     return cpus
   end
 
 
   def get_memory_high(settings, db)
+    #start = Time.now
     memory = []
     db[:memory].filter{ util > 90 }.natural_join(:component).each do |row|
       memory.push Memory.new(device: row[:device], index: row[:index]).populate(row)
     end
+    #puts "get_memory_high: #{'%.2f' % (Time.now - start) }s"
 
     return memory
   end
 
 
   def get_hw_problems(settings, db)
+    #start = Time.now
     hw = { :fans => [], :psus => [], :temps => [] }
 
     db[:fan].where(:status => [2,3]).natural_join(:component).each do |row|
@@ -92,12 +95,14 @@ module Core
     db[:temperature].where(:status => 2).natural_join(:component).each do |row|
       hw[:temps].push Temperature.new(device: row[:device], index: row[:index]).populate(row)
     end
+    #puts "get_hw_problems: #{'%.2f' % (Time.now - start) }s"
 
     return hw
   end
 
 
   def get_alarms(settings, db)
+    #start = Time.now
     devices = []
     device_data = db[:device].exclude(
       (Sequel.expr(:yellow_alarm => 2) | Sequel.expr(:yellow_alarm => nil)) &
@@ -106,16 +111,19 @@ module Core
     device_data.select_all.each do |row|
       devices.push(Device.new(row[:device]).populate(row))
     end
+    #puts "get_alarms: #{'%.2f' % (Time.now - start) }s"
 
     return devices
   end
 
 
   def get_poller_failures(settings, db)
+    #start = Time.now
     devices = []
     db[:device].filter(:last_poll_result => 1).each do |row|
       devices.push(Device.new(row[:device]).populate(row))
     end
+    #puts "get_poller_failures: #{'%.2f' % (Time.now - start) }s"
 
     return devices
   end

@@ -7,6 +7,8 @@ require_relative '../lib/memory'
 require_relative '../lib/psu'
 require_relative '../lib/temperature'
 require_relative '../lib/event'
+require_relative '../lib/events/component_event'
+require_relative '../lib/events/description_change_event'
 
 require_relative 'objects'
 

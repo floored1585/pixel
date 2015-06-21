@@ -6,6 +6,7 @@ require_relative '../lib/fan'
 require_relative '../lib/memory'
 require_relative '../lib/psu'
 require_relative '../lib/temperature'
+require_relative '../lib/event'
 
 require_relative 'objects'
 

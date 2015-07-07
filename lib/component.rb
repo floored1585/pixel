@@ -95,6 +95,9 @@ class Component
       $LOG.info("#{@hw_type}: Adding #{@index} (#{@description}) on #{@device} from #{@worker}")
       db[:component].insert(data)
     end
+    # Get @id if we don't already have it
+    @id = existing.first[:id] unless @id
+    raise "No component id! #{@index} (#{@description}) on #{@device} from #{@worker}" unless @id
 
     return self
   end

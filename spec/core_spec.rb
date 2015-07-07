@@ -335,11 +335,16 @@ describe '#add_devices' do
 
       device_count = DB[:device].count
       device_ip_count = DB[:device].where(:ip => '10.11.12.13').count
-      other_cpu_count = DB[:cpu].exclude(:device => 'gar-b11u1-dist').count
-      other_fan_count = DB[:fan].exclude(:device => 'gar-b11u1-dist').count
-      other_memory_count = DB[:memory].exclude(:device => 'gar-b11u1-dist').count
-      other_psu_count = DB[:psu].exclude(:device => 'gar-b11u1-dist').count
-      other_temperature_count = DB[:temperature].exclude(:device => 'gar-b11u1-dist').count
+      other_cpu_count = DB[:cpu].natural_join(:component).
+        exclude(:device => 'gar-b11u1-dist').count
+      other_fan_count = DB[:fan].natural_join(:component).
+        exclude(:device => 'gar-b11u1-dist').count
+      other_memory_count = DB[:memory].natural_join(:component).
+        exclude(:device => 'gar-b11u1-dist').count
+      other_psu_count = DB[:psu].natural_join(:component).
+        exclude(:device => 'gar-b11u1-dist').count
+      other_temperature_count = DB[:temperature].natural_join(:component).
+        exclude(:device => 'gar-b11u1-dist').count
     end
 
     it 'should remove all other devices' do

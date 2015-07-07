@@ -66,10 +66,10 @@ class Memory < Component
     begin
       super # Component#save
 
-      data = { :device => @device, :index => @index }
+      data = { :id => @id }
       data[:util] = util
 
-      existing = db[:memory].where(:device => @device, :index => @index)
+      existing = db[:memory].where(:id => @id)
       if existing.update(data) != 1
         db[:memory].insert(data)
       end

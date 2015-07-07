@@ -69,7 +69,8 @@ module Influx
     original.each do |series,points|
       index = /#{attribute}\.([\.\d]+)\.[^\.]+$/.match(series)[1]
       device = /(.+)\.#{attribute}/.match(series)[1]
-      row = db[attribute.to_sym].filter(:device => device, :index => index).first
+      row = db[:component].where(:device => device, :index => index).
+        natural_join(attribute.to_sym).first
       next unless row
       description = row[:description]
       data = []

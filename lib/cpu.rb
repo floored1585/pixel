@@ -65,10 +65,10 @@ class CPU < Component
     begin
       super # Component#save
 
-      data = { :device => @device, :index => @index }
+      data = { :id => @id }
       data[:util] = util
 
-      existing = db[:cpu].where(:device=>@device, :index=>@index)
+      existing = db[:cpu].where(:id => @id)
       if existing.update(data) != 1
         db[:cpu].insert(data)
       end

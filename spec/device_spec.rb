@@ -5,7 +5,7 @@ describe Device do
 
 
   test_devices = {
-    'Cisco 2960' => 'gar-b11u17-acc-g',
+    'Cisco 2960' => 'gar-b11u16-acc-g',
     'Cisco 4948' => 'irv-i1u1-dist',
     'Cumulus' => 'aon-cumulus-2',
     'Juniper EX' => 'gar-p1u1-dist',

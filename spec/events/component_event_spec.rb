@@ -53,6 +53,14 @@ describe ComponentEvent do
   end
 
 
+  # component_id
+  describe '#component_id' do
+
+    #TODO: Fill in
+
+  end
+
+
   # device
   describe '#device' do
 
@@ -105,6 +113,140 @@ describe ComponentEvent do
 
     it 'should be accurate' do
       expect(event.type).to eql 'component'
+    end
+
+  end
+
+
+  # save
+  describe '#save' do
+
+    before :each do
+      # Insert our bare bones device and component
+      DB[:device].insert(:device => 'test-v11u1-acc-y', :ip => '1.2.3.4')
+      DB[:component].insert(
+        :hw_type => 'test-v11u1-acc-y',
+        :device => 'test-v11u1-acc-y',
+        :index => '1',
+        :last_updated => '12345678',
+        :description => 'CPU 1',
+        :worker => 'rspec',
+      )
+    end
+    after :each do
+      # Clean up DB
+      DB[:device].where(:device => 'test-v11u1-acc-y').delete
+    end
+
+
+    it 'should not exist before saving' do
+      event = Device.fetch('test-v11u1-acc-y')
+      expect(event).to eql nil
+    end
+
+    it 'should fail if empty' do
+      event = ComponentEvent.new(device: 'test-v11u1-acc-y', index: '1')
+      expect(event.save(DB)).to eql nil
+    end
+
+    it 'should fail if device does not exist' do
+      event = ComponentEvent.new(device: 'test-test-acc-y', index: '1').populate(imaginary_data)
+      expect(event.save(DB)).to eql nil
+    end
+
+    it 'should exist after being saved' do
+      JSON.load(DEV2_JSON).event['1'].save(DB)
+      event = ComponentEvent.fetch('test-v11u1-acc-y', '1')
+      expect(event).to be_a ComponentEvent
+    end
+
+    it 'should update without error' do
+      JSON.load(DEV2_JSON).event['1'].save(DB)
+      JSON.load(DEV2_JSON).event['1'].save(DB)
+      event = ComponentEvent.fetch('test-v11u1-acc-y', '1')
+      expect(event).to be_a ComponentEvent
+    end
+
+    it 'should be identical before and after' do
+      JSON.load(DEV2_JSON).event['1'].save(DB)
+      event = ComponentEvent.fetch('test-v11u1-acc-y', '1')
+      expect(event.to_json).to eql JSON.load(DEV2_JSON).event['1'].to_json
+    end
+
+  end
+
+
+  # delete
+  describe '#delete' do
+
+    before :each do
+      # Insert our bare bones device, just name and IP
+      DB[:device].insert(:device => 'test-v11u1-acc-y', :ip => '1.2.3.4')
+    end
+    after :each do
+      # Clean up DB
+      DB[:device].where(:device => 'test-v11u1-acc-y').delete
+    end
+
+
+    it 'should return 1 if it exists' do
+      JSON.load(DEV2_JSON).event['1'].save(DB)
+      object = ComponentEvent.new(device: 'test-v11u1-acc-y', index: '1')
+      expect(object.delete(DB)).to eql 1
+    end
+
+    it "should return 0 if nonexistant" do
+      object = ComponentEvent.new(device: 'test-v11u1-acc-y', index: '1')
+      expect(object.delete(DB)).to eql 0
+    end
+
+  end
+
+
+  # to_json
+  describe '#to_json and #json_create' do
+
+    context 'when freshly created' do
+
+      before(:each) do
+        @event = ComponentEvent.new(device: 'gar-test-1', index: '103')
+      end
+
+
+      it 'should return a string' do
+        expect(@event.to_json).to be_a String
+      end
+
+      it 'should serialize and deserialize' do
+        json = @event.to_json
+        expect(JSON.load(json)).to be_a ComponentEvent
+        expect(JSON.load(json).to_json).to eql json
+      end
+
+    end
+
+
+    context 'when populated' do
+
+      before(:each) do
+        @event1 = ComponentEvent.fetch('gar-b11u1-dist', '7.2.0.0')
+        @event2 = ComponentEvent.fetch('aon-cumulus-2', '0')
+        @event3 = ComponentEvent.fetch('gar-k11u1-dist', '1')
+        @event4 = ComponentEvent.fetch('iad1-trn-1', '2')
+      end
+
+
+      it 'should serialize and deserialize properly' do
+        json1 = @event1.to_json
+        json2 = @event2.to_json
+        json3 = @event3.to_json
+        json4 = @event4.to_json
+        expect(JSON.load(json1).to_json).to eql json1
+        expect(JSON.load(json2).to_json).to eql json2
+        expect(JSON.load(json3).to_json).to eql json3
+        expect(JSON.load(json4).to_json).to eql json4
+      end
+
     end
 
   end

@@ -20,6 +20,11 @@ class ComponentEvent < Event
   end
 
 
+  def component_id
+    @component_id
+  end
+
+
   def device
     @device
   end
@@ -37,6 +42,25 @@ class ComponentEvent < Event
 
   def subtype
     @subtype
+  end
+
+
+  def save(db)
+    begin
+
+      @component_id = db[:component].where(:device=>@device, :hw_type=>@hw_type, :index=>@index).first[:id]
+      raise "Can't find component ID: #{@device}, #{@hw_type}, #{@index}" unless @component_id
+
+      data = { :component_id=>@component_id, :subtype=>@subtype, :time=>@time, :data=>@data }
+
+      @id = db[:component_event].insert(data)
+      raise "Didn't get event ID for new event!" unless @id
+    rescue Sequel::NotNullConstraintViolation, Sequel::ForeignKeyConstraintViolation => e
+      $LOG.error("Component Event: Save failed. #{e.to_s.gsub(/\n/,'. ')}")
+      return nil
+    end
+
+    return self
   end
 
 

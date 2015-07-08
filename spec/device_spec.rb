@@ -5,7 +5,7 @@ describe Device do
 
 
   test_devices = {
-    'Cisco 2960' => 'gar-b11u16-acc-g',
+    'Cisco 2960' => 'gar-b11u18-acc-y',
     'Cisco 4948' => 'irv-i1u1-dist',
     'Cumulus' => 'aon-cumulus-2',
     'Juniper EX' => 'gar-p1u1-dist',
@@ -61,18 +61,18 @@ describe Device do
     end
 
     it 'should return' do
-      device = Device.new('gar-b11u16-acc-g')
+      device = Device.new('gar-b11u18-acc-y')
       expect(device).to be_a Device
     end
 
     it 'should return' do
-      device = Device.new('gar-b11u16-acc-g', poll_ip: '172.24.7.54')
+      device = Device.new('gar-b11u18-acc-y', poll_ip: '172.24.7.55')
       expect(device).to be_a Device
     end
 
     it 'should take the right name' do
-      device1 = Device.new('gar-c11u1-dist', poll_ip: '172.24.7.54')
-      device2 = Device.new('gar-c11u1-dist', poll_ip: '172.24.7.54')
+      device1 = Device.new('gar-c11u1-dist', poll_ip: '172.24.7.55')
+      device2 = Device.new('gar-c11u1-dist', poll_ip: '172.24.7.55')
       expect(device1.name).to eql 'gar-c11u1-dist'
       expect(device2.name).to eql 'gar-c11u1-dist'
     end
@@ -185,16 +185,16 @@ describe Device do
   context 'when newly created' do
 
     before :each do
-      @dev_name = Device.new('gar-b11u16-acc-g')
+      @dev_name = Device.new('gar-b11u18-acc-y')
     end
 
 
     describe '#name' do
-      specify { expect(@dev_name.name).to eql 'gar-b11u16-acc-g' }
+      specify { expect(@dev_name.name).to eql 'gar-b11u18-acc-y' }
     end
 
     describe '#poll_ip' do
-      dev_ip = Device.new('gar-b11u16-acc-g', poll_ip: '1.2.3.4')
+      dev_ip = Device.new('gar-b11u18-acc-y', poll_ip: '1.2.3.4')
       specify { expect(@dev_name.poll_ip).to eql nil }
       specify { expect(dev_ip.poll_ip).to eql '1.2.3.4' }
     end
@@ -278,7 +278,7 @@ describe Device do
 
   context 'when populated' do
 
-    dev1 = Device.fetch('gar-b11u16-acc-g', :all => true)
+    dev1 = Device.fetch('gar-b11u18-acc-y', :all => true)
     dev2 = Device.fetch('irv-i1u1-dist', :all => true)
     alarm_none = JSON.load(P1U1_JSON_1)
     alarm_yellow = JSON.load(P1U1_JSON_2)
@@ -287,12 +287,12 @@ describe Device do
 
 
     describe '#name' do
-      specify { expect(dev1.name).to eql 'gar-b11u16-acc-g' }
+      specify { expect(dev1.name).to eql 'gar-b11u18-acc-y' }
       specify { expect(dev2.name).to eql 'irv-i1u1-dist' }
     end
 
     describe '#poll_ip' do
-      specify { expect(dev1.poll_ip).to eql '172.24.7.54' }
+      specify { expect(dev1.poll_ip).to eql '172.24.7.55' }
       specify { expect(dev2.poll_ip).to eql '208.113.142.180' }
     end
 
@@ -347,7 +347,7 @@ describe Device do
     end
 
     describe '#sw_version' do
-      specify { expect(dev1.sw_version).to eql '15.0(2)SE2' }
+      specify { expect(dev1.sw_version).to eql '15.0(2)SE4' }
       specify { expect(dev2.sw_version).to eql '12.2(53)SG2' }
     end
 
@@ -598,7 +598,7 @@ describe Device do
     #f10_s4810 = Device.new(test_devices['Force10 S4810']).populate.poll(worker: 't')
 
     context 'on a Cisco 2960' do
-      #'Cisco 2960' => 'gar-b11u16-acc-g',
+      #'Cisco 2960' => 'gar-b11u18-acc-y',
     end
 
     context 'on a Cisco 4948' do

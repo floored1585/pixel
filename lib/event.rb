@@ -13,9 +13,7 @@ class Event
       raise TypeError.new("timestamp (#{time}) must look like an Integer!")
     end
 
-    @type = type
     @time = time.to_i
-    @id = SecureRandom.uuid
     @type = nil # Should be set in subclass
   end
 

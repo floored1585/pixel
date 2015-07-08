@@ -242,6 +242,7 @@ class Interface < Component
   def update(data, worker:)
     # Save times (@last_updated gets modified by super)
     old_time = @last_updated
+    old_description = @description
     current_time = Time.now.to_i
 
     super
@@ -260,6 +261,20 @@ class Interface < Component
     new_in_errors = data['in_errors'].to_i_if_numeric
     new_out_discards = data['out_discards'].to_i_if_numeric
     new_out_errors = data['out_errors'].to_i_if_numeric
+
+
+    # Generate events if things have changed
+    #
+    @events ||= []
+
+    # Description change
+    unless old_description == @description
+      @events.push(DescriptionChangeEvent.new(
+        device: @device, hw_type: @hw_type, index: @index,
+        old: old_description, new: @description
+      ))
+    end
+
 
     # Determine interface type, by capturing the part of the description before __ or [
     if type_match = @description.match(/^([a-z]+)(?:__|\[)/)

@@ -12,6 +12,12 @@ class Pixel < Sinatra::Base
     JSON.generate( fetch_poll(@@settings, @@db, count.to_i, poller) )
   end
 
+  get '/v2/device/*/*/*/id' do |device, hw_type, index|
+    JSON.generate(
+      { 'id' => Component.id(device: device, index: index, hw_type: hw_type, db: @@db) }
+    )
+  end
+
   get '/v2/device/*/interface/*' do |device, index|
     JSON.generate( get_interface(@@settings, @@db, device, index: index) )
   end

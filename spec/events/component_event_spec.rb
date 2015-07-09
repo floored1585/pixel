@@ -118,14 +118,15 @@ describe ComponentEvent do
   end
 
 
+=begin
   # save
   describe '#save' do
 
     before :each do
       # Insert our bare bones device and component
       DB[:device].insert(:device => 'test-v11u1-acc-y', :ip => '1.2.3.4')
-      DB[:component].insert(
-        :hw_type => 'test-v11u1-acc-y',
+      @id = DB[:component].insert(
+        :hw_type => 'cpu',
         :device => 'test-v11u1-acc-y',
         :index => '1',
         :last_updated => '12345678',
@@ -138,9 +139,8 @@ describe ComponentEvent do
       DB[:device].where(:device => 'test-v11u1-acc-y').delete
     end
 
-
     it 'should not exist before saving' do
-      event = Device.fetch('test-v11u1-acc-y')
+      event = ComponentEvent.get(
       expect(event).to eql nil
     end
 
@@ -203,6 +203,7 @@ describe ComponentEvent do
   end
 
 
+=begin
   # to_json
   describe '#to_json and #json_create' do
 
@@ -250,6 +251,6 @@ describe ComponentEvent do
     end
 
   end
-
+=end
 
 end

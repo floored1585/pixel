@@ -16,8 +16,7 @@ class Temperature < Component
 
 
   def initialize(device:, index:)
-    super
-    @hw_type = 'Temperature'
+    super(device: device, index: index, hw_type: 'Temperature')
   end
 
 

@@ -16,8 +16,7 @@ class PSU < Component
 
 
   def initialize(device:, index:)
-    super
-    @hw_type = 'PSU'
+    super(device: device, index: index, hw_type: 'PSU')
   end
 
 

@@ -20,9 +20,30 @@ class Component
   end
 
 
-  def initialize(device:, index:)
+  def self.fetch_id(device:, index:, hw_type:)
+    obj = API.get(
+      src: 'component',
+      dst: 'core',
+      resource: "/v2/device/#{device}/#{hw_type}/#{index}/id",
+      what: "ID value for #{hw_type} #{index} on #{device}",
+    )
+    obj['id']
+  end
+
+
+  def self.id(device:, index:, hw_type:, db:)
+    db[:component].where(
+      :hw_type=>hw_type.downcase,
+      :device=>device,
+      :index=>index
+    ).first[:id]
+  end
+
+
+  def initialize(device:, index:, hw_type:)
     @device = device
     @index = index.to_s
+    @hw_type = hw_type
   end
 
 

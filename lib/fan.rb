@@ -16,8 +16,7 @@ class Fan < Component
 
 
   def initialize(device:, index:)
-    super
-    @hw_type = 'Fan'
+    super(device: device, index: index, hw_type: 'Fan')
   end
 
 

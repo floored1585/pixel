@@ -47,6 +47,7 @@ describe Event do
   end
 
 
+=begin
   # id
   describe '#id' do
 
@@ -59,6 +60,7 @@ describe Event do
     end
 
   end
+=end
 
 
   # type

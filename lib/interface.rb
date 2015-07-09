@@ -21,8 +21,7 @@ class Interface < Component
       raise TypeError.new("index (#{index}) must look like an Integer!")
     end
 
-    super
-    @hw_type = 'Interface'
+    super(device: device, index: index, hw_type: 'Interface')
   end
 
 

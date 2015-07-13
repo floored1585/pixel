@@ -76,7 +76,7 @@ describe DescriptionChangeEvent do
   describe '#subtype' do
 
     it 'should be correct' do
-      expect(event.subtype).to eql 'description_change'
+      expect(event.subtype).to eql 'DescriptionChangeEvent'
     end
 
   end

@@ -16,7 +16,7 @@ class Fan < Component
 
 
   def initialize(device:, index:)
-    super(device: device, index: index, hw_type: 'Fan')
+    super(device: device, index: index, hw_type: 'fAn')
   end
 
 
@@ -82,10 +82,7 @@ class Fan < Component
   def to_json(*a)
     hash = {
       "json_class" => self.class.name,
-      "data" => {
-        "device" => @device,
-        "index" => @index,
-      }
+      "data" => {}
     }
 
     hash['data']["status"] = @status if @status

@@ -7,13 +7,16 @@ $LOG ||= Logger.new(STDOUT)
 class DescriptionChangeEvent < ComponentEvent
 
 
-  def initialize(device: nil, hw_type: nil, index: nil, comp_id: nil, time: Time.now.to_i)
+  def initialize(device: nil, hw_type: nil, index: nil, comp_id: nil,
+    time: Time.now.to_i, old: nil, new: nil)
     return nil unless (device && hw_type && index) || comp_id
     # ComponentEvent#new
     super(
       device: device, hw_type: hw_type, index: index,
       time: time, comp_id: comp_id, subtype: self.class.name
     )
+    @old = old
+    @new = new
   end
 
 

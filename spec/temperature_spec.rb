@@ -57,7 +57,7 @@ describe Temperature do
       end
 
       it 'should have hw_type Temperature' do
-        expect(Temperature.new(device: 'gar-test-1', index: 103).hw_type).to eql 'Temperature'
+        expect(Temperature.new(device: 'gar-test-1', index: 103).hw_type).to eql 'temperature'
       end
 
     end

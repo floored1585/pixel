@@ -39,7 +39,7 @@ describe CPU do
       end
 
       it 'should have hw_type CPU' do
-        expect(CPU.new(device: 'gar-test-1', index: 103).hw_type).to eql 'CPU'
+        expect(CPU.new(device: 'gar-test-1', index: 103).hw_type).to eql 'cpu'
       end
 
     end

@@ -56,7 +56,7 @@ describe Fan do
       end
 
       it 'should have hw_type Fan' do
-        expect(Fan.new(device: 'gar-test-1', index: 103).hw_type).to eql 'Fan'
+        expect(Fan.new(device: 'gar-test-1', index: 103).hw_type).to eql 'fan'
       end
 
     end

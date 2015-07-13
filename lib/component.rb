@@ -20,7 +20,8 @@ class Component
   end
 
 
-  def self.fetch_id(device:, index:, hw_type:)
+  def self.id(device:, index:, hw_type:)
+    return nil if (device.to_s.empty? || index.to_s.empty? || hw_type.to_s.empty?)
     obj = API.get(
       src: 'component',
       dst: 'core',
@@ -31,19 +32,21 @@ class Component
   end
 
 
-  def self.id(device:, index:, hw_type:, db:)
-    db[:component].where(
+  def self.id_from_db(device:, index:, hw_type:, db:)
+    component = db[:component].where(
       :hw_type=>hw_type.downcase,
       :device=>device,
       :index=>index
-    ).first[:id]
+    ).first
+    return component[:id] if component
+    return nil
   end
 
 
   def initialize(device:, index:, hw_type:)
     @device = device
     @index = index.to_s
-    @hw_type = hw_type
+    @hw_type = hw_type.downcase
   end
 
 

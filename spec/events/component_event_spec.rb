@@ -6,10 +6,103 @@ describe ComponentEvent do
   hw_type = 'CPU'
   index = '1'
   time = Time.now.to_i
+  subtype = 'TestComponentEvent'
 
   event = ComponentEvent.new(
-    device: device, hw_type: hw_type, index: index, time: time
+    device: device, hw_type: hw_type, index: index,
+    time: time, subtype: subtype
   )
+
+
+  # Fetch
+  describe '#fetch' do
+
+    before :each do
+      # Insert our bare bones device and component
+      DB[:device].insert(:device => 'test-v11u1-acc-y', :ip => '1.2.3.4')
+      @component_id = DB[:component].insert(
+        :hw_type => 'CPU',
+        :device => 'test-v11u1-acc-y',
+        :index => '1',
+        :last_updated => '12345678',
+        :description => 'CPU 1',
+        :worker => 'rspec',
+      )
+      # Insert the event we're going to fetch
+      @id = DB[:component_event].insert(
+        :component_id => @component_id,
+        :subtype => "DescriptionChangeEvent",
+        :time => Time.now.to_i,
+        :data => '{"old":"bb__iad1-trn-1__g0/1","new":"bb__iad1-trn-1__g0/2"}',
+      )
+    end
+    after :each do
+      # Clean up DB
+      DB[:device].where(:device => 'test-v11u1-acc-y').delete
+    end
+
+
+    context 'when using component_id' do
+
+      it 'should return an array under any condition' do
+        expect(ComponentEvent.fetch(comp_id: 0)).to be_an Array
+        expect(ComponentEvent.fetch(comp_id: @component_id)).to be_an Array
+      end
+
+      it 'should return an empty array for invalid comp_id' do
+        expect(ComponentEvent.fetch(comp_id: 0)).to be_empty
+      end
+
+      it 'should return an empty array for invalid comp_id' do
+        expect(ComponentEvent.fetch(comp_id: 'abcd')).to be_empty
+      end
+
+      it 'should fetch a ComponentEvent' do
+        expect(ComponentEvent.fetch(comp_id: @component_id).first).to be_a ComponentEvent
+      end
+
+      it 'should actually be a DescriptionChangeEvent' do
+        expect(ComponentEvent.fetch(comp_id: @component_id).first).to be_a DescriptionChangeEvent
+      end
+
+    end
+
+
+
+  end
+
+
+  # Fetch_from_db
+  describe '#fetch_from_db' do
+
+    before :each do
+      # Insert our bare bones device and component
+      DB[:device].insert(:device => 'test-v11u1-acc-y', :ip => '1.2.3.4')
+      @component_id = DB[:component].insert(
+        :hw_type => 'cpu',
+        :device => 'test-v11u1-acc-y',
+        :index => '1',
+        :last_updated => '12345678',
+        :description => 'CPU 1',
+        :worker => 'rspec',
+      )
+      # Insert the event we're going to fetch
+      @id = DB[:component_event].insert(
+        :component_id => @component_id,
+        :subtype => "DescriptionChangeEvent",
+        :time => Time.now.to_i,
+        :data => '{"old":"bb__iad1-trn-1__g0/1","new":"bb__iad1-trn-1__g0/2"}',
+      )
+    end
+    after :each do
+      # Clean up DB
+      DB[:device].where(:device => 'test-v11u1-acc-y').delete
+    end
+
+
+
+  end
+
 
   # Constructor
   describe '#new' do
@@ -26,27 +119,13 @@ describe ComponentEvent do
     context 'when properly formatted with data and time' do
       custom_time = 1000
       time_event = ComponentEvent.new(
-        device: device, hw_type: hw_type, index: index, time: custom_time
+        device: device, hw_type: hw_type, index: index, time: custom_time, subtype: subtype
       )
       it 'should return a ComponentEvent object' do
         expect(time_event).to be_a ComponentEvent
       end
       it 'should have an accurate time' do
         expect(time_event.time).to eql custom_time
-      end
-    end
-
-    context 'when properly formatted without data' do
-      it 'should return a ComponentEvent object' do
-        expect(event).to be_a ComponentEvent
-      end
-    end
-
-    context 'when missing time' do
-      it 'should raise an ArgumentError' do
-        expect{
-          event = ComponentEvent.new(device: device, hw_type: hw_type, index: index)
-        }.to raise_error ArgumentError
       end
     end
 
@@ -90,7 +169,7 @@ describe ComponentEvent do
 
     it 'should convert to String' do
       numeric_index_event = ComponentEvent.new(
-        device: device, hw_type: hw_type, index: 100, time: time
+        device: device, hw_type: hw_type, index: 100, time: time, subtype: subtype
       )
       expect(numeric_index_event.index).to eql '100'
     end
@@ -101,24 +180,13 @@ describe ComponentEvent do
   # subtype
   describe '#subtype' do
 
-    it 'should be nil without subclass' do
-      expect(event.subtype).to eql nil
+    it 'should be what was passed in' do
+      expect(event.subtype).to eql subtype
     end
 
   end
 
 
-  # type
-  describe '#type' do
-
-    it 'should be accurate' do
-      expect(event.type).to eql 'component'
-    end
-
-  end
-
-
-=begin
   # save
   describe '#save' do
 
@@ -140,42 +208,34 @@ describe ComponentEvent do
     end
 
     it 'should not exist before saving' do
-      event = ComponentEvent.get(
+      event = ComponentEvent.fetch(device: device, hw_type: hw_type, index: index).first
       expect(event).to eql nil
     end
 
     it 'should fail if empty' do
-      event = ComponentEvent.new(device: 'test-v11u1-acc-y', index: '1')
-      expect(event.save(DB)).to eql nil
+      event = ComponentEvent.new(device: 'test-v11u1-acc-y', index: '1', hw_type: 'CPU',
+                                 time: Time.now.to_i, subtype: 'DescriptionChangeEvent')
+      expect(event.save(db: DB, data: {})).to eql nil
     end
 
     it 'should fail if device does not exist' do
-      event = ComponentEvent.new(device: 'test-test-acc-y', index: '1').populate(imaginary_data)
-      expect(event.save(DB)).to eql nil
+      event = ComponentEvent.new(device: 'test-test-acc-y', index: '1', hw_type: 'CPU',
+                                 time: Time.now.to_i, subtype: 'DescriptionChangeEvent')
+      expect(event.save(db: DB, data: {'test'=>'data'})).to eql nil
     end
 
     it 'should exist after being saved' do
-      JSON.load(DEV2_JSON).event['1'].save(DB)
-      event = ComponentEvent.fetch('test-v11u1-acc-y', '1')
-      expect(event).to be_a ComponentEvent
-    end
-
-    it 'should update without error' do
-      JSON.load(DEV2_JSON).event['1'].save(DB)
-      JSON.load(DEV2_JSON).event['1'].save(DB)
-      event = ComponentEvent.fetch('test-v11u1-acc-y', '1')
-      expect(event).to be_a ComponentEvent
-    end
-
-    it 'should be identical before and after' do
-      JSON.load(DEV2_JSON).event['1'].save(DB)
-      event = ComponentEvent.fetch('test-v11u1-acc-y', '1')
-      expect(event.to_json).to eql JSON.load(DEV2_JSON).event['1'].to_json
+      event = ComponentEvent.new(device: 'test-v11u1-acc-y', index: '1', hw_type: 'CPU',
+                                 time: Time.now.to_i, subtype: 'DescriptionChangeEvent')
+      event.save(db: DB, data: {'test'=>'data'})
+      event1 = ComponentEvent.fetch(device: 'test-v11u1-acc-y', index: '1', hw_type: 'CPU').first
+      expect(event1).to be_a ComponentEvent
     end
 
   end
 
 
+=begin
   # delete
   describe '#delete' do
 
@@ -201,16 +261,16 @@ describe ComponentEvent do
     end
 
   end
+=end
 
 
-=begin
   # to_json
   describe '#to_json and #json_create' do
 
     context 'when freshly created' do
 
       before(:each) do
-        @event = ComponentEvent.new(device: 'gar-test-1', index: '103')
+        @event = ComponentEvent.new(comp_id: 123, subtype: 'DescriptionChangeEvent', time: Time.now.to_i)
       end
 
 
@@ -226,31 +286,6 @@ describe ComponentEvent do
 
     end
 
-
-    context 'when populated' do
-
-      before(:each) do
-        @event1 = ComponentEvent.fetch('gar-b11u1-dist', '7.2.0.0')
-        @event2 = ComponentEvent.fetch('aon-cumulus-2', '0')
-        @event3 = ComponentEvent.fetch('gar-k11u1-dist', '1')
-        @event4 = ComponentEvent.fetch('iad1-trn-1', '2')
-      end
-
-
-      it 'should serialize and deserialize properly' do
-        json1 = @event1.to_json
-        json2 = @event2.to_json
-        json3 = @event3.to_json
-        json4 = @event4.to_json
-        expect(JSON.load(json1).to_json).to eql json1
-        expect(JSON.load(json2).to_json).to eql json2
-        expect(JSON.load(json3).to_json).to eql json3
-        expect(JSON.load(json4).to_json).to eql json4
-      end
-
-    end
-
   end
-=end
 
 end

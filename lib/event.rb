@@ -14,7 +14,6 @@ class Event
     end
 
     @time = time.to_i
-    @type = nil # Should be set in subclass
   end
 
 
@@ -28,8 +27,32 @@ class Event
   end
 
 
-  def type
-    @type
+  def populate(data)
+    # Required in order to accept symbol and non-symbol keys
+    data = data.symbolize
+
+    # Return nil if we didn't find any data
+    # TODO: Raise an exception instead?
+    return nil if data.empty?
+
+    @id = data[:id].to_i_if_numeric
+    @time = data[:time].to_i_if_numeric
+
+    return self
   end
+
+
+  def to_json(*a)
+    hash = {
+      "json_class" => self.class.name,
+      "data" => {}
+    }
+
+    hash['data']["id"] = @id
+    hash['data']["time"] = @time
+
+    hash.to_json(*a)
+  end
+
 
 end

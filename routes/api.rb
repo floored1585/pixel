@@ -12,9 +12,32 @@ class Pixel < Sinatra::Base
     JSON.generate( fetch_poll(@@settings, @@db, count.to_i, poller) )
   end
 
+  get '/v2/events/component/*/*/*' do |device, hw_type, index|
+    start_time = params[:start_time]
+    end_time = params[:end_time]
+    types = params[:types].split(',')
+    JSON.generate(ComponentEvent.fetch_from_db(
+      device: device, index: index, hw_type: hw_type, start_time: start_time,
+      end_time: end_time, types: types, db: @@db
+    ))
+  end
+
+  get '/v2/events/component/*' do |comp_id|
+    # Return an empty array unless comp_id is numeric
+    return '[]' unless comp_id.to_s =~ /^[0-9]+$/
+
+    start_time = params[:start_time]
+    end_time = params[:end_time]
+    types = params[:types].split(',')
+
+    JSON.generate(ComponentEvent.fetch_from_db(
+      comp_id: comp_id, start_time: start_time, end_time: end_time, types: types, db: @@db
+    ))
+  end
+
   get '/v2/device/*/*/*/id' do |device, hw_type, index|
     JSON.generate(
-      { 'id' => Component.id(device: device, index: index, hw_type: hw_type, db: @@db) }
+      { 'id' => Component.id_from_db(device: device, index: index, hw_type: hw_type, db: @@db) }
     )
   end
 

@@ -46,9 +46,18 @@ describe Component do
     context 'when component exists' do
 
       it 'should return the right id' do
-        id = Component.id(device: 'gar-b11u1-dist', index: '7.2.0.0', hw_type: 'CPU', db: DB)
+        id = Component.id(device: 'gar-b11u1-dist', index: '7.2.0.0', hw_type: 'CPU')
         expect(id).to be_a Numeric
         expect(id).to be > 0
+      end
+
+    end
+
+    context 'when component does not exist' do
+
+      it 'should return nil' do
+        id = Component.id(device: 'gar-invalid-device', index: '7.2.0.0', hw_type: 'CPU')
+        expect(id).to eql nil
       end
 
     end
@@ -56,21 +65,29 @@ describe Component do
   end
 
 
-  # fetch_id
-  describe '#fetch_id' do
+  # id_from_db
+  describe '#id_from_db' do
 
     context 'when component exists' do
 
       it 'should return the right id' do
-        id = Component.fetch_id(device: 'gar-b11u1-dist', index: '7.2.0.0', hw_type: 'CPU')
+        id = Component.id_from_db(device: 'gar-b11u1-dist', index: '7.2.0.0', hw_type: 'CPU', db: DB)
         expect(id).to be_a Numeric
         expect(id).to be > 0
       end
 
     end
 
-  end
+    context 'when component does not exist' do
 
+      it 'should return nil' do
+        id = Component.id_from_db(device: 'gar-whatever-invalid', index: '7.2.0.0', hw_type: 'CPU', db: DB)
+        expect(id).to eql nil
+      end
+
+    end
+
+  end
 
 
   # populate

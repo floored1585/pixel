@@ -106,6 +106,18 @@ class Component
     current_time = Time.now.to_i
     new_worker = worker
 
+    # Generate events if things have changed
+    @events ||= []
+
+    # Description change
+    if new_description != @description
+      @events.push(DescriptionChangeEvent.new(
+        device: @device, hw_type: @hw_type, index: @index,
+        old: @description, new: new_description
+      ))
+    end
+
+    # Update values
     @description = new_description
     @last_updated = current_time
     @worker = new_worker

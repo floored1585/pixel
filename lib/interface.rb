@@ -267,7 +267,7 @@ class Interface < Component
     @events ||= []
 
     # Description change
-    unless old_description == @description
+    if @description != old_description
       @events.push(DescriptionChangeEvent.new(
         device: @device, hw_type: @hw_type, index: @index,
         old: old_description, new: @description

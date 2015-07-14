@@ -21,7 +21,7 @@ describe ComponentEvent do
       # Insert our bare bones device and component
       DB[:device].insert(:device => 'test-v11u1-acc-y', :ip => '1.2.3.4')
       @component_id = DB[:component].insert(
-        :hw_type => 'CPU',
+        :hw_type => 'cpu',
         :device => 'test-v11u1-acc-y',
         :index => '1',
         :last_updated => '12345678',
@@ -134,6 +134,14 @@ describe ComponentEvent do
 
   # component_id
   describe '#component_id' do
+
+    #TODO: Fill in
+
+  end
+
+
+  # set_component_id
+  describe '#set_component_id' do
 
     #TODO: Fill in
 

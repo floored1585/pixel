@@ -86,6 +86,13 @@ class ComponentEvent < Event
   end
 
 
+  def set_component_id(comp_id)
+    return nil unless comp_id =~ /^[0-9]+$/
+    @component_id = comp_id
+    return self
+  end
+
+
   def device
     @device
   end

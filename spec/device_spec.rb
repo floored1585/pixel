@@ -443,6 +443,7 @@ describe Device do
     after :each do
       # Clean up DB
       DB[:device].where(:device => 'test-v11u1-acc-y').delete
+      DB[:device].where(:device => 'test-v11u2-acc-y').delete
     end
 
 
@@ -474,9 +475,9 @@ describe Device do
     end
 
     it 'should be identical before and after' do
-      JSON.load(DEV2_JSON).save(DB)
-      fetched = JSON.parse(Device.fetch('test-v11u1-acc-y', :all => true).to_json)
-      expect(fetched).to eql JSON.parse(DEV2_JSON)
+      JSON.load(DEV4_JSON).save(DB)
+      fetched = JSON.parse(Device.fetch('test-v11u2-acc-y', :all => true).to_json)
+      expect(fetched).to eql JSON.parse(DEV4_JSON)
     end
 
     it 'should delete outdated components' do

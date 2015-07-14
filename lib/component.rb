@@ -75,6 +75,11 @@ class Component
   end
 
 
+  def events
+    @events || []
+  end
+
+
   def populate(data)
     # Required in order to accept symbol and non-symbol keys
     data = data.symbolize
@@ -86,6 +91,7 @@ class Component
     @description = data[:description].to_s
     @last_updated = data[:last_updated].to_i_if_numeric
     @worker = data[:worker]
+    @events = data[:events]
 
     return self
   end
@@ -119,9 +125,18 @@ class Component
       $LOG.info("#{@hw_type}: Adding #{@index} (#{@description}) on #{@device} from #{@worker}")
       db[:component].insert(data)
     end
+
     # Get @id if we don't already have it
     @id = existing.first[:id] unless @id
     raise "No component id! #{@index} (#{@description}) on #{@device} from #{@worker}" unless @id
+
+    # Update the component_event table
+    if @events
+      @events.each do |event|
+        event.set_component_id(@id)
+        event.save(db)
+      end
+    end
 
     return self
   end
@@ -152,6 +167,7 @@ class Component
     hash['data']["description"] = description
     hash['data']["last_updated"] = @last_updated if @last_updated
     hash['data']["worker"] = @worker if @worker
+    hash['data']["events"] = events unless events.empty?
 
     hash.to_json(*a)
   end

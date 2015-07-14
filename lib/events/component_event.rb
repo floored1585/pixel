@@ -125,6 +125,9 @@ class ComponentEvent < Event
 
     @component_id = data[:component_id].to_i_if_numeric
     @subtype = data[:subtype]
+    @device = data[:device]
+    @hw_type = data[:hw_type]
+    @index = data[:index]
 
     return self
   end
@@ -167,6 +170,9 @@ class ComponentEvent < Event
 
     hash['data']["component_id"] = @component_id
     hash['data']["subtype"] = @subtype
+    hash['data']["hw_type"] = @hw_type
+    hash['data']["device"] = @device
+    hash['data']["index"] = @index
     hash['data'].merge!( JSON.parse(super)['data'] )
 
     hash.to_json(*a)

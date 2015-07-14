@@ -16,7 +16,7 @@ class CPU < Component
 
 
   def initialize(device:, index:)
-    super(device: device, index: index, hw_type: 'CPU')
+    super(device: device, index: index, hw_type: 'cpu')
   end
 
 

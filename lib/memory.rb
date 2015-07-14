@@ -16,7 +16,7 @@ class Memory < Component
 
 
   def initialize(device:, index:)
-    super(device: device, index: index, hw_type: 'Memory')
+    super(device: device, index: index, hw_type: 'memory')
   end
 
 

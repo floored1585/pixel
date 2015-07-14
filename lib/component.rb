@@ -33,6 +33,10 @@ class Component
 
 
   def self.id_from_db(device:, index:, hw_type:, db:)
+    unless device && index && hw_type
+      $LOG.error("COMPONENT: Can't fetch ID from db. Device: #{device}, hw_type: #{hw_type}, index: #{index}")
+      return nil
+    end
     component = db[:component].where(
       :hw_type=>hw_type.downcase,
       :device=>device,

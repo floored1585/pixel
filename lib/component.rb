@@ -103,7 +103,7 @@ class Component
 
   def update(data, worker:)
     new_description = data['description'] || "#{@hw_type} #{@index}"
-    new_description.gsub(/\\[u|U]0000/,"")
+    new_description.delete("\0")
     current_time = Time.now.to_i
     new_worker = worker
 

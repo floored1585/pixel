@@ -26,7 +26,7 @@ module Poller
   def self._poll(device_name, uuid)
     pid = fork do
       # Get current values
-      device = Device.fetch(device_name, :interfaces => true)
+      device = Device.fetch(device_name, :all => true)
 
       # Poll the device; send data back to core
       if device.poll(worker: Socket.gethostname, uuid: uuid)

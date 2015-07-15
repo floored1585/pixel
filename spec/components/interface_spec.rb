@@ -1,4 +1,4 @@
-require_relative 'rspec'
+require_relative '../rspec'
 
 describe Interface do
 
@@ -92,6 +92,24 @@ describe Interface do
 
     it 'should have hw_type Interface' do
       expect(Interface.new(device: 'gar-test-1', index: 103).hw_type).to eql 'interface'
+    end
+
+  end
+
+
+  describe '#status_converter' do
+
+    it 'should return Down if the number is not 1' do
+      expect(Interface.status_converter(0)).to eql 'Down'
+    end
+    it 'should return Up if the number is 1' do
+      expect(Interface.status_converter(1)).to eql 'Up'
+    end
+    it 'should work with a string' do
+      expect(Interface.status_converter('1')).to eql 'Up'
+    end
+    it 'should return Down for nil' do
+      expect(Interface.status_converter(nil)).to eql 'Down'
     end
 
   end

@@ -1,14 +1,4 @@
-require_relative '../lib/sq'
-require_relative '../lib/device'
-require_relative '../lib/components/interface'
-require_relative '../lib/components/cpu'
-require_relative '../lib/components/fan'
-require_relative '../lib/components/memory'
-require_relative '../lib/components/psu'
-require_relative '../lib/components/temperature'
-require_relative '../lib/event'
-require_relative '../lib/events/component_event'
-require_relative '../lib/events/component_events/description_change_event'
+Dir["#{File.dirname(__FILE__)}/../lib/**/*.rb"].each { |file| require(file) }
 
 require_relative 'objects'
 

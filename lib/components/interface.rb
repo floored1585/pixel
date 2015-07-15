@@ -15,6 +15,11 @@ class Interface < Component
   end
 
 
+  def self.status_converter(int_status)
+    int_status.to_i_if_numeric == 1 ? "Up" : "Down"
+  end
+
+
   def initialize(device:, index:)
     # If index doesn't look like an integer, raise an exception.
     unless index.to_s =~ /^[0-9]+$/
@@ -156,9 +161,9 @@ class Interface < Component
   #   operating status, but you can pass in a symbol if you want to get the admin status)
   def status(status_type = :oper)
     if status_type == :oper
-      @oper_status == 1 ? "Up" : "Down"
+      Interface.status_converter(@oper_status)
     elsif status_type == :admin
-      @admin_status == 1 ? "Up" : "Down"
+      Interface.status_converter(@admin_status)
     else
       nil
     end
@@ -263,6 +268,21 @@ class Interface < Component
 
     # Generate events if things have changed
     @events ||= []
+
+    # Status changes
+    if new_admin_status != @admin_status
+      @events.push(AdminStatusChangeEvent.new(
+        device: @device, hw_type: @hw_type, index: @index,
+        status: Interface.status_converter(new_admin_status)
+      ))
+    end
+    if new_oper_status != @oper_status
+      @events.push(OperStatusChangeEvent.new(
+        device: @device, hw_type: @hw_type, index: @index,
+        status: Interface.status_converter(new_oper_status)
+      ))
+    end
+
 
     # Determine interface type, by capturing the part of the description before __ or [
     if type_match = @description.match(/^([a-z]+)(?:__|\[)/)

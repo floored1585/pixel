@@ -1,35 +1,28 @@
-# description_change_event.rb
+# component_status_change_event.rb
 #
 require 'logger'
 require 'json'
 require_relative '../component_event'
 $LOG ||= Logger.new(STDOUT)
 
-class DescriptionChangeEvent < ComponentEvent
+class ComponentStatusChangeEvent < ComponentEvent
 
 
   def initialize(device: nil, hw_type: nil, index: nil, comp_id: nil,
-    time: Time.now.to_i, old: nil, new: nil)
+    time: Time.now.to_i, status: nil)
     return nil unless (device && hw_type && index) || comp_id
     # ComponentEvent#new
     super(
       device: device, hw_type: hw_type, index: index,
       time: time, comp_id: comp_id, subtype: self.class.name
     )
-    @old = old
-    @new = new
+    @status = status
   end
 
 
-  # Old description
-  def old
-    @old || ''
-  end
-
-
-  # New description
-  def new
-    @new || ''
+  # New status
+  def status
+    @status
   end
 
 
@@ -40,8 +33,7 @@ class DescriptionChangeEvent < ComponentEvent
     # If parent's #populate returns nil, return nil here also
     return nil unless super && data && data[:data].class == Hash
 
-    @old = data[:data]['old']
-    @new = data[:data]['new']
+    @status = data[:data]['status']
 
     return self
   end
@@ -49,8 +41,7 @@ class DescriptionChangeEvent < ComponentEvent
 
   def save(db)
     data = {
-      :old => @old,
-      :new => @new,
+      :status => @status,
     }
     super(db: db, data: data)
   end
@@ -62,8 +53,7 @@ class DescriptionChangeEvent < ComponentEvent
       "data" => { 'data' => {} }
     }
 
-    hash['data']['data']["old"] = @old
-    hash['data']['data']["new"] = @new
+    hash['data']['data']["status"] = @status
     hash['data'].merge!( JSON.parse(super)['data'] )
 
     hash.to_json(*a)
@@ -72,7 +62,8 @@ class DescriptionChangeEvent < ComponentEvent
 
   def self.json_create(json)
     data = json["data"]
-    obj = DescriptionChangeEvent.new(
+    # Object::const_get(data['subtype']) is a stand in for ClassName constant
+    obj = Object::const_get(data['subtype']).new(
       device: data['device'], hw_type: data['hw_type'], index: data['index'],
       time: data['time'], comp_id: data['comp_id']
     )

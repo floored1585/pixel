@@ -1,4 +1,4 @@
-require_relative 'rspec'
+require_relative '../rspec'
 
 describe Memory do
 

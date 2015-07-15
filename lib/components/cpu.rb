@@ -1,22 +1,22 @@
-# memory.rb
+# cpu.rb
 #
 require 'logger'
 require 'json'
-require_relative 'component'
-require_relative 'core_ext/object'
+require_relative '../component'
+require_relative '../core_ext/object'
 $LOG ||= Logger.new(STDOUT)
 
-class Memory < Component
+class CPU < Component
 
 
   def self.fetch(device, index)
-    obj = super(device, index, 'memory')
-    obj.class == Memory ? obj : nil
+    obj = super(device, index, 'cpu')
+    obj.class == CPU ? obj : nil
   end
 
 
   def initialize(device:, index:)
-    super(device: device, index: index, hw_type: 'memory')
+    super(device: device, index: index, hw_type: 'cpu')
   end
 
 
@@ -32,14 +32,13 @@ class Memory < Component
     # Required in order to accept symbol and non-symbol keys
     data = data.symbolize
 
-    @util = data[:util].to_i
+    @util = data[:util].to_i_if_numeric
 
     return self
   end
 
 
   def update(data, worker:)
-
     # TODO: Data validation? See mac class for example
 
     super
@@ -54,7 +53,7 @@ class Memory < Component
 
   def write_influxdb
     Influx.post(
-      series: "#{@device}.memory.#{@index}.#{@description}",
+      series: "#{@device}.cpu.#{@index}.#{@description}",
       value: @util,
       time: @last_updated,
     )
@@ -68,12 +67,12 @@ class Memory < Component
       data = { :id => @id }
       data[:util] = util
 
-      existing = db[:memory].where(:id => @id)
+      existing = db[:cpu].where(:id => @id)
       if existing.update(data) != 1
-        db[:memory].insert(data)
+        db[:cpu].insert(data)
       end
     rescue Sequel::NotNullConstraintViolation, Sequel::ForeignKeyConstraintViolation => e
-      $LOG.error("MEMORY: Save failed. #{e.to_s.gsub(/\n/,'. ')}")
+      $LOG.error("CPU: Save failed. #{e.to_s.gsub(/\n/,'. ')}")
       return nil
     end
 
@@ -96,7 +95,7 @@ class Memory < Component
 
   def self.json_create(json)
     data = json["data"]
-    Memory.new(device: data['device'], index: data['index']).populate(data)
+    CPU.new(device: data['device'], index: data['index']).populate(data)
   end
 
 

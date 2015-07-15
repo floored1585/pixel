@@ -1,7 +1,7 @@
 # description_change_event.rb
 #
 require 'logger'
-require_relative 'component_event'
+require_relative '../component_event'
 $LOG ||= Logger.new(STDOUT)
 
 class DescriptionChangeEvent < ComponentEvent

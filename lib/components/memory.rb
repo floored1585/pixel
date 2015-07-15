@@ -1,22 +1,22 @@
-# cpu.rb
+# memory.rb
 #
 require 'logger'
 require 'json'
-require_relative 'component'
-require_relative 'core_ext/object'
+require_relative '../component'
+require_relative '../core_ext/object'
 $LOG ||= Logger.new(STDOUT)
 
-class CPU < Component
+class Memory < Component
 
 
   def self.fetch(device, index)
-    obj = super(device, index, 'cpu')
-    obj.class == CPU ? obj : nil
+    obj = super(device, index, 'memory')
+    obj.class == Memory ? obj : nil
   end
 
 
   def initialize(device:, index:)
-    super(device: device, index: index, hw_type: 'cpu')
+    super(device: device, index: index, hw_type: 'memory')
   end
 
 
@@ -32,13 +32,14 @@ class CPU < Component
     # Required in order to accept symbol and non-symbol keys
     data = data.symbolize
 
-    @util = data[:util].to_i_if_numeric
+    @util = data[:util].to_i
 
     return self
   end
 
 
   def update(data, worker:)
+
     # TODO: Data validation? See mac class for example
 
     super
@@ -53,7 +54,7 @@ class CPU < Component
 
   def write_influxdb
     Influx.post(
-      series: "#{@device}.cpu.#{@index}.#{@description}",
+      series: "#{@device}.memory.#{@index}.#{@description}",
       value: @util,
       time: @last_updated,
     )
@@ -67,12 +68,12 @@ class CPU < Component
       data = { :id => @id }
       data[:util] = util
 
-      existing = db[:cpu].where(:id => @id)
+      existing = db[:memory].where(:id => @id)
       if existing.update(data) != 1
-        db[:cpu].insert(data)
+        db[:memory].insert(data)
       end
     rescue Sequel::NotNullConstraintViolation, Sequel::ForeignKeyConstraintViolation => e
-      $LOG.error("CPU: Save failed. #{e.to_s.gsub(/\n/,'. ')}")
+      $LOG.error("MEMORY: Save failed. #{e.to_s.gsub(/\n/,'. ')}")
       return nil
     end
 
@@ -95,7 +96,7 @@ class CPU < Component
 
   def self.json_create(json)
     data = json["data"]
-    CPU.new(device: data['device'], index: data['index']).populate(data)
+    Memory.new(device: data['device'], index: data['index']).populate(data)
   end
 
 

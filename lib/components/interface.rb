@@ -2,8 +2,8 @@
 #
 require 'logger'
 require 'json'
-require_relative 'component'
-require_relative 'core_ext/object'
+require_relative '../component'
+require_relative '../core_ext/object'
 $LOG ||= Logger.new(STDOUT)
 
 class Interface < Component

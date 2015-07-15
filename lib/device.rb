@@ -5,12 +5,12 @@ require_relative 'api'
 require_relative 'influx'
 require_relative 'configfile'
 require_relative 'core_ext/object'
-require_relative 'interface'
-require_relative 'cpu'
-require_relative 'fan'
-require_relative 'memory'
-require_relative 'psu'
-require_relative 'temperature'
+require_relative 'components/interface'
+require_relative 'components/cpu'
+require_relative 'components/fan'
+require_relative 'components/memory'
+require_relative 'components/psu'
+require_relative 'components/temperature'
 
 $LOG ||= Logger.new(STDOUT)
 

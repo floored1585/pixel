@@ -151,7 +151,6 @@ class ComponentEvent < Event
         :data => data.to_json
       }
 
-      pp db[:component_event].insert_sql(data)
       @id = db[:component_event].insert(data)
       raise "Didn't get event ID for new event!" unless @id
     rescue Sequel::NotNullConstraintViolation, Sequel::ForeignKeyConstraintViolation => e

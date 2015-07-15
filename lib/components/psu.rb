@@ -1,22 +1,22 @@
-# fan.rb
+# psu.rb
 #
 require 'logger'
 require 'json'
-require_relative 'component'
-require_relative 'core_ext/object'
+require_relative '../component'
+require_relative '../core_ext/object'
 $LOG ||= Logger.new(STDOUT)
 
-class Fan < Component
+class PSU < Component
 
 
   def self.fetch(device, index)
-    obj = super(device, index, 'fan')
-    obj.class == Fan ? obj : nil
+    obj = super(device, index, 'psu')
+    obj.class == PSU ? obj : nil
   end
 
 
   def initialize(device:, index:)
-    super(device: device, index: index, hw_type: 'fAn')
+    super(device: device, index: index, hw_type: 'psu')
   end
 
 
@@ -41,6 +41,7 @@ class Fan < Component
 
 
   def update(data, worker:)
+
     # TODO: Data validation? See mac class for example
 
     super
@@ -66,12 +67,12 @@ class Fan < Component
       data[:vendor_status] = @vendor_status if @vendor_status
       data[:status_text] = @status_text if @status_text
 
-      existing = db[:fan].where(:id => @id)
+      existing = db[:psu].where(:id => @id)
       if existing.update(data) != 1
-        db[:fan].insert(data)
+        db[:psu].insert(data)
       end
     rescue Sequel::NotNullConstraintViolation, Sequel::ForeignKeyConstraintViolation => e
-      $LOG.error("FAN: Save failed. #{e.to_s.gsub(/\n/,'. ')}")
+      $LOG.error("PSU: Save failed. #{e.to_s.gsub(/\n/,'. ')}")
       return nil
     end
 
@@ -96,7 +97,7 @@ class Fan < Component
 
   def self.json_create(json)
     data = json["data"]
-    Fan.new(device: data['device'], index: data['index']).populate(data)
+    PSU.new(device: data['device'], index: data['index']).populate(data)
   end
 
 

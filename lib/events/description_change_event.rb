@@ -15,8 +15,8 @@ class DescriptionChangeEvent < ComponentEvent
       device: device, hw_type: hw_type, index: index,
       time: time, comp_id: comp_id, subtype: self.class.name
     )
-    @old = old.empty? ? nil : old
-    @new = new.empty? ? nil : new
+    @old = (old.nil? || old.empty?) ? nil : old
+    @new = (new.nil? || new.empty?) ? nil : new
   end
 
 

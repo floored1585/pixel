@@ -271,15 +271,17 @@ class Interface < Component
 
     # Status changes
     if new_admin_status != @admin_status
-      @events.push(AdminStatusChangeEvent.new(
+      @events.push(AdminStatusEvent.new(
         device: @device, hw_type: @hw_type, index: @index,
-        status: Interface.status_converter(new_admin_status)
+        old: Interface.status_converter(@admin_status),
+        new: Interface.status_converter(new_admin_status)
       ))
     end
     if new_oper_status != @oper_status
-      @events.push(OperStatusChangeEvent.new(
+      @events.push(OperStatusEvent.new(
         device: @device, hw_type: @hw_type, index: @index,
-        status: Interface.status_converter(new_oper_status)
+        old: Interface.status_converter(@oper_status),
+        new: Interface.status_converter(new_oper_status)
       ))
     end
 

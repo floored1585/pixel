@@ -112,7 +112,7 @@ class Component
 
     # Description change
     if new_description != @description
-      @events.push(DescriptionChangeEvent.new(
+      @events.push(DescriptionEvent.new(
         device: @device, hw_type: @hw_type, index: @index,
         old: @description, new: new_description
       ))

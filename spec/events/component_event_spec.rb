@@ -6,11 +6,11 @@ describe ComponentEvent do
   hw_type = 'CPU'
   index = '1'
   time = Time.now.to_i
-  subtype = 'TestComponentEvent'
+  subtype = 'ComponentEvent'
 
   event = ComponentEvent.new(
     device: device, hw_type: hw_type, index: index,
-    time: time, subtype: subtype
+    time: time
   )
 
 
@@ -31,7 +31,7 @@ describe ComponentEvent do
       # Insert the event we're going to fetch
       @id = DB[:component_event].insert(
         :component_id => @component_id,
-        :subtype => "DescriptionChangeEvent",
+        :subtype => 'DescriptionEvent',
         :time => Time.now.to_i,
         :data => '{"old":"bb__iad1-trn-1__g0/1","new":"bb__iad1-trn-1__g0/2"}',
       )
@@ -62,7 +62,7 @@ describe ComponentEvent do
       end
 
       it 'should actually be a DescriptionChangeEvent' do
-        expect(ComponentEvent.fetch(comp_id: @component_id).first).to be_a DescriptionChangeEvent
+        expect(ComponentEvent.fetch(comp_id: @component_id).first).to be_a DescriptionEvent
       end
 
     end
@@ -89,7 +89,7 @@ describe ComponentEvent do
       # Insert the event we're going to fetch
       @id = DB[:component_event].insert(
         :component_id => @component_id,
-        :subtype => "DescriptionChangeEvent",
+        :subtype => subtype,
         :time => Time.now.to_i,
         :data => '{"old":"bb__iad1-trn-1__g0/1","new":"bb__iad1-trn-1__g0/2"}',
       )
@@ -119,7 +119,7 @@ describe ComponentEvent do
     context 'when properly formatted with data and time' do
       custom_time = 1000
       time_event = ComponentEvent.new(
-        device: device, hw_type: hw_type, index: index, time: custom_time, subtype: subtype
+        device: device, hw_type: hw_type, index: index, time: custom_time
       )
       it 'should return a ComponentEvent object' do
         expect(time_event).to be_a ComponentEvent
@@ -177,7 +177,7 @@ describe ComponentEvent do
 
     it 'should convert to String' do
       numeric_index_event = ComponentEvent.new(
-        device: device, hw_type: hw_type, index: 100, time: time, subtype: subtype
+        device: device, hw_type: hw_type, index: 100, time: time
       )
       expect(numeric_index_event.index).to eql '100'
     end
@@ -222,19 +222,19 @@ describe ComponentEvent do
 
     it 'should fail if empty' do
       event = ComponentEvent.new(device: 'test-v11u1-acc-y', index: '1', hw_type: 'CPU',
-                                 time: Time.now.to_i, subtype: 'DescriptionChangeEvent')
+                                 time: Time.now.to_i)
       expect(event.save(db: DB, data: {})).to eql nil
     end
 
     it 'should fail if device does not exist' do
       event = ComponentEvent.new(device: 'test-test-acc-y', index: '1', hw_type: 'CPU',
-                                 time: Time.now.to_i, subtype: 'DescriptionChangeEvent')
+                                 time: Time.now.to_i)
       expect(event.save(db: DB, data: {'test'=>'data'})).to eql nil
     end
 
     it 'should exist after being saved' do
       event = ComponentEvent.new(device: 'test-v11u1-acc-y', index: '1', hw_type: 'CPU',
-                                 time: Time.now.to_i, subtype: 'DescriptionChangeEvent')
+                                 time: Time.now.to_i)
       event.save(db: DB, data: {'test'=>'data'})
       event1 = ComponentEvent.fetch(device: 'test-v11u1-acc-y', index: '1', hw_type: 'CPU').first
       expect(event1).to be_a ComponentEvent
@@ -278,7 +278,7 @@ describe ComponentEvent do
     context 'when freshly created' do
 
       before(:each) do
-        @event = ComponentEvent.new(comp_id: 123, subtype: 'DescriptionChangeEvent', time: Time.now.to_i)
+        @event = ComponentEvent.new(comp_id: 123, time: Time.now.to_i)
       end
 
 

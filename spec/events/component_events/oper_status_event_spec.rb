@@ -1,23 +1,24 @@
 require_relative '../../rspec'
 
-describe OperStatusChangeEvent do
+describe OperStatusEvent do
 
   device = 'gar-bdr-1'
   hw_type = 'CPU'
   index = '1'
-  status = 'down'
+  old = 'Up'
+  new = 'Down'
   time = Time.now.to_i
 
-  event = OperStatusChangeEvent.new(
-    device: device, hw_type: hw_type, index: index, status: status
+  event = OperStatusEvent.new(
+    device: device, hw_type: hw_type, index: index, old: old, new: new
   )
 
   # Constructor
   describe '#new' do
 
     context 'when properly formatted' do
-      it 'should return a OperStatusChangeEvent object' do
-        expect(event).to be_a OperStatusChangeEvent
+      it 'should return a OperStatusEvent object' do
+        expect(event).to be_a OperStatusEvent
       end
       it 'should have an accurate time' do
         expect(event.time).to eql time
@@ -26,12 +27,12 @@ describe OperStatusChangeEvent do
 
     context 'when properly formatted with time' do
       custom_time = 1000
-      time_event = OperStatusChangeEvent.new(
+      time_event = OperStatusEvent.new(
         device: 'gar-bdr-1', hw_type: 'CPU', index: '1',
-        status: 'test_status', time: custom_time
+        old: 'test', new: 'new', time: custom_time
       )
-      it 'should return a OperStatusChangeEvent object' do
-        expect(time_event).to be_a OperStatusChangeEvent
+      it 'should return a OperStatusEvent object' do
+        expect(time_event).to be_a OperStatusEvent
       end
       it 'should have an accurate time' do
         expect(time_event.time).to eql custom_time
@@ -75,17 +76,27 @@ describe OperStatusChangeEvent do
   describe '#subtype' do
 
     it 'should be correct' do
-      expect(event.subtype).to eql 'OperStatusChangeEvent'
+      expect(event.subtype).to eql 'OperStatusEvent'
     end
 
   end
 
 
-  # status
-  describe '#status' do
+  # old
+  describe '#old' do
 
     it 'should be correct' do
-      expect(event.status).to eql status
+      expect(event.old).to eql old
+    end
+
+  end
+
+
+  # new
+  describe '#new' do
+
+    it 'should be correct' do
+      expect(event.new).to eql new
     end
 
   end
@@ -106,11 +117,12 @@ describe OperStatusChangeEvent do
     end
 
     it 'should be present when event occurs' do
-      expect(func_event).to be_a OperStatusChangeEvent
+      expect(func_event).to be_a OperStatusEvent
     end
 
     it 'should have the correct status' do
-      expect(func_event.status).to eql 'Down'
+      expect(func_event.old).to eql 'Up'
+      expect(func_event.new).to eql 'Down'
     end
 
     it 'should have the correct time' do
@@ -138,10 +150,11 @@ describe OperStatusChangeEvent do
     it 'should be saved' do
       saved_event = ComponentEvent.fetch(
         device: 'test-v11u3-acc-y', hw_type: 'interface',
-        index: '10119', types: [ 'OperStatusChangeEvent' ]
+        index: '10119', types: [ 'OperStatusEvent' ]
       ).first
-      expect(saved_event).to be_a OperStatusChangeEvent
-      expect(saved_event.status).to eql 'Up'
+      expect(saved_event).to be_a OperStatusEvent
+      expect(saved_event.old).to eql 'Down'
+      expect(saved_event.new).to eql 'Up'
     end
 
   end

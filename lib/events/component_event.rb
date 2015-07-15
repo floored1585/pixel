@@ -56,8 +56,7 @@ class ComponentEvent < Event
     events = []
     event_data.select_all.each do |row|
       row[:data] = JSON.parse row[:data] if row[:data].class == String
-      klass = Object::const_get(row[:subtype])
-      event = klass.new(
+      event = Object::const_get(row[:subtype]).new(
         device: row[:device], hw_type: row[:hw_type], index: row[:index],
         time: row[:time]
       )
@@ -68,7 +67,7 @@ class ComponentEvent < Event
   end
 
 
-  def initialize(device: nil, hw_type: nil, index: nil, comp_id: nil, time:, subtype:)
+  def initialize(device: nil, hw_type: nil, index: nil, comp_id: nil, time:)
     return nil unless (device && hw_type && index) || comp_id
     # Event#new
     super(time: time)
@@ -77,7 +76,7 @@ class ComponentEvent < Event
     @hw_type = hw_type.to_s
     @index = index.to_s
     @component_id = comp_id.to_i_if_numeric
-    @subtype = subtype
+    @subtype = self.class.name
   end
 
 
@@ -183,7 +182,7 @@ class ComponentEvent < Event
     data = json["data"]
     obj = ComponentEvent.new(
       device: data['device'], hw_type: data['hw_type'], index: data['index'],
-      time: data['time'], comp_id: data['component_id'], subtype: data['subtype']
+      time: data['time'], comp_id: data['component_id']
     )
     obj.populate(data)
   end

@@ -1,23 +1,24 @@
 require_relative '../../rspec'
 
-describe ComponentStatusChangeEvent do
+describe ComponentStatusEvent do
 
   device = 'gar-bdr-1'
   hw_type = 'CPU'
   index = '1'
-  status = 'down'
+  old = 'Down'
+  new = 'Up'
   time = Time.now.to_i
 
-  event = ComponentStatusChangeEvent.new(
-    device: device, hw_type: hw_type, index: index, status: status
+  event = ComponentStatusEvent.new(
+    device: device, hw_type: hw_type, index: index, old: old, new: new
   )
 
   # Constructor
   describe '#new' do
 
     context 'when properly formatted' do
-      it 'should return a ComponentStatusChangeEvent object' do
-        expect(event).to be_a ComponentStatusChangeEvent
+      it 'should return a ComponentStatusEvent object' do
+        expect(event).to be_a ComponentStatusEvent
       end
       it 'should have an accurate time' do
         expect(event.time).to eql time
@@ -26,12 +27,12 @@ describe ComponentStatusChangeEvent do
 
     context 'when properly formatted with time' do
       custom_time = 1000
-      time_event = ComponentStatusChangeEvent.new(
+      time_event = ComponentStatusEvent.new(
         device: 'gar-bdr-1', hw_type: 'CPU', index: '1',
-        status: 'test_status', time: custom_time
+        old: 'test', new: 'test_new', time: custom_time
       )
-      it 'should return a ComponentStatusChangeEvent object' do
-        expect(time_event).to be_a ComponentStatusChangeEvent
+      it 'should return a ComponentStatusEvent object' do
+        expect(time_event).to be_a ComponentStatusEvent
       end
       it 'should have an accurate time' do
         expect(time_event.time).to eql custom_time
@@ -75,17 +76,27 @@ describe ComponentStatusChangeEvent do
   describe '#subtype' do
 
     it 'should be correct' do
-      expect(event.subtype).to eql 'ComponentStatusChangeEvent'
+      expect(event.subtype).to eql 'ComponentStatusEvent'
     end
 
   end
 
 
-  # status
-  describe '#status' do
+  # old
+  describe '#old' do
 
     it 'should be correct' do
-      expect(event.status).to eql status
+      expect(event.old).to eql old
+    end
+
+  end
+
+
+  # new
+  describe '#new' do
+
+    it 'should be correct' do
+      expect(event.new).to eql new
     end
 
   end

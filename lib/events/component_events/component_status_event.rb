@@ -1,11 +1,11 @@
-# description_change_event.rb
+# component_status_event.rb
 #
 require 'logger'
 require 'json'
 require_relative '../component_event'
 $LOG ||= Logger.new(STDOUT)
 
-class DescriptionChangeEvent < ComponentEvent
+class ComponentStatusEvent < ComponentEvent
 
 
   def initialize(device: nil, hw_type: nil, index: nil, comp_id: nil,
@@ -14,22 +14,20 @@ class DescriptionChangeEvent < ComponentEvent
     # ComponentEvent#new
     super(
       device: device, hw_type: hw_type, index: index,
-      time: time, comp_id: comp_id, subtype: self.class.name
+      time: time, comp_id: comp_id
     )
     @old = old
     @new = new
   end
 
 
-  # Old description
   def old
-    @old || ''
+    @old
   end
 
 
-  # New description
   def new
-    @new || ''
+    @new
   end
 
 
@@ -72,7 +70,7 @@ class DescriptionChangeEvent < ComponentEvent
 
   def self.json_create(json)
     data = json["data"]
-    obj = DescriptionChangeEvent.new(
+    obj = Object::const_get(data['subtype']).new(
       device: data['device'], hw_type: data['hw_type'], index: data['index'],
       time: data['time'], comp_id: data['comp_id']
     )

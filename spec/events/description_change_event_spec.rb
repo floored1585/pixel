@@ -140,7 +140,7 @@ describe DescriptionChangeEvent do
       JSON.load(DEVTEST_JSON).save(DB)
       int_save = JSON.load(INTERFACE_5)
       int_save_data = JSON.parse(INTERFACE_5)["data"]
-      int_save_data["description"] = "TEST CHANGE DESCRIPTION"
+      int_save_data["description"] = ""
       int_save_data["high_speed"] = int_save_data["speed"] / 1000000
       int_save_updated = int_save.dup.update(int_save_data, worker: 'test')
       int_save_updated.save(DB)

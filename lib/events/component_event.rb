@@ -9,19 +9,20 @@ class ComponentEvent < Event
 
 
   def self.fetch(device: nil, hw_type: nil, index: nil, comp_id: nil,
-                 start_time: nil, end_time: nil, types: [ 'all' ])
+                 start_time: nil, end_time: nil, types: [ 'all' ], limit: nil)
 
     if (device && hw_type && index)
       resource = "/v2/events/component/#{device}/#{hw_type}/#{index}"
     elsif comp_id
       resource = "/v2/events/component/#{comp_id}"
     else
-      raise ArgumentError.new("Not enough information to fetch events.")
+      resource = "/v2/events/component"
     end
 
     params = "types=#{types.join(',')}"
     params += "&start_time=#{start_time}" if start_time
     params += "&end_time=#{end_time}" if end_time
+    params += "&limit=#{limit}" if limit && limit.to_s =~ /^[0-9]+$/
 
     result = API.get(
       src: 'component_event',
@@ -39,19 +40,21 @@ class ComponentEvent < Event
   end
 
 
-  def self.fetch_from_db(device: nil, index: nil, hw_type: nil, comp_id: nil, types:, db:, start_time: nil, end_time: nil)
+  def self.fetch_from_db(device: nil, index: nil, hw_type: nil, comp_id: nil,
+                         types:, db:, start_time: nil, end_time: nil, limit: nil)
     if (device && hw_type && index)
       comp_id = Component.id_from_db(device: device, index: index, hw_type: hw_type, db: db)
-    elsif (!comp_id)
-      raise ArgumentError.new("Not enough information to fetch events.")
     end
 
-    event_data = db[:component_event].where(:component_id => comp_id)
+    event_data = db[:component_event]
     # Filter if options were passed
-    event_data.where{:time >= start_time} if start_time
-    event_data.where{:time <= end_time} if end_time
-    event_data.where(:subtype => types) unless types.include? 'all'
-    event_data.join(:component, :id => :component_id)
+    event_data = event_data.where(:component_id => comp_id) if comp_id
+    event_data = event_data.where{:time >= start_time} if start_time
+    event_data = event_data.where{:time <= end_time} if end_time
+    event_data = event_data.where(:subtype => types) unless (types.nil? || types.include?('all'))
+    event_data = event_data.order(Sequel.desc(:time))
+    event_data = event_data.limit(limit) if limit && limit.to_s =~ /^\d+$/
+    event_data = event_data.join(:component, :id => :component_id)
 
     events = []
     event_data.select_all.each do |row|

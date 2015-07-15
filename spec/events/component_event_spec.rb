@@ -2,8 +2,8 @@ require_relative '../rspec'
 
 describe ComponentEvent do
 
-  device = 'gar-bdr-1'
-  hw_type = 'CPU'
+  device = 'gar-test-device'
+  hw_type = 'cpu'
   index = '1'
   time = Time.now.to_i
   subtype = 'ComponentEvent'
@@ -216,7 +216,7 @@ describe ComponentEvent do
     end
 
     it 'should not exist before saving' do
-      event = ComponentEvent.fetch(device: device, hw_type: hw_type, index: index).first
+      event = ComponentEvent.fetch(device: 'test-v11u1-acc-y', hw_type: 'cpu', index: '1').first
       expect(event).to eql nil
     end
 

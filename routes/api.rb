@@ -15,10 +15,11 @@ class Pixel < Sinatra::Base
   get '/v2/events/component/*/*/*' do |device, hw_type, index|
     start_time = params[:start_time]
     end_time = params[:end_time]
+    limit = params[:limit]
     types = params[:types].split(',')
     JSON.generate(ComponentEvent.fetch_from_db(
       device: device, index: index, hw_type: hw_type, start_time: start_time,
-      end_time: end_time, types: types, db: @@db
+      end_time: end_time, types: types, db: @@db, limit: limit
     ))
   end
 
@@ -32,6 +33,16 @@ class Pixel < Sinatra::Base
 
     JSON.generate(ComponentEvent.fetch_from_db(
       comp_id: comp_id, start_time: start_time, end_time: end_time, types: types, db: @@db
+    ))
+  end
+
+  get '/v2/events/component' do
+    start_time = params[:start_time]
+    end_time = params[:end_time]
+    limit = params[:limit]
+    types = params[:types].split(',') if types
+    JSON.generate(ComponentEvent.fetch_from_db(
+      start_time: start_time, end_time: end_time, types: types, db: @@db, limit: limit
     ))
   end
 

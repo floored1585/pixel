@@ -10,13 +10,13 @@ class CPU < Component
 
 
   def self.fetch(device, index)
-    obj = super(device, index, 'cpu')
+    obj = super(device, index, 'CPU')
     obj.class == CPU ? obj : nil
   end
 
 
   def initialize(device:, index:)
-    super(device: device, index: index, hw_type: 'cpu')
+    super(device: device, index: index, hw_type: 'CPU')
   end
 
 

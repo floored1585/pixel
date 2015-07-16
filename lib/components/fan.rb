@@ -10,13 +10,13 @@ class Fan < Component
 
 
   def self.fetch(device, index)
-    obj = super(device, index, 'fan')
+    obj = super(device, index, 'Fan')
     obj.class == Fan ? obj : nil
   end
 
 
   def initialize(device:, index:)
-    super(device: device, index: index, hw_type: 'fAn')
+    super(device: device, index: index, hw_type: 'Fan')
   end
 
 

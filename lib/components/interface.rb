@@ -10,7 +10,7 @@ class Interface < Component
 
 
   def self.fetch(device, index)
-    obj = super(device, index, 'interface')
+    obj = super(device, index, 'Interface')
     obj.class == Interface ? obj : nil
   end
 
@@ -26,7 +26,7 @@ class Interface < Component
       raise TypeError.new("index (#{index}) must look like an Integer!")
     end
 
-    super(device: device, index: index, hw_type: 'interface')
+    super(device: device, index: index, hw_type: 'Interface')
   end
 
 

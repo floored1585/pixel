@@ -93,11 +93,11 @@ describe Component do
   # populate
   describe '#populate' do
     it 'should fill up the object' do
-      good = Component.new(device: 'iad1-bdr-1', index: '1.4.0', hw_type: 'cpu')
+      good = Component.new(device: 'iad1-bdr-1', index: '1.4.0', hw_type: 'CPU')
       expect(JSON.parse(good.populate(data1_base).to_json)['data'].keys.sort).to eql json_keys
     end
     it 'should return nil if no data passed' do
-      good = Component.new(device: 'iad1-bdr-1', index: '1.4.0', hw_type: 'cpu')
+      good = Component.new(device: 'iad1-bdr-1', index: '1.4.0', hw_type: 'CPU')
       expect(good.populate({})).to eql nil
     end
   end
@@ -106,7 +106,7 @@ describe Component do
   context 'when freshly created' do
 
     before(:each) do
-      @component = Component.new(device: 'gar-test-1', index: '103', hw_type: 'cpu')
+      @component = Component.new(device: 'gar-test-1', index: '103', hw_type: 'CPU')
     end
 
 
@@ -127,7 +127,7 @@ describe Component do
 
     # update
     describe '#update' do
-      obj = Component.new(device: 'gar-test-1', index: '103', hw_type: 'cpu')
+      obj = Component.new(device: 'gar-test-1', index: '103', hw_type: 'CPU')
       obj.update(data1_update_ok, worker: 'test')
 
       specify { expect(obj).to be_a Component }
@@ -146,11 +146,11 @@ describe Component do
   context 'when populated' do
 
     before(:each) do
-      @component1 = Component.new(device: 'gar-b11u1-dist', index: '7.1.0.0', hw_type: 'cpu')
+      @component1 = Component.new(device: 'gar-b11u1-dist', index: '7.1.0.0', hw_type: 'CPU')
       @component1.populate(data1_base)
-      @component2 = Component.new(device: 'gar-k11u1-dist', index: '1', hw_type: 'cpu')
+      @component2 = Component.new(device: 'gar-k11u1-dist', index: '1', hw_type: 'CPU')
       @component2.populate(data2_base)
-      @component3 = Component.new(device: 'gar-k11u1-dist', index: '1', hw_type: 'cpu')
+      @component3 = Component.new(device: 'gar-k11u1-dist', index: '1', hw_type: 'CPU')
       @component3.populate(data3_base)
     end
 

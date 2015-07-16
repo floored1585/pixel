@@ -56,7 +56,7 @@ describe PSU do
       end
 
       it 'should have hw_type PSU' do
-        expect(PSU.new(device: 'gar-test-1', index: 103).hw_type).to eql 'psu'
+        expect(PSU.new(device: 'gar-test-1', index: 103).hw_type).to eql 'PSU'
       end
 
     end

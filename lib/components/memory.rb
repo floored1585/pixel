@@ -10,13 +10,13 @@ class Memory < Component
 
 
   def self.fetch(device, index)
-    obj = super(device, index, 'memory')
+    obj = super(device, index, 'Memory')
     obj.class == Memory ? obj : nil
   end
 
 
   def initialize(device:, index:)
-    super(device: device, index: index, hw_type: 'memory')
+    super(device: device, index: index, hw_type: 'Memory')
   end
 
 

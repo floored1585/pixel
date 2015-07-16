@@ -13,10 +13,32 @@ class Component
     obj = API.get(
       src: 'component',
       dst: 'core',
-      resource: "/v2/device/#{device}/#{hw_type}/#{index}",
+      resource: "/v2/device/#{device}/#{hw_type.downcase}/#{index}",
       what: "#{hw_type} #{index} on #{device}",
     )
     obj.is_a?(Component) ? obj : nil
+  end
+
+
+  def self.fetch_from_db(device: nil, index: nil, hw_type: nil, id: nil, db:, limit: nil)
+
+    comp_data = db[:component]
+    # Filter if options were passed
+    comp_data = comp_data.where(:id => id) if id
+    comp_data = comp_data.where(:device => device) if device
+    comp_data = comp_data.where(:hw_type => hw_type) if hw_type
+    comp_data = comp_data.where(:index => index) if index
+    comp_data = comp_data.limit(limit) if limit && limit.to_s =~ /^\d+$/
+
+    components = []
+    comp_data.select_all.each do |row|
+      component = Object::const_get(row[:hw_type]).new(
+        device: row[:device], hw_type: row[:hw_type], index: row[:index],
+      )
+      components.push(component.populate(row))
+    end
+
+    return components
   end
 
 
@@ -38,7 +60,7 @@ class Component
       return nil
     end
     component = db[:component].where(
-      :hw_type=>hw_type.downcase,
+      :hw_type=>hw_type,
       :device=>device,
       :index=>index
     ).first
@@ -50,7 +72,7 @@ class Component
   def initialize(device:, index:, hw_type:)
     @device = device
     @index = index.to_s
-    @hw_type = hw_type.downcase
+    @hw_type = hw_type
   end
 
 
@@ -130,14 +152,14 @@ class Component
   def save(db)
     data = {}
     data[:device] = @device
-    data[:hw_type] = @hw_type.downcase
+    data[:hw_type] = @hw_type
     data[:index] = @index
     data[:description] = description
     data[:last_updated] = @last_updated if @last_updated
     data[:worker] = @worker if @worker
 
     # Update the component table
-    existing = db[:component].where(:hw_type=>@hw_type.downcase, :device=>@device, :index=>@index)
+    existing = db[:component].where(:hw_type=>@hw_type, :device=>@device, :index=>@index)
     if existing.update(data) != 1
       $LOG.info("#{@hw_type}: Adding #{@index} (#{@description}) on #{@device} from #{@worker}")
       db[:component].insert(data)
@@ -166,7 +188,7 @@ class Component
     )
 
     db[:component].where(
-      :hw_type => @hw_type.downcase,
+      :hw_type => @hw_type,
       :device => @device,
       :index => @index
     ).delete

@@ -10,13 +10,13 @@ class PSU < Component
 
 
   def self.fetch(device, index)
-    obj = super(device, index, 'psu')
+    obj = super(device, index, 'PSU')
     obj.class == PSU ? obj : nil
   end
 
 
   def initialize(device:, index:)
-    super(device: device, index: index, hw_type: 'psu')
+    super(device: device, index: index, hw_type: 'PSU')
   end
 
 

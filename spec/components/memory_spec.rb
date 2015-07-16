@@ -47,7 +47,7 @@ describe Memory do
       end
 
       it 'should have hw_type Memory' do
-        expect(Memory.new(device: 'gar-test-1', index: 103).hw_type).to eql 'memory'
+        expect(Memory.new(device: 'gar-test-1', index: 103).hw_type).to eql 'Memory'
       end
 
     end

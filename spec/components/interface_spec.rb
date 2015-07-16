@@ -91,7 +91,7 @@ describe Interface do
     end
 
     it 'should have hw_type Interface' do
-      expect(Interface.new(device: 'gar-test-1', index: 103).hw_type).to eql 'interface'
+      expect(Interface.new(device: 'gar-test-1', index: 103).hw_type).to eql 'Interface'
     end
 
   end

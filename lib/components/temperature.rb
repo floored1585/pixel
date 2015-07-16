@@ -10,13 +10,13 @@ class Temperature < Component
 
 
   def self.fetch(device, index)
-    obj = super(device, index, 'temperature')
+    obj = super(device, index, 'Temperature')
     obj.class == Temperature ? obj : nil
   end
 
 
   def initialize(device:, index:)
-    super(device: device, index: index, hw_type: 'temperature')
+    super(device: device, index: index, hw_type: 'Temperature')
   end
 
 

@@ -14,9 +14,9 @@ class AdminStatusEvent < ComponentStatusEvent
     end
 
     if int
-      "Interface #{int.name} on #{@device} #{verb} <span class='#{status_class}'><b>Admin #{@new}</b></span>!"
+      "Interface #{int.name} on #{@device} #{verb} <span class='#{status_class}'><b>Admin #{@new}</b></span>"
     else
-      "Interface w/ index #{@index} on #{@device} #{verb} <span class='#{status_class}'><b>Admin #{@new}</b></span>!"
+      "Interface w/ index #{@index} on #{@device} #{verb} <span class='#{status_class}'><b>Admin #{@new}</b></span>"
     end
   end
 

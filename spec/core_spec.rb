@@ -6,6 +6,50 @@ include Core
 settings = Configfile.retrieve
 
 
+# get_interface
+describe '#get_interface' do
+
+  context 'when called with a valid device and index' do
+    specify { expect(get_interface(settings, DB, 'iad1-a-1', index: 1990)).to be_a Interface }
+    specify { expect(get_interface(settings, DB, 'iad1-a-1', index: '1990')).to be_a Interface }
+  end
+
+  context 'when called with a valid device and name' do
+    # Test exact match
+    specify { expect(get_interface(settings, DB, 'iad1-a-1', name: 'ge-24/0/3')).to be_a Interface }
+    # Test providing uppercase (db has lowercase)
+    specify { expect(get_interface(settings, DB, 'iad1-a-1', name: 'GE-24/0/3')).to be_a Interface }
+    # Test providing lowercase (db has uppercase)
+    specify { expect(get_interface(settings, DB, 'iad1-trn-1', name: 'po1')).to be_a Interface }
+  end
+
+  context 'when called with an invalid device + index' do
+    invalid = get_interface(settings, DB, 'test-a-1', index: 1990)
+    specify { expect(invalid).to be_a Hash }
+    specify { expect(invalid).to be_empty }
+  end
+
+  context 'when called with an invalid device + name' do
+    invalid = get_interface(settings, DB, 'test-a-1', name: 'ge-24/0/3')
+    specify { expect(invalid).to be_a Hash }
+    specify { expect(invalid).to be_empty }
+  end
+
+  context 'when called with an invalid index' do
+    invalid = get_interface(settings, DB, 'iad1-a-1', index: 199099)
+    specify { expect(invalid).to be_a Hash }
+    specify { expect(invalid).to be_empty }
+  end
+
+  context 'when called with an invalid name' do
+    invalid = get_interface(settings, DB, 'iad1-a-1', name: 'ge-33/0/20')
+    specify { expect(invalid).to be_a Hash }
+    specify { expect(invalid).to be_empty }
+  end
+
+end
+
+
 # get_device
 describe '#get_device' do
 

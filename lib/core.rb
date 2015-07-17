@@ -129,6 +129,26 @@ module Core
   end
 
 
+  def get_interface(settings, db, device, index: nil, name: nil)
+    if index
+      row = db[:interface].where(:device => device, :index => index.to_s).
+        natural_join(:component).first
+    elsif name
+      row = db[:interface].where(:device => device).
+        where(Sequel.function(:lower, :name) => name.downcase).
+        natural_join(:component).first
+    else
+      row = nil
+    end
+
+    if row
+      return Interface.new(device: row[:device], index: row[:index]).populate(row)
+    else
+      return {}
+    end
+  end
+
+
   def get_device(settings, db, device)
     db[:device].where(:device => device).each do |row|
       return Device.new(row[:device]).populate(row) || {}

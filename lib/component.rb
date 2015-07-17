@@ -37,7 +37,7 @@ class Component
 
     comp_data = db[:component]
     # Filter if options were passed
-    comp_data = comp_data.where(:id => id) if id
+    comp_data = comp_data.where(:component_id => id) if id
     comp_data = comp_data.where(:device => device) if device
     comp_data = comp_data.where(:hw_type => hw_types) unless (hw_types.nil? || hw_types.include?('all'))
     comp_data = comp_data.where(:index => index.to_s) if index
@@ -49,7 +49,7 @@ class Component
         device: row[:device], index: row[:index],
       )
       # Get the specific component details (CPU, Interface, etc)
-      row.merge!( db[component.class.name.downcase.to_sym].where(:id => row[:id]).first )
+      row.merge!( db[component.class.name.downcase.to_sym].where(:component_id => row[:component_id]).first )
       components.push(component.populate(row))
     end
 
@@ -79,7 +79,7 @@ class Component
       :device=>device,
       :index=>index.to_s
     ).first
-    return component[:id] if component
+    return component[:component_id] if component
     return nil
   end
 
@@ -181,7 +181,7 @@ class Component
     end
 
     # Get @id if we don't already have it
-    @id = existing.first[:id] unless @id
+    @id = existing.first[:component_id] unless @id
     raise "No component id! #{@index} (#{@description}) on #{@device} from #{@worker}" unless @id
 
     # Update the component_event table

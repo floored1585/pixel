@@ -55,12 +55,12 @@ class Fan < Component
     begin
       super # Component#save
 
-      data = { :id => @id }
+      data = { :component_id => @id }
       data[:status] = @status if @status
       data[:vendor_status] = @vendor_status if @vendor_status
       data[:status_text] = @status_text if @status_text
 
-      existing = db[:fan].where(:id => @id)
+      existing = db[:fan].where(:component_id => @id)
       if existing.update(data) != 1
         db[:fan].insert(data)
       end

@@ -106,7 +106,7 @@ describe Component do
       )
       # Insert the component itself
       DB[:cpu].insert(
-        :id => @component_id,
+        :component_id => @component_id,
         :util => 54,
       )
     end

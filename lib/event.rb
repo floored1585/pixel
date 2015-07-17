@@ -35,7 +35,7 @@ class Event
     # TODO: Raise an exception instead?
     return nil if data.empty?
 
-    @id = data[:id].to_i_if_numeric
+    @id = data[:event_id].to_i_if_numeric
     @time = data[:time].to_i_if_numeric
 
     return self
@@ -48,7 +48,7 @@ class Event
       "data" => {}
     }
 
-    hash['data']["id"] = @id
+    hash['data']["event_id"] = @id
     hash['data']["time"] = @time
 
     hash.to_json(*a)

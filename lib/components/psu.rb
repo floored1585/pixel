@@ -56,12 +56,12 @@ class PSU < Component
     begin
       super # Component#save
 
-      data = { :id => @id }
+      data = { :component_id => @id }
       data[:status] = @status if @status
       data[:vendor_status] = @vendor_status if @vendor_status
       data[:status_text] = @status_text if @status_text
 
-      existing = db[:psu].where(:id => @id)
+      existing = db[:psu].where(:component_id => @id)
       if existing.update(data) != 1
         db[:psu].insert(data)
       end

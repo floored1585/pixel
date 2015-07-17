@@ -405,7 +405,7 @@ class Interface < Component
     begin
       super # Component#save
 
-      data = { :id => @id }
+      data = { :component_id => @id }
       data[:name] = @name if @name
       data[:hc_in_octets] = @hc_in_octets if @hc_in_octets
       data[:hc_out_octets] = @hc_out_octets if @hc_out_octets
@@ -433,7 +433,7 @@ class Interface < Component
       data[:bps_util_out] = bps_util_out
       data[:type] = @type if @type
 
-      existing = db[:interface].where(:id => @id)
+      existing = db[:interface].where(:component_id => @id)
       if existing.update(data) != 1
         db[:interface].insert(data)
       end

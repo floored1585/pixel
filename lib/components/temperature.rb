@@ -75,14 +75,14 @@ class Temperature < Component
     begin
       super # Component#save
 
-      data = { :id => @id }
+      data = { :component_id => @id }
       data[:temperature] = @temperature if @temperature
       data[:status] = @status if @status
       data[:threshold] = @threshold if @threshold
       data[:vendor_status] = @vendor_status if @vendor_status
       data[:status_text] = @status_text if @status_text
 
-      existing = db[:temperature].where(:id => @id)
+      existing = db[:temperature].where(:component_id => @id)
       if existing.update(data) != 1
         db[:temperature].insert(data)
       end

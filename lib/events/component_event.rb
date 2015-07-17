@@ -54,7 +54,7 @@ class ComponentEvent < Event
     event_data = event_data.where(:subtype => types) unless (types.nil? || types.include?('all'))
     event_data = event_data.order(Sequel.desc(:time))
     event_data = event_data.limit(limit) if limit && limit.to_s =~ /^\d+$/
-    event_data = event_data.join(:component, :id => :component_id)
+    event_data = event_data.join(:component, [:component_id])
 
     events = []
     event_data.select_all.each do |row|

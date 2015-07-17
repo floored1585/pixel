@@ -17,21 +17,23 @@ $LOG ||= Logger.new(STDOUT)
 class Device
 
 
-  def self.fetch(device, opts={})
+  def self.fetch(device, components=[])
     # Get the device via API
-    obj = API.get(
+    device = API.get(
       src: 'device',
       dst: 'core',
       resource: "/v2/device/#{device}",
       what: "device #{device}"
     )
-    return nil unless obj.class == Device
+    return nil unless device.class == Device
 
-    valid_opts = [ :all, :interfaces, :cpus, :fans, :memory, :psus, :temperatures ]
-    # Run populate only if one of the valid_opts are present (if we
+    valid_components = [ "all", "Interface", "CPU", "Fan", "Memory", "PSU", "Temperature" ]
+    # Run populate only if one of the valid_components are present (if we
     #   were asked to fetch components as well)
-    obj.populate(nil, opts) unless (valid_opts - opts.keys) == valid_opts
-    return obj
+    unless components.nil? || (valid_components - components) == valid_components
+      device.populate(nil, components)
+    end
+    return device
   end
 
 
@@ -270,9 +272,9 @@ class Device
 
   # populate is called by #fetch to get components and by #json_create to fill in
   #   device data and components.
-  def populate(data, opts={})
+  def populate(data, hw_types=[])
 
-    # directly passed data will never be overwritten by data passed via opts hash
+    # directly passed data will never be overwritten by data passed via hw_types hash
     data = JSON.load(data) if data.class == String # To allow for raw JSON as well as objects
 
     # If data was passed in, update the device
@@ -310,93 +312,21 @@ class Device
       @poller_uuid = data[:poller_uuid]
     end
 
-    # Fill in interfaces
-    if data == nil && (opts[:interfaces] || opts[:all])
-      @interfaces = {}
-      interfaces = API.get(
-        src: 'device',
-        dst: 'core',
-        resource: "/v2/device/#{@name}/interfaces",
-        what: "all interfaces on #{@name}",
-      )
-      interfaces.each do |index, int|
-        next unless int.class == Interface
-        @interfaces[int.index] = int
-      end
-    end
-
-    # Fill in CPUs
-    if data == nil && (opts[:cpus] || opts[:all])
+    if data == nil && !hw_types.empty?
       @cpus = {}
-      cpus = API.get(
-        src: 'device',
-        dst: 'core',
-        resource: "/v2/device/#{@name}/cpus",
-        what: "all cpus on #{@name}",
-      )
-      cpus.each do |index, cpu|
-        next unless cpu.class == CPU
-        @cpus[cpu.index] = cpu
-      end
-    end
-
-    # Fill in fans
-    if data == nil && (opts[:fans] || opts[:all])
       @fans = {}
-      fans = API.get(
-        src: 'device',
-        dst: 'core',
-        resource: "/v2/device/#{@name}/fans",
-        what: "all fans on #{@name}",
-      )
-      fans.each do |index, fan|
-        next unless fan.class == Fan
-        @fans[fan.index] = fan
-      end
-    end
-
-    # Fill in memory
-    if data == nil && (opts[:memory] || opts[:all])
+      @interfaces = {}
       @memory = {}
-      memories = API.get(
-        src: 'device',
-        dst: 'core',
-        resource: "/v2/device/#{@name}/memory",
-        what: "all memory on #{@name}",
-      )
-      memories.each do |index, memory|
-        next unless memory.class == Memory
-        @memory[memory.index] = memory
-      end
-    end
-
-    # Fill in PSUs
-    if data == nil && (opts[:psus] || opts[:all])
       @psus = {}
-      psus = API.get(
-        src: 'device',
-        dst: 'core',
-        resource: "/v2/device/#{@name}/psus",
-        what: "all psus on #{@name}",
-      )
-      psus.each do |index, psu|
-        next unless psu.class == PSU
-        @psus[psu.index] = psu
-      end
-    end
-
-    # Fill in temperatures
-    if data == nil && (opts[:temperatures] || opts[:all])
       @temps = {}
-      temps = API.get(
-        src: 'device',
-        dst: 'core',
-        resource: "/v2/device/#{@name}/temperatures",
-        what: "all temperatures on #{@name}",
-      )
-      temps.each do |index, temp|
-        next unless temp.class == Temperature
-        @temps[temp.index] = temp
+      components = Component.fetch(hw_types: hw_types, device: @name)
+      components.each do |comp|
+        @cpus[comp.index] = comp if comp.class == CPU
+        @fans[comp.index] = comp if comp.class == Fan
+        @interfaces[comp.index] = comp if comp.class == Interface
+        @memory[comp.index] = comp if comp.class == Memory
+        @psus[comp.index] = comp if comp.class == PSU
+        @temps[comp.index] = comp if comp.class == Temperature
       end
     end
 

@@ -9,32 +9,47 @@ $LOG ||= Logger.new(STDOUT)
 class Component
 
 
-  def self.fetch(device, index, hw_type)
-    obj = API.get(
+  def self.fetch(device: nil, hw_types: ['all'], index: nil, id: nil, limit: nil)
+    resource = '/v2/component'
+
+    params = "hw_types=#{hw_types.join(',')}"
+    params += "&device=#{device}" if device
+    params += "&index=#{index}" if index
+    params += "&limit=#{limit}" if limit && limit.to_s =~ /^[0-9]+$/
+
+    result = API.get(
       src: 'component',
       dst: 'core',
-      resource: "/v2/device/#{device}/#{hw_type.downcase}/#{index}",
-      what: "#{hw_type} #{index} on #{device}",
+      resource: "#{resource}?#{params}",
+      what: "components",
     )
-    obj.is_a?(Component) ? obj : nil
+    result.each do |object|
+      unless object.is_a?(Component)
+        raise "Received bad object in Component.fetch"
+        return []
+      end
+    end
+    return result
   end
 
 
-  def self.fetch_from_db(device: nil, index: nil, hw_type: nil, id: nil, db:, limit: nil)
+  def self.fetch_from_db(device: nil, index: nil, hw_types: nil, id: nil, db:, limit: nil)
 
     comp_data = db[:component]
     # Filter if options were passed
     comp_data = comp_data.where(:id => id) if id
     comp_data = comp_data.where(:device => device) if device
-    comp_data = comp_data.where(:hw_type => hw_type) if hw_type
-    comp_data = comp_data.where(:index => index) if index
+    comp_data = comp_data.where(:hw_type => hw_types) unless (hw_types.nil? || hw_types.include?('all'))
+    comp_data = comp_data.where(:index => index.to_s) if index
     comp_data = comp_data.limit(limit) if limit && limit.to_s =~ /^\d+$/
 
     components = []
     comp_data.select_all.each do |row|
       component = Object::const_get(row[:hw_type]).new(
-        device: row[:device], hw_type: row[:hw_type], index: row[:index],
+        device: row[:device], index: row[:index],
       )
+      # Get the specific component details (CPU, Interface, etc)
+      row.merge!( db[component.class.name.downcase.to_sym].where(:id => row[:id]).first )
       components.push(component.populate(row))
     end
 
@@ -62,7 +77,7 @@ class Component
     component = db[:component].where(
       :hw_type=>hw_type,
       :device=>device,
-      :index=>index
+      :index=>index.to_s
     ).first
     return component[:id] if component
     return nil

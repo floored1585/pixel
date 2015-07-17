@@ -64,31 +64,6 @@ describe Fan do
   end
 
 
-  # fetch
-  describe '#fetch' do
-
-    before :each do
-      @bad_fan = Fan.fetch('gar-test-1', 'test')
-      @good_fan = Fan.fetch('gar-bdr-1', '1.4.0')
-    end
-
-
-    it 'should return nil if the object does not exist' do
-      expect(@bad_fan).to eql nil
-    end
-
-    it 'should return an object if the object exists' do
-      expect(@good_fan).to be_a Fan
-    end
-
-    it 'should fill up the object' do
-      expect(JSON.parse(@good_fan.to_json)['data'].keys.sort).to eql json_keys
-    end
-
-
-  end
-
-
   # populate
   describe '#populate' do
     it 'should fill up the object' do
@@ -212,7 +187,7 @@ describe Fan do
 
 
     it 'should not exist before saving' do
-      fan = Fan.fetch('test-v11u1-acc-y', '1004')
+      fan = Component.fetch(device: 'test-v11u1-acc-y', index: '1004', hw_types: ['Fan']).first
       expect(fan).to eql nil
     end
 
@@ -228,20 +203,20 @@ describe Fan do
 
     it 'should exist after being saved' do
       JSON.load(DEV2_JSON).fans['1004'].save(DB)
-      fan = Fan.fetch('test-v11u1-acc-y', '1004')
+      fan = Component.fetch(device: 'test-v11u1-acc-y', index: '1004', hw_types: ['Fan']).first
       expect(fan).to be_a Fan
     end
 
     it 'should update without error' do
       JSON.load(DEV2_JSON).fans['1004'].save(DB)
       JSON.load(DEV2_JSON).fans['1004'].save(DB)
-      fan = Fan.fetch('test-v11u1-acc-y', '1004')
+      fan = Component.fetch(device: 'test-v11u1-acc-y', index: '1004', hw_types: ['Fan']).first
       expect(fan).to be_a Fan
     end
 
     it 'should be identical before and after' do
       JSON.load(DEV2_JSON).fans['1004'].save(DB)
-      fan = Fan.fetch('test-v11u1-acc-y', '1004')
+      fan = Component.fetch(device: 'test-v11u1-acc-y', index: '1004', hw_types: ['Fan']).first
       expect(fan.to_json).to eql JSON.load(DEV2_JSON).fans['1004'].to_json
     end
 
@@ -301,10 +276,10 @@ describe Fan do
     context 'when populated' do
 
       before(:each) do
-        @fan1 = Fan.fetch('gar-b11u1-dist', '4.1.1.1')
-        @fan2 = Fan.fetch('iad1-bdr-1', '4.1.4.0')
-        @fan3 = Fan.fetch('gar-k11u1-dist', '1')
-        @fan4 = Fan.fetch('iad1-trn-1', '2.1')
+        @fan1 = Component.fetch(device: 'gar-b11u1-dist', index: '4.1.1.1', hw_types: ['CPU']).first
+        @fan2 = Component.fetch(device: 'iad1-bdr-1', index: '4.1.4.0', hw_types: ['CPU']).first
+        @fan3 = Component.fetch(device: 'gar-k11u1-dist', index: '1', hw_types: ['Fan']).first
+        @fan4 = Component.fetch(device: 'iad1-trn-1', index: '2.1', hw_types: ['CPU']).first
       end
 
 

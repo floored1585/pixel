@@ -65,30 +65,6 @@ describe Temperature do
   end
 
 
-  # fetch
-  describe '#fetch' do
-
-    before :each do
-      @bad_temp = Temperature.fetch('gar-test-1', 'test')
-      @good_temp = Temperature.fetch('irv-i1u1-dist', '1')
-    end
-
-
-    it 'should return nil if the object does not exist' do
-      expect(@bad_temp).to eql nil
-    end
-
-    it 'should return an object if the object exists' do
-      expect(@good_temp).to be_a Temperature
-    end
-
-    it 'should fill up the object' do
-      expect(JSON.parse(@good_temp.to_json)['data'].keys.sort).to eql json_keys
-    end
-
-  end
-
-
   # populate
   describe '#populate' do
     it 'should fill up the object' do
@@ -218,7 +194,7 @@ describe Temperature do
 
 
     it 'should not exist before saving' do
-      temp = Temperature.fetch('test-v11u1-acc-y', '1005')
+      temp = Temperature.fetch(device: 'test-v11u1-acc-y', index: '1005', hw_types: ['Temperature']).first
       expect(temp).to eql nil
     end
 
@@ -234,20 +210,20 @@ describe Temperature do
 
     it 'should exist after being saved' do
       JSON.load(DEV2_JSON).temps['1005'].save(DB)
-      temp = Temperature.fetch('test-v11u1-acc-y', '1005')
+      temp = Temperature.fetch(device: 'test-v11u1-acc-y', index: '1005', hw_types: ['Temperature']).first
       expect(temp).to be_a Temperature
     end
 
     it 'should update without error' do
       JSON.load(DEV2_JSON).temps['1005'].save(DB)
       JSON.load(DEV2_JSON).temps['1005'].save(DB)
-      temp = Temperature.fetch('test-v11u1-acc-y', '1005')
+      temp = Temperature.fetch(device: 'test-v11u1-acc-y', index: '1005', hw_types: ['Temperature']).first
       expect(temp).to be_a Temperature
     end
 
     it 'should be identical before and after' do
       JSON.load(DEV2_JSON).temps['1005'].save(DB)
-      temp = Temperature.fetch('test-v11u1-acc-y', '1005')
+      temp = Temperature.fetch(device: 'test-v11u1-acc-y', index: '1005', hw_types: ['Temperature']).first
       expect(temp.to_json).to eql JSON.load(DEV2_JSON).temps['1005'].to_json
     end
 
@@ -307,10 +283,10 @@ describe Temperature do
     context 'when populated' do
 
       before(:each) do
-        @temp1 = Temperature.fetch('gar-b11u1-dist', '7.1.0.0')
-        @temp2 = Temperature.fetch('irv-i1u1-dist', '1')
-        @temp3 = Temperature.fetch('gar-bdr-1', '4.2.5.0')
-        @temp4 = Temperature.fetch('iad1-trn-1', '1')
+        @temp1 = Temperature.fetch(device: 'gar-b11u1-dist', index: '7.1.0.0', hw_types: ['Temperature']).first
+        @temp2 = Temperature.fetch(device: 'irv-i1u1-dist', index: '1', hw_types: ['Temperature']).first
+        @temp3 = Temperature.fetch(device: 'gar-bdr-1', index: '4.2.5.0', hw_types: ['Temperature']).first
+        @temp4 = Temperature.fetch(device: 'iad1-trn-1', index: '1', hw_types: ['Temperature']).first
       end
 
 

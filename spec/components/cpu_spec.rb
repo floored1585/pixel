@@ -47,31 +47,6 @@ describe CPU do
   end
 
 
-  # fetch
-  describe '#fetch' do
-
-    before :each do
-      @bad_cpu = CPU.fetch('gar-test-1', 'test')
-      @good_cpu = CPU.fetch('iad1-trn-1', '2')
-    end
-
-
-    it 'should return nil if the object does not exist' do
-      expect(@bad_cpu).to eql nil
-    end
-
-    it 'should return an object if the object exists' do
-      expect(@good_cpu).to be_a CPU
-    end
-
-    it 'should fill up the object' do
-      expect(JSON.parse(@good_cpu.to_json)['data'].keys.sort).to eql json_keys
-    end
-
-
-  end
-
-
   # populate
   describe '#populate' do
     it 'should fill up the object' do
@@ -197,7 +172,7 @@ describe CPU do
 
 
     it 'should not exist before saving' do
-      cpu = CPU.fetch('test-v11u1-acc-y', '1')
+      cpu = Component.fetch(device: 'test-v11u1-acc-y', index: '1', hw_types: ['CPU']).first
       expect(cpu).to eql nil
     end
 
@@ -213,20 +188,20 @@ describe CPU do
 
     it 'should exist after being saved' do
       JSON.load(DEV2_JSON).cpus['1'].save(DB)
-      cpu = CPU.fetch('test-v11u1-acc-y', '1')
+      cpu = Component.fetch(device: 'test-v11u1-acc-y', index: '1', hw_types: ['CPU']).first
       expect(cpu).to be_a CPU
     end
 
     it 'should update without error' do
       JSON.load(DEV2_JSON).cpus['1'].save(DB)
       JSON.load(DEV2_JSON).cpus['1'].save(DB)
-      cpu = CPU.fetch('test-v11u1-acc-y', '1')
+      cpu = CPU.fetch(device: 'test-v11u1-acc-y', index: '1', hw_types: ['CPU']).first
       expect(cpu).to be_a CPU
     end
 
     it 'should be identical before and after' do
       JSON.load(DEV2_JSON).cpus['1'].save(DB)
-      cpu = CPU.fetch('test-v11u1-acc-y', '1')
+      cpu = CPU.fetch(device: 'test-v11u1-acc-y', index: '1', hw_types: ['CPU']).first
       expect(cpu.to_json).to eql JSON.load(DEV2_JSON).cpus['1'].to_json
     end
 
@@ -286,10 +261,10 @@ describe CPU do
     context 'when populated' do
 
       before(:each) do
-        @cpu1 = CPU.fetch('gar-b11u1-dist', '7.1.0.0')
-        @cpu2 = CPU.fetch('aon-cumulus-2', '768')
-        @cpu3 = CPU.fetch('gar-k11u1-dist', '1')
-        @cpu4 = CPU.fetch('iad1-trn-1', '2')
+        @cpu1 = CPU.fetch(device: 'gar-b11u1-dist', index: '7.1.0.0', hw_types: ['CPU']).first
+        @cpu2 = CPU.fetch(device: 'aon-cumulus-2', index: '768', hw_types: ['CPU']).first
+        @cpu3 = CPU.fetch(device: 'gar-k11u1-dist', index: '1', hw_types: ['CPU']).first
+        @cpu4 = CPU.fetch(device: 'iad1-trn-1', index: '2', hw_types: ['CPU']).first
       end
 
 

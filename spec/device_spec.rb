@@ -94,8 +94,8 @@ describe Device do
         specify { expect(dev.psus.values.first).to eql nil }
         specify { expect(dev.temps.values.first).to eql nil }
       end
-      context "on a #{label} when :interfaces passed" do
-        dev = Device.fetch(device, :interfaces => true)
+      context "on a #{label} when 'Interface' passed" do
+        dev = Device.fetch(device, ['Interface'])
         specify { expect(dev).to be_a Device }
         specify { expect(dev.interfaces.values.first).to be_a Interface }
         specify { expect(dev.cpus.values.first).to eql nil }
@@ -104,8 +104,8 @@ describe Device do
         specify { expect(dev.psus.values.first).to eql nil }
         specify { expect(dev.temps.values.first).to eql nil }
       end
-      context "on a #{label} when :cpus passed" do
-        dev = Device.fetch(device, :cpus => true)
+      context "on a #{label} when 'CPU' passed" do
+        dev = Device.fetch(device, ['CPU'])
         specify { expect(dev).to be_a Device }
         specify { expect(dev.interfaces.values.first).to eql nil }
         specify { expect(dev.cpus.values.first).to be_a CPU }
@@ -114,8 +114,8 @@ describe Device do
         specify { expect(dev.psus.values.first).to eql nil }
         specify { expect(dev.temps.values.first).to eql nil }
       end
-      context "on a #{label} when :fans passed" do
-        dev = Device.fetch(device, :fans => true)
+      context "on a #{label} when 'Fan' passed" do
+        dev = Device.fetch(device, ['Fan'])
         specify { expect(dev).to be_a Device }
         specify { expect(dev.interfaces.values.first).to eql nil }
         specify { expect(dev.cpus.values.first).to eql nil }
@@ -124,8 +124,8 @@ describe Device do
         specify { expect(dev.psus.values.first).to eql nil }
         specify { expect(dev.temps.values.first).to eql nil }
       end
-      context "on a #{label} when :memory passed" do
-        dev = Device.fetch(device, :memory => true)
+      context "on a #{label} when 'Memory' passed" do
+        dev = Device.fetch(device, ['Memory'])
         specify { expect(dev).to be_a Device }
         specify { expect(dev.interfaces.values.first).to eql nil }
         specify { expect(dev.cpus.values.first).to eql nil }
@@ -134,8 +134,8 @@ describe Device do
         specify { expect(dev.psus.values.first).to eql nil }
         specify { expect(dev.temps.values.first).to eql nil }
       end
-      context "on a #{label} when :psus passed" do
-        dev = Device.fetch(device, :psus => true)
+      context "on a #{label} when 'PSU' passed" do
+        dev = Device.fetch(device, ['PSU'])
         specify { expect(dev).to be_a Device }
         specify { expect(dev.interfaces.values.first).to eql nil }
         specify { expect(dev.cpus.values.first).to eql nil }
@@ -144,8 +144,8 @@ describe Device do
         specify { expect(dev.psus.values.first).to be_a PSU } unless label == 'Cumulus'
         specify { expect(dev.temps.values.first).to eql nil }
       end
-      context "on a #{label} when :temperatures passed" do
-        dev = Device.fetch(device, :temperatures => true)
+      context "on a #{label} when 'Temperature' passed" do
+        dev = Device.fetch(device, ['Temperature'])
         specify { expect(dev).to be_a Device }
         specify { expect(dev.interfaces.values.first).to eql nil }
         specify { expect(dev.cpus.values.first).to eql nil }
@@ -155,7 +155,7 @@ describe Device do
         specify { expect(dev.temps.values.first).to be_a Temperature } unless [ 'Cumulus', 'Cisco 2960' ].include? label
       end
       context "on a #{label} when all options passed" do
-        dev = Device.fetch(device, :all => true)
+        dev = Device.fetch(device, ['all'])
         specify { expect(dev).to be_a Device }
         specify { expect(dev.interfaces.values.first).to be_a Interface }
         specify { expect(dev.cpus.values.first).to be_a CPU }
@@ -278,8 +278,8 @@ describe Device do
 
   context 'when populated' do
 
-    dev1 = Device.fetch('gar-b11u18-acc-y', :all => true)
-    dev2 = Device.fetch('irv-i1u1-dist', :all => true)
+    dev1 = Device.fetch('gar-b11u18-acc-y', ['all'])
+    dev2 = Device.fetch('irv-i1u1-dist', ['all'])
     alarm_none = JSON.load(P1U1_JSON_1)
     alarm_yellow = JSON.load(P1U1_JSON_2)
     alarm_red = JSON.load(P1U1_JSON_3)
@@ -477,7 +477,7 @@ describe Device do
     it 'should be identical before and after' do
       DB[:device].where(:device => 'test-v11u1-acc-y').delete
       JSON.load(DEV4_JSON).save(DB)
-      fetched = JSON.parse(Device.fetch('test-v11u2-acc-y', :all => true).to_json)
+      fetched = JSON.parse(Device.fetch('test-v11u2-acc-y', ['all']).to_json)
       expect(fetched).to eql JSON.parse(DEV4_JSON)
     end
 
@@ -486,7 +486,7 @@ describe Device do
       JSON.load(DEV2_JSON).save(DB)
       # Past dated last_updated times (this should delete everything except the device)
       JSON.load(DEV3_JSON).save(DB)
-      dev = Device.fetch('test-v11u1-acc-y', :all => true)
+      dev = Device.fetch('test-v11u1-acc-y', ['all'])
       expect(dev.interfaces).to be_empty
       expect(dev.cpus).to be_empty
       expect(dev.fans).to be_empty
@@ -515,7 +515,7 @@ describe Device do
 
     it 'should return the number of deleted objects' do
       JSON.load(DEV2_JSON).save(DB)
-      object = Device.fetch('test-v11u1-acc-y', :all => true)
+      object = Device.fetch('test-v11u1-acc-y', ['all'])
       expect(object.delete(DB)).to eql 61
     end
 
@@ -552,12 +552,12 @@ describe Device do
 
     context 'when populated' do
 
-      c2960 = Device.fetch(test_devices['Cisco 2960'], :all => true)
-      c4948 = Device.fetch(test_devices['Cisco 4948'], :all => true)
-      cumulus = Device.fetch(test_devices['Cumulus'], :all => true)
-      ex = Device.fetch(test_devices['Juniper EX'], :all => true)
-      mx = Device.fetch(test_devices['Juniper MX'], :all => true)
-      f10_s4810 = Device.fetch(test_devices['Force10 S4810'], :all => true)
+      c2960 = Device.fetch(test_devices['Cisco 2960'], ['all'])
+      c4948 = Device.fetch(test_devices['Cisco 4948'], ['all'])
+      cumulus = Device.fetch(test_devices['Cumulus'], ['all'])
+      ex = Device.fetch(test_devices['Juniper EX'], ['all'])
+      mx = Device.fetch(test_devices['Juniper MX'], ['all'])
+      f10_s4810 = Device.fetch(test_devices['Force10 S4810'], ['all'])
 
       json_c2960 = c2960.to_json
       json_c4948 = c4948.to_json

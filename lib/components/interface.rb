@@ -9,12 +9,6 @@ $LOG ||= Logger.new(STDOUT)
 class Interface < Component
 
 
-  def self.fetch(device, index)
-    obj = super(device, index, 'Interface')
-    obj.class == Interface ? obj : nil
-  end
-
-
   def self.status_converter(int_status)
     int_status.to_i_if_numeric == 1 ? "Up" : "Down"
   end

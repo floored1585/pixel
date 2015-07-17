@@ -64,30 +64,6 @@ describe PSU do
   end
 
 
-  # fetch
-  describe '#fetch' do
-
-    before :each do
-      @bad_psu = PSU.fetch('gar-test-1', 'test')
-      @good_psu = PSU.fetch('iad1-trn-1', '1.1')
-    end
-
-
-    it 'should return nil if the object does not exist' do
-      expect(@bad_psu).to eql nil
-    end
-
-    it 'should return an object if the object exists' do
-      expect(@good_psu).to be_a PSU
-    end
-
-    it 'should fill up the object' do
-      expect(JSON.parse(@good_psu.to_json)['data'].keys.sort).to eql json_keys
-    end
-
-  end
-
-
   # populate
   describe '#populate' do
     it 'should fill up the object' do
@@ -212,7 +188,7 @@ describe PSU do
 
 
     it 'should not exist before saving' do
-      psu = PSU.fetch('test-v11u1-acc-y', '1003')
+      psu = PSU.fetch(device: 'test-v11u1-acc-y', index: '1003', hw_types: ['PSU']).first
       expect(psu).to eql nil
     end
 
@@ -228,20 +204,20 @@ describe PSU do
 
     it 'should exist after being saved' do
       JSON.load(DEV2_JSON).psus['1003'].save(DB)
-      psu = PSU.fetch('test-v11u1-acc-y', '1003')
+      psu = PSU.fetch(device: 'test-v11u1-acc-y', index: '1003', hw_types: ['PSU']).first
       expect(psu).to be_a PSU
     end
 
     it 'should update without error' do
       JSON.load(DEV2_JSON).psus['1003'].save(DB)
       JSON.load(DEV2_JSON).psus['1003'].save(DB)
-      psu = PSU.fetch('test-v11u1-acc-y', '1003')
+      psu = PSU.fetch(device: 'test-v11u1-acc-y', index: '1003', hw_types: ['PSU']).first
       expect(psu).to be_a PSU
     end
 
     it 'should be identical before and after' do
       JSON.load(DEV2_JSON).psus['1003'].save(DB)
-      psu = PSU.fetch('test-v11u1-acc-y', '1003')
+      psu = PSU.fetch(device: 'test-v11u1-acc-y', index: '1003', hw_types: ['PSU']).first
       expect(psu.to_json).to eql JSON.load(DEV2_JSON).psus['1003'].to_json
     end
 
@@ -301,10 +277,10 @@ describe PSU do
     context 'when populated' do
 
       before(:each) do
-        @psu1 = PSU.fetch('gar-b11u1-dist', '2.1.1.0')
-        @psu2 = PSU.fetch('gar-b11u17-acc-g', '1003')
-        @psu3 = PSU.fetch('gar-bdr-1', '2.1.0.0')
-        @psu4 = PSU.fetch('iad1-trn-1', '1.1')
+        @psu1 = PSU.fetch(device: 'gar-b11u1-dist', index: '2.1.1.0', hw_types: ['PSU']).first
+        @psu2 = PSU.fetch(device: 'gar-b11u17-acc-g', index: '1003', hw_types: ['PSU']).first
+        @psu3 = PSU.fetch(device: 'gar-bdr-1', index: '2.1.0.0', hw_types: ['PSU']).first
+        @psu4 = PSU.fetch(device: 'iad1-trn-1', index: '1.1', hw_types: ['PSU']).first
       end
 
 

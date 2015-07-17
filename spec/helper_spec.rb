@@ -109,30 +109,6 @@ describe '#tr_attributes' do
     specify { expect(attr7).to eql expected_7 }
     specify { expect(attr8).to eql expected_8 }
   end
-
-  context 'as a child interface with invalid parent' do
-    int = JSON.load(INT_INVALID_CHILD_JSON)
-    parent = get_interface(settings, DB, int.device, name: int.parent_name)
-
-    attr1 = tr_attributes(int,parent)
-    expected_1 = "data-toggle='tooltip' data-container='body' title='index: 595'" +
-      " data-rel='tooltip-left' data-pxl-index='595' class=''"
-    attr2 = tr_attributes(int, parent)
-    expected_2 = "data-toggle='tooltip' data-container='body' title='index: 595'" +
-      " data-rel='tooltip-left' data-pxl-index='595' class=''"
-    attr3 = tr_attributes(int, parent, hl_relation: true)
-    expected_3 = "data-toggle='tooltip' data-container='body' title='index: 595'" +
-      " data-rel='tooltip-left' data-pxl-index='595' class=''"
-    attr4 = tr_attributes(int, parent, hl_relation: true)
-    expected_4 = "data-toggle='tooltip' data-container='body' title='index: 595'" +
-      " data-rel='tooltip-left' data-pxl-index='595' class=''"
-
-    specify { expect(attr1).to eql expected_1 }
-    specify { expect(attr2).to eql expected_2 }
-    specify { expect(attr3).to eql expected_3 }
-    specify { expect(attr4).to eql expected_4 }
-  end
-
 end
 
 

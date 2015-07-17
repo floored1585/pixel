@@ -55,31 +55,6 @@ describe Memory do
   end
 
 
-  # fetch
-  describe '#fetch' do
-
-    before :each do
-      @bad_memory = Memory.fetch('gar-test-1', 'test')
-      @good_memory = Memory.fetch('iad1-trn-1', '2')
-    end
-
-
-    it 'should return nil if the object does not exist' do
-      expect(@bad_memory).to eql nil
-    end
-
-    it 'should return an object if the object exists' do
-      expect(@good_memory).to be_a Memory
-    end
-
-    it 'should fill up the object' do
-      expect(JSON.parse(@good_memory.to_json)['data'].keys.sort).to eql json_keys
-    end
-
-
-  end
-
-
   # populate
   describe '#populate' do
     it 'should fill up the object' do
@@ -205,7 +180,7 @@ describe Memory do
 
 
     it 'should not exist before saving' do
-      mem = Memory.fetch('test-v11u1-acc-y', '1')
+      mem = Memory.fetch(device: 'test-v11u1-acc-y', index: '1', hw_types: ['Memory']).first
       expect(mem).to eql nil
     end
 
@@ -221,20 +196,20 @@ describe Memory do
 
     it 'should exist after being saved' do
       JSON.load(DEV2_JSON).memory['1'].save(DB)
-      mem = Memory.fetch('test-v11u1-acc-y', '1')
+      mem = Memory.fetch(device: 'test-v11u1-acc-y', index: '1', hw_types: ['Memory']).first
       expect(mem).to be_a Memory
     end
 
     it 'should update without error' do
       JSON.load(DEV2_JSON).memory['1'].save(DB)
       JSON.load(DEV2_JSON).memory['1'].save(DB)
-      mem = Memory.fetch('test-v11u1-acc-y', '1')
+      mem = Memory.fetch(device: 'test-v11u1-acc-y', index: '1', hw_types: ['Memory']).first
       expect(mem).to be_a Memory
     end
 
     it 'should be identical before and after' do
       JSON.load(DEV2_JSON).memory['1'].save(DB)
-      mem = Memory.fetch('test-v11u1-acc-y', '1')
+      mem = Memory.fetch(device: 'test-v11u1-acc-y', index: '1', hw_types: ['Memory']).first
       expect(mem.to_json).to eql JSON.load(DEV2_JSON).memory['1'].to_json
     end
 
@@ -294,10 +269,10 @@ describe Memory do
     context 'when populated' do
 
       before(:each) do
-        @memory1 = Memory.fetch('gar-b11u1-dist', '7.2.0.0')
-        @memory2 = Memory.fetch('aon-cumulus-2', '0')
-        @memory3 = Memory.fetch('gar-k11u1-dist', '1')
-        @memory4 = Memory.fetch('iad1-trn-1', '2')
+        @memory1 = Memory.fetch(device: 'gar-b11u1-dist', index: '7.2.0.0', hw_types: ['Memory']).first
+        @memory2 = Memory.fetch(device: 'aon-cumulus-2', index: '0', hw_types: ['Memory']).first
+        @memory3 = Memory.fetch(device: 'gar-k11u1-dist', index: '1', hw_types: ['Memory']).first
+        @memory4 = Memory.fetch(device: 'iad1-trn-1', index: '2', hw_types: ['Memory']).first
       end
 
 

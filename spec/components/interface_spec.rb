@@ -115,30 +115,6 @@ describe Interface do
   end
 
 
-  describe '#fetch' do
-
-    before(:each) do
-      # Create our empty interface
-      @bad_int = Interface.fetch('gar-test-1', 103)
-      @good_int = Interface.fetch('gar-p1u1-dist', 656)
-    end
-
-
-    it 'should return nil if the object does not exist' do
-      expect(@bad_int).to eql nil
-    end
-
-    it 'should return an object if the object exists' do
-      expect(@good_int).to be_a Interface
-    end
-
-    it 'should fill up the object' do
-      expect(JSON.parse(@good_int.to_json)['data'].keys.sort).to eql json_keys
-    end
-
-  end
-
-
   # populate
   describe '#populate' do
     it 'should fill up the object' do
@@ -599,7 +575,7 @@ describe Interface do
 
 
     it 'should not exist before saving' do
-      expect(Interface.fetch('test-v11u1-acc-y', 10139)).to eql nil
+      expect(Interface.fetch(device: 'test-v11u1-acc-y', index: 10139, hw_types: ['Interface']).first).to eql nil
     end
 
     it 'should fail if empty' do
@@ -614,20 +590,20 @@ describe Interface do
 
     it 'should exist after being saved' do
       JSON.load(DEV2_JSON).interfaces['10139'].save(DB)
-      int = Interface.fetch('test-v11u1-acc-y', 10139)
+      int = Interface.fetch(device: 'test-v11u1-acc-y', index: 10139, hw_types: ['Interface']).first
       expect(int).to be_a Interface
     end
 
     it 'should update without error' do
       JSON.load(DEV2_JSON).interfaces['10139'].save(DB)
       JSON.load(DEV2_JSON).interfaces['10139'].save(DB)
-      int = Interface.fetch('test-v11u1-acc-y', 10139)
+      int = Interface.fetch(device: 'test-v11u1-acc-y', index: 10139, hw_types: ['Interface']).first
       expect(int).to be_a Interface
     end
 
     it 'should be identical before and after' do
       JSON.load(DEV2_JSON).interfaces['10139'].save(DB)
-      int = Interface.fetch('test-v11u1-acc-y', 10139)
+      int = Interface.fetch(device: 'test-v11u1-acc-y', index: 10139, hw_types: ['Interface']).first
       expect(int.to_json).to eql JSON.load(DEV2_JSON).interfaces['10139'].to_json
     end
 
@@ -686,10 +662,10 @@ describe Interface do
 
     context 'when populated' do
 
-      int1 = Interface.fetch('gar-b11u1-dist', 604)
-      int2 = Interface.fetch('gar-b11u17-acc-g', 10040)
-      int3 = Interface.fetch('gar-bdr-1', 541)
-      int4 = Interface.fetch('aon-cumulus-2', 15)
+      int1 = Interface.fetch(device: 'gar-b11u1-dist', index: 604, hw_types: ['Interface']).first
+      int2 = Interface.fetch(device: 'gar-b11u17-acc-g', index: 10040, hw_types: ['Interface']).first
+      int3 = Interface.fetch(device: 'gar-bdr-1', index: 541, hw_types: ['Interface']).first
+      int4 = Interface.fetch(device: 'aon-cumulus-2', index: 15, hw_types: ['Interface']).first
 
       json1 = int1.to_json
       json2 = int2.to_json

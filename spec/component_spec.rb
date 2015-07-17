@@ -90,6 +90,51 @@ describe Component do
   end
 
 
+  # Fetch_from_db
+  describe '#fetch_from_db' do
+
+    before :each do
+      # Insert our bare bones device and component
+      DB[:device].insert(:device => 'test-v11u1-acc-y', :ip => '1.2.3.4')
+      @component_id = DB[:component].insert(
+        :hw_type => 'CPU',
+        :device => 'test-v11u1-acc-y',
+        :index => '1',
+        :last_updated => '12345678',
+        :description => 'CPU 1',
+        :worker => 'rspec',
+      )
+      # Insert the component itself
+      DB[:cpu].insert(
+        :id => @component_id,
+        :util => 54,
+      )
+    end
+    after :each do
+      # Clean up DB
+      DB[:device].where(:device => 'test-v11u1-acc-y').delete
+    end
+
+
+    it 'should return an array' do
+      expect(Component.fetch_from_db(hw_types: ['CPU'], device: 'test-v11u1-acc-y', index: 1, db: DB)).to be_an Array
+    end
+
+    it 'should return a Component' do
+      expect(Component.fetch_from_db(hw_types: ['CPU'], device: 'test-v11u1-acc-y', index: 1, db: DB).first).to be_a Component
+    end
+
+    it 'should return the right Component' do
+      expect(Component.fetch_from_db(hw_types: ['CPU'], device: 'test-v11u1-acc-y', index: 1, db: DB).first).to be_a CPU
+    end
+
+    it 'should respect a limit' do
+      expect(Component.fetch_from_db(hw_types: ['CPU'], db: DB, limit: 10).length).to be 10
+    end
+
+  end
+
+
   # populate
   describe '#populate' do
     it 'should fill up the object' do

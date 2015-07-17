@@ -7,10 +7,10 @@ class AdminStatusEvent < ComponentStatusEvent
   def html_details(int=nil)
     if @new == 'Down'
       status_class = 'text-danger'
-      verb = 'was brought'
+      verb = 'was set'
     else # Up
       status_class = 'text-success'
-      verb = 'was brought'
+      verb = 'was set'
     end
 
     if int

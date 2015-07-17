@@ -49,6 +49,8 @@ class ComponentEvent < Event
     event_data = db[:component_event]
     # Filter if options were passed
     event_data = event_data.where(:component_id => comp_id) if comp_id
+    event_data = event_data.where(:device => device) if device
+    event_data = event_data.where(:hw_type => hw_type) if hw_type
     event_data = event_data.where{:time >= start_time} if start_time
     event_data = event_data.where{:time <= end_time} if end_time
     event_data = event_data.where(:subtype => types) unless (types.nil? || types.include?('all'))
@@ -112,6 +114,11 @@ class ComponentEvent < Event
 
   def subtype
     @subtype
+  end
+
+
+  def html_details(component=nil)
+    "ERROR: html_details method not implemented in class #{self.class}"
   end
 
 

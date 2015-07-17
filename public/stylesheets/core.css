@@ -188,6 +188,10 @@ table.tablesorter thead tr {
   cursor: pointer;
 }
 
+table.d3-tablesorter thead tr {
+  cursor: pointer;
+}
+
 .pxl-hidden {
   display: none;
 }

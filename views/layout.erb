@@ -11,6 +11,7 @@
 <script src="/vendor/bootstrap/js/bootstrap.min.js"></script>
 <script src="/vendor/jquery.tablesorter.js"></script>
 <script src="/vendor/jquery.cookie.js"></script>
+<script src="/vendor/jquery-dateFormat.min.js"></script>
 <script src="/vendor/d3.v3.min.js" charset="utf-8"></script>
 <script src="/vendor/moment.min.js" charset="utf-8"></script>
 <script src="/vendor/rickshaw.min.js"></script> 
@@ -35,6 +36,7 @@
           </form>
           </li>
           <li><a href='/'>Alerts</a></li>
+          <li><a href='/events'>Events</a></li>
           <li>
           <form action='/device/search' class='navbar-form navbar-left' method='get' role='search'>
             <div class='form-group'>
@@ -65,7 +67,7 @@
         <li>Powered by <a href='http://www.slowbro.org/', target='_blank'>Nyan</a></li>
       </ul>
       <ul>
-        <li><%= "db lookup: #{db_elapsed}s" %></li>
+        <li><%= "db lookup: #{db_elapsed}s" if defined? db_elapsed %></li>
       </ul>
     </nav>
   </footer>

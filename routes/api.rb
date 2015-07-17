@@ -40,17 +40,27 @@ class Pixel < Sinatra::Base
     start_time = params[:start_time]
     end_time = params[:end_time]
     limit = params[:limit]
+    device = params[:device]
+    hw_type = params[:hw_type]
     types = params[:types] ? params[:types].split(',') : nil
+
     events = ComponentEvent.fetch_from_db(
-      start_time: start_time, end_time: end_time, types: types, db: @@db, limit: limit
+      start_time: start_time, end_time: end_time, types: types, db: @@db, limit: limit,
+      device: device, hw_type: hw_type
     )
+
     if params[:ajax]
-      data = { 'events' => {}, 'components' => {} }
+      data = []
       events.each do |event|
-        data['events'][event.id] = event
-        data['components'][event.component_id] ||= Component.fetch_from_db(id: event.component_id).first
+        temp = JSON.parse(event.to_json)['data']
+        component = Component.fetch_from_db(id: event.component_id, db: @@db).first
+        temp['details'] = event.html_details(component)
+        temp.merge!(JSON.parse(component.to_json)['data'])
+        data.push(temp)
       end
+      return JSON.generate(data)
     end
+
     return JSON.generate(events)
   end
 

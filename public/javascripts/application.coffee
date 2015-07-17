@@ -12,7 +12,9 @@ ready = ->
   draw_charts()
   typeahead()
   set_focus()
+  d3_populate()
   $(window).resize(check_charts)
+
 
 set_onscrolls = ->
   $(window).scroll( ->
@@ -30,6 +32,7 @@ set_onscrolls = ->
       if $(window).scrollTop() > 0 # prevent hiding when @ top of page
         $(this).filter(':not(:animated)').animate({marginTop: '-2em' }))
 
+
 draw_charts = ->
   $('.pxl-rickshaw').each ->
     element = $(this)
@@ -45,6 +48,7 @@ draw_charts = ->
 
     generate_charts(element, url)
 
+
 check_charts = ->
   need_to_update = true
   if need_to_update
@@ -53,6 +57,7 @@ check_charts = ->
       chart['graph'].render()
       chart['axes']['x'].render()
       chart['axes']['y'].render()
+
 
 generate_charts = (element, url) ->
   element_y = element.parent().find('.pxl-rickshaw-y')[0]
@@ -84,6 +89,7 @@ generate_charts = (element, url) ->
       axes['y'].render()
   })
 
+
 toReadable = (raw,unit,si) ->
   i = 0
   units = {
@@ -96,18 +102,23 @@ toReadable = (raw,unit,si) ->
     i++
   return raw.toFixed(2) + units[unit][i]
 
+
 check_refresh = ->
   if $.cookie('auto-refresh') != 'false'
     $('.pxl-btn-refresh').toggleClass('pxl-btn-refresh-white pxl-btn-refresh-green')
     set_refresh()
 
+
 refresh_page = -> location.reload()
+
 
 set_refresh = ->
   siid = setInterval refresh_page, 120000
   $.cookie('auto-refresh', siid, { expires: 365, path: '/' })
 
+
 set_focus = -> $('#device_input').focus()
+
 
 set_onclicks = ->
   $('.swapPlusMinus').on click: ->
@@ -122,14 +133,17 @@ set_onclicks = ->
       set_refresh()
     set_focus()
 
+
 tooltips = ->
   $('[data-rel="tooltip-left"]').tooltip({ placement: 'left', animation: false })
   $('[data-rel="tooltip-right"]').tooltip({ placement: 'right', animation: false })
   $('[data-rel="tooltip-bottom"]').tooltip({ placement: 'bottom', animation: false })
 
+
 parent_child = ->
   $('tr[class*=child]').mouseenter -> hl_parent($(this),'#E5E5E5')
   $('tr[class*=child]').mouseleave -> hl_parent($(this),'#FFF')
+
 
 hl_parent = (child,color) ->
   parent = $(child).data('pxl-parent')
@@ -138,17 +152,23 @@ hl_parent = (child,color) ->
   for cell in parent_row.find('.pxl-histogram')
     color_cell(cell,color)
 
+
 sort_table = ->
+  # Function for sorting on metadata
+  pxl_meta = (node) ->
+    if($(node).hasClass('pxl-meta'))
+      $(node).data('pxl-meta')
+    else
+      node.innerText
+
   # Initialize tablesorter
   $('.tablesorter').tablesorter({
     sortList: [[0,1]],
     sortInitialOrder: 'desc'
-    textExtraction: (node) ->
-      if($(node).hasClass('pxl-meta'))
-        $(node).data('pxl-meta')
-      else
-        node.innerText
+    textExtraction: pxl_meta
   })
+  $('.d3-tablesorter').tablesorter({ textExtraction: pxl_meta })
+
   # This is run on each sort to separate the child parent relationship somewhat
   $('table').bind 'sortStart', ->
     $('.pxl-child-tr').removeClass('pxl-child-tr')
@@ -157,6 +177,7 @@ sort_table = ->
   # Show the th sort arrows when hovering
   $('.pxl-th').hover ->
     $(this).find('span').toggleClass('pxl-hidden')
+
 
 color_cell = (cell,bgcolor) ->
   return if !cell.firstChild # Exits if the cell is empty
@@ -173,6 +194,7 @@ color_cell = (cell,bgcolor) ->
     cell.style.background="-o-linear-gradient(left,#{color} #{percentage}%, #{bgcolor} #{percentage}%)"
     cell.style.background="linear-gradient(to right,#{color} #{percentage}%, #{bgcolor} #{percentage}%)"
 
+
 color_table = ->
   $('tr').mouseenter ->
     for cell in $(this).find('.pxl-histogram')
@@ -184,10 +206,12 @@ color_table = ->
   for cell in document.getElementsByClassName('pxl-histogram')
     color_cell(cell,bgcolor)
 
+
 set_hoverswaps = ->
   $('td span.pxl-swap-alt').addClass('pxl-hidden')
   $('tr td.pxl-hoverswap').hover ->
     $(this).find("[class^='pxl-swap']").toggleClass('pxl-hidden')
+
 
 typeahead = ->
   devices = new Bloodhound({
@@ -232,6 +256,76 @@ typeahead = ->
     },
   )
   $('input.typeahead').bind("typeahead:selected", -> $("form").submit() )
+
+
+d3_populate = ->
+  $('.ajax_table').each ->
+    table = $(this)
+    url = table.data('api-url')
+    params = table.data('api-params').split(',').join('&')
+
+    id = table.attr('id')
+
+    $.ajax "#{url}?#{params}&ajax=true",
+      success: (data, status, xhr) ->
+        data = parse_event_data($.parseJSON(data))
+        d3_update(id, data)
+      error: (xhr, status, err) ->
+      complete: (xhr, status) ->
+        # trigger tablesorter update
+        table.trigger('update')
+
+
+d3_update = (table_id, data) ->
+
+  columns = $("##{table_id} > thead > tr > th").map(->
+    $(this).data('api-field')
+  ).get()
+
+  table = d3.select("##{table_id}")
+  thead = table.select('thead').select('tr').selectAll('th').attr("class","pxl-th")
+  tbody = table.select('tbody')
+
+  # Helper functions for data binding
+  ident = (d) -> d
+
+  get_keys = (d) ->
+    d[table.attr('data-api-key')]
+
+  get_cell_data = (d) ->
+    columns.map((column) -> d[column])
+
+  tr = tbody.selectAll("tr")
+    .data(data, get_keys)
+    .enter()
+    .append("tr")
+
+  td = tr.selectAll("td")
+    .data(get_cell_data)
+    .enter()
+    .append("td")
+    .html(ident)
+
+
+parse_event_data = (data) ->
+  $.map(data, (obj) ->
+    date_format = 'yyyy-MM-dd @ HH:mm'
+    obj['time'] = epoch_to_local(obj['time'], date_format) if obj['time'] != undefined
+    return obj
+  )
+
+
+epoch_to_local = (epoch, format) -> $.format.date(new Date(epoch * 1000), format)
+
+
+# This function eliminates the Class information and parses JSON from the Pixel API
+unwrap_ruby_json = (json) ->
+  new_data = []
+  $.each(data, (k,v) ->
+    new_data.push(v['data'])
+  )
+  return new_data
+
 
 $(document).ready(ready)
 $(document).on('page:load', ready)

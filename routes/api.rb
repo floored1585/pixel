@@ -16,7 +16,7 @@ class Pixel < Sinatra::Base
     start_time = params[:start_time]
     end_time = params[:end_time]
     limit = params[:limit]
-    types = params[:types].split(',')
+    types = params[:types] ? params[:types].split(',') : nil
     JSON.generate(ComponentEvent.fetch_from_db(
       device: device, index: index, hw_type: hw_type, start_time: start_time,
       end_time: end_time, types: types, db: @@db, limit: limit
@@ -29,7 +29,7 @@ class Pixel < Sinatra::Base
 
     start_time = params[:start_time]
     end_time = params[:end_time]
-    types = params[:types].split(',')
+    types = params[:types] ? params[:types].split(',') : nil
 
     JSON.generate(ComponentEvent.fetch_from_db(
       comp_id: comp_id, start_time: start_time, end_time: end_time, types: types, db: @@db
@@ -40,10 +40,18 @@ class Pixel < Sinatra::Base
     start_time = params[:start_time]
     end_time = params[:end_time]
     limit = params[:limit]
-    types = params[:types].split(',') if types
-    JSON.generate(ComponentEvent.fetch_from_db(
+    types = params[:types] ? params[:types].split(',') : nil
+    events = ComponentEvent.fetch_from_db(
       start_time: start_time, end_time: end_time, types: types, db: @@db, limit: limit
-    ))
+    )
+    if params[:ajax]
+      data = { 'events' => {}, 'components' => {} }
+      events.each do |event|
+        data['events'][event.id] = event
+        data['components'][event.component_id] ||= Component.fetch_from_db(id: event.component_id).first
+      end
+    end
+    return JSON.generate(events)
   end
 
   get '/v2/device/*/*/*/id' do |device, hw_type, index|
@@ -52,46 +60,15 @@ class Pixel < Sinatra::Base
     )
   end
 
-  get '/v2/device/*/interface/*' do |device, index|
-    JSON.generate( get_interface(@@settings, @@db, device, index: index) )
-  end
-  get '/v2/device/*/interfaces' do |device|
-    JSON.generate( get_interfaces(@@settings, @@db, device) )
-  end
-
-  get '/v2/device/*/cpu/*' do |device, index|
-    JSON.generate( get_cpu(@@settings, @@db, device, index) )
-  end
-  get '/v2/device/*/cpus' do |device|
-    JSON.generate( get_cpus(@@settings, @@db, device) )
-  end
-
-  get '/v2/device/*/fan/*' do |device, index|
-    JSON.generate( get_fan(@@settings, @@db, device, index) )
-  end
-  get '/v2/device/*/fans' do |device|
-    JSON.generate( get_fans(@@settings, @@db, device) )
-  end
-
-  get '/v2/device/*/memory/*' do |device, index|
-    JSON.generate( get_memory(@@settings, @@db, device, index) )
-  end
-  get '/v2/device/*/memory' do |device|
-    JSON.generate( get_memories(@@settings, @@db, device) )
-  end
-
-  get '/v2/device/*/psu/*' do |device, index|
-    JSON.generate( get_psu(@@settings, @@db, device, index) )
-  end
-  get '/v2/device/*/psus' do |device|
-    JSON.generate( get_psus(@@settings, @@db, device) )
-  end
-
-  get '/v2/device/*/temperature/*' do |device, index|
-    JSON.generate( get_temperature(@@settings, @@db, device, index) )
-  end
-  get '/v2/device/*/temperatures' do |device|
-    JSON.generate( get_temperatures(@@settings, @@db, device) )
+  get '/v2/component' do
+    id = params[:id]
+    device = params[:device]
+    hw_types = params[:hw_types] ? params[:hw_types].split(',') : nil
+    index = params[:index]
+    limit = params[:limit]
+    JSON.generate(Component.fetch_from_db(
+      device: device, index: index, hw_types: hw_types, db: @@db, limit: limit
+    ))
   end
 
   get '/v2/device/*' do |device|

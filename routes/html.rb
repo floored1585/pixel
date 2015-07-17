@@ -32,6 +32,11 @@ class Pixel < Sinatra::Base
   end
 
 
+  get '/events' do
+    erb :events
+  end
+
+
   get '/saturation' do
     util = params[:util] || 90
     util = util.to_i
@@ -65,7 +70,7 @@ class Pixel < Sinatra::Base
     # Start timer
     beginning = Time.now
 
-    device = Device.fetch(device_name, :all => true)
+    device = Device.fetch(device_name, ['all'])
 
     # How long did it take us to query the database
     db_elapsed = '%.2f' % (Time.now - beginning)

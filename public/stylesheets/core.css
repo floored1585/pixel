@@ -26,6 +26,9 @@ li.list-group-item-danger a:hover {
   text-decoration: inherit;
   color: #0000aa;
 }
+.table tr th div {
+  border-color: transparent;
+}
 
 .panel-footer {
   background-color: white;

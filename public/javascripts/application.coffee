@@ -2,6 +2,7 @@ charts = []
 
 ready = ->
   sort_table()
+  set_th_hovers()
   color_table()
   set_onscrolls()
   tooltips()
@@ -12,7 +13,7 @@ ready = ->
   draw_charts()
   typeahead()
   set_focus()
-  d3_populate()
+  d3_init()
   $(window).resize(check_charts)
 
 
@@ -121,6 +122,10 @@ set_focus = -> $('#device_input').focus()
 
 
 set_onclicks = ->
+  $('#event-refresh').on click: ->
+    d3_fetch()
+  $('table > thead > tr > th').on click: ->
+    set_focus()
   $('.swapPlusMinus').on click: ->
     $(this).find('span').toggleClass('glyphicon-plus glyphicon-minus')
     set_focus()
@@ -167,7 +172,11 @@ sort_table = ->
     sortInitialOrder: 'desc'
     textExtraction: pxl_meta
   })
-  $('.d3-tablesorter').tablesorter({ textExtraction: pxl_meta })
+  $('.d3-tablesorter').tablesorter({
+    sortList: [[0,1]],
+    resort: true,
+    textExtraction: pxl_meta
+  })
 
   # This is run on each sort to separate the child parent relationship somewhat
   $('table').bind 'sortStart', ->
@@ -175,6 +184,8 @@ sort_table = ->
     $('tbody tr td span.pxl-hidden').removeClass('pxl-hidden')
     set_hoverswaps()
   # Show the th sort arrows when hovering
+
+set_th_hovers = ->
   $('.pxl-th').hover ->
     $(this).find('span').toggleClass('pxl-hidden')
 
@@ -257,8 +268,11 @@ typeahead = ->
   )
   $('input.typeahead').bind("typeahead:selected", -> $("form").submit() )
 
+d3_init = ->
+  window.setInterval((-> d3_fetch()), 5000)
+  d3_fetch()
 
-d3_populate = ->
+d3_fetch = ->
   $('.ajax_table').each ->
     table = $(this)
     url = table.data('api-url')
@@ -269,36 +283,60 @@ d3_populate = ->
     $.ajax "#{url}?#{params}&ajax=true",
       success: (data, status, xhr) ->
         data = parse_event_data($.parseJSON(data))
-        d3_update(id, data)
+        d3_update(table, data)
       error: (xhr, status, err) ->
       complete: (xhr, status) ->
-        # trigger tablesorter update
-        table.trigger('update')
+        # trigger tablesorter update, and perform initial sort if
+        # we previously had no data
+        fresh_data = true if table[0].config.totalRows == 0
+        table.trigger('updateAll')
+        table.trigger('sorton', [[[0,1]]]) if fresh_data
 
 
-d3_update = (table_id, data) ->
+d3_update = (jq_table, data) ->
 
-  columns = $("##{table_id} > thead > tr > th").map(->
-    $(this).data('api-field')
-  ).get()
+  columns = $.map(jq_table.data('api-columns').split(','), (pair) ->
+    split = pair.split(':')
+    c = {}
+    c[split[0]] = split[1]
+    c
+  )
 
-  table = d3.select("##{table_id}")
-  thead = table.select('thead').select('tr').selectAll('th').attr("class","pxl-th")
+  ident = (d) -> d
+
+  table = d3.select("##{jq_table.attr('id')}")
+
+  # If the column have changed (or didn't exist), we need to rebuild them from scratch
+  # to avoid issues with hovering and sorting
+  if jq_table.first('th').length == 0 || columns.length != jq_table.find('th').length
+    th_html = "<span class='glyphicon glyphicon-sort pxl-sort-icon pxl-hidden'></span>"
+    th_html += "<span class='glyphicon glyphicon-filter pxl-filter-icon'></span>"
+    table.select('thead').selectAll('th').remove() # kill all the existing <th>s
+    thead = table.select('thead').select('tr').selectAll('th') # create new ones
+      .data(columns)
+      .enter()
+      .append('th')
+      .text((column) -> d3.values(column)[0]) # Here 'column' looks like {'time': 'Time '}
+      .attr('class', 'pxl-th')
+    thead.append('span').attr('class', 'glyphicon glyphicon-sort pxl-sort-icon pxl-hidden')
+    #thead.append('span').attr('class', 'glyphicon glyphicon-filter pxl-filter-icon pxl-hidden')
+    set_th_hovers()
+
   tbody = table.select('tbody')
 
   # Helper functions for data binding
-  ident = (d) -> d
 
   get_keys = (d) ->
     d[table.attr('data-api-key')]
 
   get_cell_data = (d) ->
-    columns.map((column) -> d[column])
+    columns.map((column) ->
+      d[d3.keys(column)[0]]) # Here 'column' looks like {'time': 'Time '}
 
   tr = tbody.selectAll("tr")
     .data(data, get_keys)
-    .enter()
-    .append("tr")
+  tr.enter().append("tr")
+  tr.exit().remove()
 
   td = tr.selectAll("td")
     .data(get_cell_data)

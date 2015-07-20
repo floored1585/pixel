@@ -3,7 +3,7 @@ require_relative '../../rspec'
 describe AdminStatusEvent do
 
   device = 'gar-bdr-1'
-  hw_type = 'interface'
+  hw_type = 'Interface'
   index = '1'
   old = 'Down'
   new = 'Up'
@@ -99,7 +99,7 @@ describe AdminStatusEvent do
 
     it 'should be saved' do
       saved_event = ComponentEvent.fetch(
-        device: 'test-v11u3-acc-y', hw_type: 'interface',
+        device: 'test-v11u3-acc-y', hw_type: 'Interface',
         index: '10119', types: [ 'AdminStatusEvent' ]
       ).first
       expect(saved_event).to be_an AdminStatusEvent

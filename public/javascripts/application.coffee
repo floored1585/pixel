@@ -122,8 +122,6 @@ set_focus = -> $('#device_input').focus()
 
 
 set_onclicks = ->
-  $('#event-refresh').on click: ->
-    d3_fetch()
   $('table > thead > tr > th').on click: ->
     set_focus()
   $('.swapPlusMinus').on click: ->
@@ -269,12 +267,17 @@ typeahead = ->
   $('input.typeahead').bind("typeahead:selected", -> $("form").submit() )
 
 d3_init = ->
-  window.setInterval((-> d3_fetch()), 5000)
-  d3_fetch()
+  # Only continue if we have ajax tables
+  if $('.ajax_table').length != 0
+    clearInterval($.cookie('auto-refresh'))
+    $('.ajax_table').each ->
+      table = $(this)
+      refresh_time = table.data('api-refresh')
+      if refresh_time?
+        window.setInterval((-> d3_fetch(table)), refresh_time * 1000)
+      d3_fetch(table)
 
-d3_fetch = ->
-  $('.ajax_table').each ->
-    table = $(this)
+d3_fetch = (table) ->
     url = table.data('api-url')
     params = table.data('api-params').split(',').join('&')
 
@@ -282,8 +285,11 @@ d3_fetch = ->
 
     $.ajax "#{url}?#{params}&ajax=true",
       success: (data, status, xhr) ->
-        data = parse_event_data($.parseJSON(data))
-        d3_update(table, data)
+        data = $.parseJSON(data)
+        meta = data['meta']
+        data = data['data']
+        data = parse_event_data(data)
+        d3_update(table, data, meta)
       error: (xhr, status, err) ->
       complete: (xhr, status) ->
         # trigger tablesorter update, and perform initial sort if
@@ -293,7 +299,7 @@ d3_fetch = ->
         table.trigger('sorton', [[[0,1]]]) if fresh_data
 
 
-d3_update = (jq_table, data) ->
+d3_update = (jq_table, data, meta) ->
 
   columns = $.map(jq_table.data('api-columns').split(','), (pair) ->
     split = pair.split(':')
@@ -309,8 +315,6 @@ d3_update = (jq_table, data) ->
   # If the column have changed (or didn't exist), we need to rebuild them from scratch
   # to avoid issues with hovering and sorting
   if jq_table.first('th').length == 0 || columns.length != jq_table.find('th').length
-    th_html = "<span class='glyphicon glyphicon-sort pxl-sort-icon pxl-hidden'></span>"
-    th_html += "<span class='glyphicon glyphicon-filter pxl-filter-icon'></span>"
     table.select('thead').selectAll('th').remove() # kill all the existing <th>s
     thead = table.select('thead').select('tr').selectAll('th') # create new ones
       .data(columns)
@@ -336,6 +340,9 @@ d3_update = (jq_table, data) ->
   tr = tbody.selectAll("tr")
     .data(data, get_keys)
   tr.enter().append("tr")
+    .style('opacity', 0)
+    .transition().duration(500)
+    .style('opacity', 1)
   tr.exit().remove()
 
   td = tr.selectAll("td")

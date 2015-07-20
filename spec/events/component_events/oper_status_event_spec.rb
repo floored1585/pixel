@@ -3,7 +3,7 @@ require_relative '../../rspec'
 describe OperStatusEvent do
 
   device = 'gar-bdr-1'
-  hw_type = 'CPU'
+  hw_type = 'Interface'
   index = '1'
   old = 'Up'
   new = 'Down'
@@ -149,7 +149,7 @@ describe OperStatusEvent do
 
     it 'should be saved' do
       saved_event = ComponentEvent.fetch(
-        device: 'test-v11u3-acc-y', hw_type: 'interface',
+        device: 'test-v11u3-acc-y', hw_type: 'Interface',
         index: '10119', types: [ 'OperStatusEvent' ]
       ).first
       expect(saved_event).to be_a OperStatusEvent

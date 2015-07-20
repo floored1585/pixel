@@ -50,13 +50,15 @@ class Pixel < Sinatra::Base
     )
 
     if params[:ajax]
-      data = []
+      data = {}
+      data['meta'] = {}
+      data['data'] = []
       events.each do |event|
         temp = JSON.parse(event.to_json)['data']
         component = Component.fetch_from_db(id: event.component_id, db: @@db).first
         temp['details'] = event.html_details(component)
         temp.merge!(JSON.parse(component.to_json)['data'])
-        data.push(temp)
+        data['data'].push(temp)
       end
       return JSON.generate(data)
     end
@@ -76,9 +78,12 @@ class Pixel < Sinatra::Base
     hw_types = params[:hw_types] ? params[:hw_types].split(',') : nil
     index = params[:index]
     limit = params[:limit]
-    JSON.generate(Component.fetch_from_db(
+
+    components = Component.fetch_from_db(
       device: device, index: index, hw_types: hw_types, db: @@db, limit: limit
-    ))
+    )
+
+    return JSON.generate(components)
   end
 
   get '/v2/device/*' do |device|

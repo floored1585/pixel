@@ -1,9 +1,10 @@
 <h1 id='event-refresh' class='pxl-bottom-margin pxl-h1'>Event Stream</h1>
 <div class='pxl-dynamic-content'>
   <table
-    class='table ajax_table table-hover table-condensed d3-tablesorter'
     id='ajax_1'
+    class='table ajax_table table-hover table-condensed d3-tablesorter'
     data-api-url="/v2/events/component"
+    data-api-refresh='10'
     data-api-params="limit=30"
     data-api-columns="time:Time ,subtype:Type ,device:Device ,details:Details "
     data-api-key="event_id">

@@ -152,7 +152,7 @@ describe DescriptionEvent do
 
     it 'should be saved' do
       saved_event = ComponentEvent.fetch(
-        device: 'test-v11u3-acc-y', hw_type: 'interface',
+        device: 'test-v11u3-acc-y', hw_type: 'Interface',
         index: '10119', types: [ 'DescriptionEvent' ]
       ).first
       expect(saved_event).to be_a DescriptionEvent

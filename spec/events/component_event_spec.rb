@@ -3,7 +3,7 @@ require_relative '../rspec'
 describe ComponentEvent do
 
   device = 'gar-test-device'
-  hw_type = 'cpu'
+  hw_type = 'CPU'
   index = '1'
   time = Time.now.to_i
   subtype = 'ComponentEvent'
@@ -21,7 +21,7 @@ describe ComponentEvent do
       # Insert our bare bones device and component
       DB[:device].insert(:device => 'test-v11u1-acc-y', :ip => '1.2.3.4')
       @component_id = DB[:component].insert(
-        :hw_type => 'cpu',
+        :hw_type => 'CPU',
         :device => 'test-v11u1-acc-y',
         :index => '1',
         :last_updated => '12345678',
@@ -79,7 +79,7 @@ describe ComponentEvent do
       # Insert our bare bones device and component
       DB[:device].insert(:device => 'test-v11u1-acc-y', :ip => '1.2.3.4')
       @component_id = DB[:component].insert(
-        :hw_type => 'cpu',
+        :hw_type => 'CPU',
         :device => 'test-v11u1-acc-y',
         :index => '1',
         :last_updated => '12345678',
@@ -202,7 +202,7 @@ describe ComponentEvent do
       # Insert our bare bones device and component
       DB[:device].insert(:device => 'test-v11u1-acc-y', :ip => '1.2.3.4')
       @id = DB[:component].insert(
-        :hw_type => 'cpu',
+        :hw_type => 'CPU',
         :device => 'test-v11u1-acc-y',
         :index => '1',
         :last_updated => '12345678',
@@ -216,7 +216,7 @@ describe ComponentEvent do
     end
 
     it 'should not exist before saving' do
-      event = ComponentEvent.fetch(device: 'test-v11u1-acc-y', hw_type: 'cpu', index: '1').first
+      event = ComponentEvent.fetch(device: 'test-v11u1-acc-y', hw_type: 'CPU', index: '1').first
       expect(event).to eql nil
     end
 

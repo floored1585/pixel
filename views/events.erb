@@ -1,9 +1,59 @@
-<h1 id='event-refresh' class='pxl-bottom-margin pxl-h1'>Event Stream</h1>
+<h1 id='event-refresh' class='pxl-h1-events'>Event Stream</h1>
+
+<div class='row'>
+  <div class='col-md-3'></div>
+  <div class='col-md-6'>
+    <center>
+      <button class="btn btn-default pxl-set-focus" type="button" data-toggle="collapse"
+        data-target="#event_stream_filters" aria-expanded="false" aria-controls="collapseExample">
+        Filters
+      </button>
+    </center>
+
+    <div class="collapse" id="event_stream_filters">
+      <br />
+
+      <div class="input-group pxl-bottom-5">
+        <span class="input-group-addon" id="es_device">Device</span>
+        <input type="text" id='event_stream_device' class="api-device form-control" size='5'
+        placeholder="Device name" aria-describedby="es_device" />
+        <span class="input-group-addon" id="es_device_partial">
+          <label style='margin-bottom: 0px;'>
+            <input type="checkbox" id='event_stream_device_partial'
+            class="api-device_partial pxl-checkbox" />
+            &nbsp;Partial
+            </input>
+          </label>
+        </span>
+      </div>
+
+      <div class="input-group">
+        <span class="input-group-addon" id="es_limit">Result Limit</span>
+        <input type="text" id='event_stream_limit' class="api-limit form-control" size='5'
+        placeholder="Only 100 results will be returned if no value is set" aria-describedby="es_limit" />
+      </div>
+      <br />
+
+      <center>
+        <button id='event_stream_apply' class="btn btn-default pxl-set-focus" type="button">
+          Apply
+        </button>
+      </center>
+
+    </div>
+
+  </div>
+  <div class='col-md-3'></div>
+</div>
+
+<br />
+
 <div class='pxl-dynamic-content'>
+
   <table
-    id='ajax_1'
+    id='event_stream'
     class='table ajax_table table-hover table-condensed d3-tablesorter'
-    data-api-url="/v2/events/component"
+    data-api-url="/v2/ajax/events"
     data-api-refresh='10'
     data-api-params="limit=30"
     data-api-columns="time:Time ,subtype:Type ,device:Device ,details:Details "
@@ -15,4 +65,5 @@
     <tbody>
     </tbody>
   </table>
+
 </div>

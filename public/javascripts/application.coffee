@@ -1,8 +1,9 @@
 charts = []
+ajaxRefreshID = {}
 
 ready = ->
   sort_table()
-  set_th_hovers()
+  set_hovers()
   color_table()
   set_onscrolls()
   tooltips()
@@ -121,13 +122,15 @@ set_refresh = ->
 set_focus = -> $('#device_input').focus()
 
 
-set_onclicks = ->
-  $('table > thead > tr > th').on click: ->
+set_onclicks = (el) ->
+  parent = if el? then el else $(':root')
+
+  parent.find('table > thead > tr > th').on click: ->
     set_focus()
-  $('.swapPlusMinus').on click: ->
+  parent.find('.swapPlusMinus').on click: ->
     $(this).find('span').toggleClass('glyphicon-plus glyphicon-minus')
     set_focus()
-  $('.pxl-btn-refresh').on click: ->
+  parent.find('.pxl-btn-refresh').on click: ->
     $(this).toggleClass('pxl-btn-refresh-white pxl-btn-refresh-green')
     if $.cookie('auto-refresh') && $.cookie('auto-refresh') != 'false'
       clearInterval($.cookie('auto-refresh'))
@@ -135,6 +138,7 @@ set_onclicks = ->
     else
       set_refresh()
     set_focus()
+  parent.find('.pxl-set-focus').on click: -> set_focus()
 
 
 tooltips = ->
@@ -183,8 +187,13 @@ sort_table = ->
     set_hoverswaps()
   # Show the th sort arrows when hovering
 
-set_th_hovers = ->
-  $('.pxl-th').hover ->
+set_hovers = (jq_table) ->
+  if jq_table?
+    columns = jq_table.find('th')
+  else
+    columns = $('.pxl-sort')
+
+  columns.hover ->
     $(this).find('span').toggleClass('pxl-hidden')
 
 
@@ -266,27 +275,29 @@ typeahead = ->
   )
   $('input.typeahead').bind("typeahead:selected", -> $("form").submit() )
 
+
 d3_init = ->
   # Only continue if we have ajax tables
   if $('.ajax_table').length != 0
     clearInterval($.cookie('auto-refresh'))
     $('.ajax_table').each ->
       table = $(this)
+      id = table.attr('id')
+      filters = $("##{id}_filters")
       refresh_time = table.data('api-refresh')
       if refresh_time?
-        window.setInterval((-> d3_fetch(table)), refresh_time * 1000)
+        ajaxRefreshID[id] = window.setInterval((-> d3_fetch(table)), refresh_time * 1000)
       d3_fetch(table)
 
 d3_fetch = (table) ->
     url = table.data('api-url')
     params = table.data('api-params').split(',').join('&')
 
-    id = table.attr('id')
-
     $.ajax "#{url}?#{params}&ajax=true",
       success: (data, status, xhr) ->
         data = $.parseJSON(data)
         meta = data['meta']
+        meta ?= {}
         data = data['data']
         data = parse_event_data(data)
         d3_update(table, data, meta)
@@ -310,7 +321,8 @@ d3_update = (jq_table, data, meta) ->
 
   ident = (d) -> d
 
-  table = d3.select("##{jq_table.attr('id')}")
+  table_id = jq_table.attr('id')
+  table = d3.select("##{table_id}")
 
   # If the column have changed (or didn't exist), we need to rebuild them from scratch
   # to avoid issues with hovering and sorting
@@ -321,10 +333,43 @@ d3_update = (jq_table, data, meta) ->
       .enter()
       .append('th')
       .text((column) -> d3.values(column)[0]) # Here 'column' looks like {'time': 'Time '}
-      .attr('class', 'pxl-th')
-    thead.append('span').attr('class', 'glyphicon glyphicon-sort pxl-sort-icon pxl-hidden')
-    #thead.append('span').attr('class', 'glyphicon glyphicon-filter pxl-filter-icon pxl-hidden')
-    set_th_hovers()
+      .classed('pxl-sort', (column_data) ->
+        column = d3.keys(column_data)[0]
+        (meta['_th_']? && meta['_th_']['pxl-sort']?)
+      )
+    # Add sort icons
+    table.selectAll('.pxl-sort')
+      .append('span')
+      .attr('class', 'glyphicon glyphicon-sort pxl-sort-icon pxl-hidden')
+    set_hovers(jq_table)
+
+    params = $.each(jq_table.data('api-params').split(','), (i, pair) ->
+      param = pair.split('=')[0]
+      value = pair.split('=')[1]
+      input = $("##{table_id}_#{param}")
+      if(input.length > 0)
+        input.val(value)
+    )
+    # Apply button should update api-params data and refresh the data
+    $("##{table_id}_apply").on click: ->
+      # Reset the refresh timer
+      refresh_time = jq_table.data('api-refresh')
+      window.clearInterval(ajaxRefreshID[table_id])
+      ajaxRefreshID[table_id] = window.setInterval((-> d3_fetch(jq_table)), refresh_time * 1000)
+
+      # apply params to the table & get new dataset
+      params = []
+      $.each(meta['_filters_'], (i, filter) ->
+        element = $("##{table_id}_#{filter}")
+        if element.is(':checkbox')
+          value = if element.is(':checked') then 'true' else ''
+        else
+          value = element?.val()
+        if (value? && value.trim()) then params.push("#{filter}=#{value}")
+      )
+      jq_table.data('api-params', params.join(','))
+      d3_fetch(jq_table)
+
 
   tbody = table.select('tbody')
 
@@ -343,7 +388,10 @@ d3_update = (jq_table, data, meta) ->
     .style('opacity', 0)
     .transition().duration(500)
     .style('opacity', 1)
-  tr.exit().remove()
+  tr.exit()
+    .transition().duration(300)
+    .style('opacity', 0)
+    .remove()
 
   td = tr.selectAll("td")
     .data(get_cell_data)

@@ -36,6 +36,50 @@ class Pixel < Sinatra::Base
     ))
   end
 
+  get '/v2/ajax/events' do
+    start_time = params[:start_time]
+    end_time = params[:end_time]
+    limit = params[:limit] || 100 # return a max of 100 results
+    device = params[:device]
+    device_partial = params[:device_partial]
+    hw_type = params[:hw_type]
+    types = params[:types] ? params[:types].split(',') : nil
+
+    events = ComponentEvent.fetch_from_db(
+      start_time: start_time, end_time: end_time, types: types, db: @@db, limit: limit,
+      device: device, hw_type: hw_type, device_partial: device_partial
+    )
+
+    data = {}
+    data['meta'] = {
+      '_th_' => {
+        'pxl-sort' => true
+      },
+      '_filters_' => [
+        'device',
+        'device_partial',
+        'label',
+        'start_time',
+        'end_time',
+        'hw_type',
+        'types',
+        'limit',
+      ]
+    }
+    data['data'] = []
+    events.each do |event|
+      temp = JSON.parse(event.to_json)['data']
+      component = Component.fetch_from_db(id: event.component_id, db: @@db).first
+      temp['details'] = event.html_details(component)
+      temp['rawtime'] = temp['time']
+      temp['_attrs_'] = { 'time' => { 'pxl-meta' => event.time }}
+      temp.merge!(JSON.parse(component.to_json)['data'])
+      data['data'].push(temp)
+    end
+    return JSON.generate(data)
+
+  end
+
   get '/v2/events/component' do
     start_time = params[:start_time]
     end_time = params[:end_time]
@@ -44,26 +88,10 @@ class Pixel < Sinatra::Base
     hw_type = params[:hw_type]
     types = params[:types] ? params[:types].split(',') : nil
 
-    events = ComponentEvent.fetch_from_db(
+    JSON.generate(ComponentEvent.fetch_from_db(
       start_time: start_time, end_time: end_time, types: types, db: @@db, limit: limit,
       device: device, hw_type: hw_type
-    )
-
-    if params[:ajax]
-      data = {}
-      data['meta'] = {}
-      data['data'] = []
-      events.each do |event|
-        temp = JSON.parse(event.to_json)['data']
-        component = Component.fetch_from_db(id: event.component_id, db: @@db).first
-        temp['details'] = event.html_details(component)
-        temp.merge!(JSON.parse(component.to_json)['data'])
-        data['data'].push(temp)
-      end
-      return JSON.generate(data)
-    end
-
-    return JSON.generate(events)
+    ))
   end
 
   get '/v2/device/*/*/*/id' do |device, hw_type, index|

@@ -40,8 +40,8 @@ class ComponentEvent < Event
   end
 
 
-  def self.fetch_from_db(device: nil, index: nil, hw_type: nil, comp_id: nil,
-                         types:, db:, start_time: nil, end_time: nil, limit: nil)
+  def self.fetch_from_db(device: nil, device_partial: nil, index: nil, hw_type: nil,
+                         comp_id: nil, types:, db:, start_time: nil, end_time: nil, limit: nil)
     if (device && hw_type && index)
       comp_id = Component.id_from_db(device: device, index: index, hw_type: hw_type, db: db)
     end
@@ -49,7 +49,8 @@ class ComponentEvent < Event
     event_data = db[:component_event]
     # Filter if options were passed
     event_data = event_data.where(:component_id => comp_id) if comp_id
-    event_data = event_data.where(:device => device) if device
+    event_data = event_data.where(:device => device) if device && !device_partial
+    event_data = event_data.where(Sequel.ilike(:device, "%#{device}%")) if device && device_partial
     event_data = event_data.where(:hw_type => hw_type) if hw_type
     event_data = event_data.where{:time >= start_time} if start_time
     event_data = event_data.where{:time <= end_time} if end_time

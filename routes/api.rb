@@ -37,8 +37,8 @@ class Pixel < Sinatra::Base
   end
 
   get '/v2/ajax/events' do
-    start_time = params[:start_time]
-    end_time = params[:end_time]
+    start_time = params[:start_time].to_i_if_numeric
+    end_time = params[:end_time].to_i_if_numeric
     limit = params[:limit] || 100 # return a max of 100 results
     device = params[:device]
     device_partial = params[:device_partial]

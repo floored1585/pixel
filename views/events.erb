@@ -27,6 +27,25 @@
         </span>
       </div>
 
+      <div class="input-group pxl-bottom-5">
+        <span class="input-group-addon" id="es_start_time">Start Time</span>
+        <input type="text" id='event_stream_start_time' class="api-start_time form-control" size='5'
+        placeholder="" aria-describedby="es_start_time" />
+      </div>
+      <script type="text/javascript">
+        $('#event_stream_start_time').datetimepicker({ format: 'Y-m-d @ H:i' })
+      </script>
+
+
+      <div class="input-group pxl-bottom-5">
+        <span class="input-group-addon" id="es_end_time">End Time</span>
+        <input type="text" id='event_stream_end_time' class="api-end_time form-control" size='5'
+        placeholder="Leave blank to see new events as they occur" aria-describedby="es_end_time" />
+      </div>
+      <script type="text/javascript">
+        $('#event_stream_end_time').datetimepicker({ format: 'Y-m-d @ H:i' });
+      </script>
+
       <div class="input-group">
         <span class="input-group-addon" id="es_limit">Result Limit</span>
         <input type="text" id='event_stream_limit' class="api-limit form-control" size='5'

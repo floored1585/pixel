@@ -52,8 +52,8 @@ class ComponentEvent < Event
     event_data = event_data.where(:device => device) if device && !device_partial
     event_data = event_data.where(Sequel.ilike(:device, "%#{device}%")) if device && device_partial
     event_data = event_data.where(:hw_type => hw_type) if hw_type
-    event_data = event_data.where{:time >= start_time} if start_time
-    event_data = event_data.where{:time <= end_time} if end_time
+    event_data = event_data.where{time >= start_time} if start_time
+    event_data = event_data.where{time <= end_time} if end_time
     event_data = event_data.where(:subtype => types) unless (types.nil? || types.include?('all'))
     event_data = event_data.order(Sequel.desc(:time))
     event_data = event_data.limit(limit) if limit && limit.to_s =~ /^\d+$/

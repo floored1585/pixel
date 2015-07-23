@@ -125,7 +125,7 @@ set_focus = -> $('#device_input').focus()
 set_onclicks = (el) ->
   parent = if el? then el else $(':root')
 
-  parent.find('table > thead > tr > th').on click: ->
+  parent.find('thead > tr > th').on click: ->
     set_focus()
   parent.find('.swapPlusMinus').on click: ->
     $(this).find('span').toggleClass('glyphicon-plus glyphicon-minus')
@@ -187,13 +187,9 @@ sort_table = ->
     set_hoverswaps()
   # Show the th sort arrows when hovering
 
-set_hovers = (jq_table) ->
-  if jq_table?
-    columns = jq_table.find('th')
-  else
-    columns = $('.pxl-sort')
-
-  columns.hover ->
+set_hovers = (el) ->
+  parent = if el? then el else $(':root')
+  parent.find('.pxl-sort').hover ->
     $(this).find('span').toggleClass('pxl-hidden')
 
 
@@ -342,6 +338,7 @@ d3_update = (jq_table, data, meta) ->
       .append('span')
       .attr('class', 'glyphicon glyphicon-sort pxl-sort-icon pxl-hidden')
     set_hovers(jq_table)
+    set_onclicks(jq_table)
 
     params = $.each(jq_table.data('api-params').split(','), (i, pair) ->
       param = pair.split('=')[0]
@@ -363,6 +360,12 @@ d3_update = (jq_table, data, meta) ->
         element = $("##{table_id}_#{filter}")
         if element.is(':checkbox')
           value = if element.is(':checked') then 'true' else ''
+        else if filter.match(/(start|end)_time/)
+          value = element?.val()
+          if value? && value.trim()
+            value = value.replace(' @ ','T')
+            s = value.split(/\D+/)
+            value = ((new Date(s[0], --s[1], s[2], s[3], s[4], s[5]? || 0)).getTime() / 1000).toString()
         else
           value = element?.val()
         if (value? && value.trim()) then params.push("#{filter}=#{value}")

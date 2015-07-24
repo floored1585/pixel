@@ -72,7 +72,6 @@ class Pixel < Sinatra::Base
       component = Component.fetch_from_db(id: event.component_id, db: @@db).first
       # Create the details field as appropriate for the event
       temp['details'] = event.html_details(component)
-      pp device_link(temp['device'])
       temp['rawtime'] = temp['time']
       temp['_attrs_'] = { 'time' => { 'pxl-meta' => event.time }}
       temp.merge!(JSON.parse(component.to_json)['data'])

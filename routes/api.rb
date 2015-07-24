@@ -70,10 +70,14 @@ class Pixel < Sinatra::Base
     events.each do |event|
       temp = JSON.parse(event.to_json)['data']
       component = Component.fetch_from_db(id: event.component_id, db: @@db).first
+      # Create the details field as appropriate for the event
       temp['details'] = event.html_details(component)
+      pp device_link(temp['device'])
       temp['rawtime'] = temp['time']
       temp['_attrs_'] = { 'time' => { 'pxl-meta' => event.time }}
       temp.merge!(JSON.parse(component.to_json)['data'])
+      # make the device a link instead of raw device name
+      temp['device'] = device_link(temp['device'])
       data['data'].push(temp)
     end
     return JSON.generate(data)

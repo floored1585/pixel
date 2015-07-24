@@ -343,10 +343,16 @@ footer ul li {
   margin-left: 10px;
 }
 
+/* TWITTER FIXES */
+
 /* Twitter typeahead compatibility fixes */
 .twitter-typeahead {
   float: left;
   margin-right: 3px;
+}
+
+.pxl-tt-ig {
+  width: 100%;
 }
 
 .tt-suggestion {

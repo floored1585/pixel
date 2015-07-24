@@ -259,9 +259,7 @@ typeahead = ->
   # passing in `null` for the `options` arguments will result in the default
   # options being used
   $('.typeahead').typeahead(
-    {
-      highlight: true,
-    },
+    { highlight: true },
     {
       name: 'devices',
       # `ttAdapter` wraps the suggestion engine in an adapter that
@@ -269,6 +267,12 @@ typeahead = ->
       source: devices.ttAdapter()
     },
   )
+  $('.ig-typeahead').typeahead(
+    { highlight: true },
+    { name: 'devices', source: devices.ttAdapter() },
+  )
+  $('.input-group').find('span.twitter-typeahead').addClass('pxl-tt-ig')
+
   $('input.typeahead').bind("typeahead:selected", -> $("form").submit() )
 
 

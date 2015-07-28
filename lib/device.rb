@@ -356,17 +356,18 @@ class Device
   def write_influxdb
 
     # Device series
-    Influx.post(series: "#{@name}.bps_out", value: bps_out, time: @last_poll)
-    Influx.post(series: "#{@name}.pps_out", value: pps_out, time: @last_poll)
-    Influx.post(series: "#{@name}.discards_out", value: discards_out, time: @last_poll)
-    Influx.post(series: "#{@name}.errors_out", value: errors_out, time: @last_poll)
+    influx_up = Influx.post(series: "#{@name}.bps_out", value: bps_out, time: @last_poll)
+    if influx_up
+      Influx.post(series: "#{@name}.pps_out", value: pps_out, time: @last_poll)
+      Influx.post(series: "#{@name}.discards_out", value: discards_out, time: @last_poll)
+      Influx.post(series: "#{@name}.errors_out", value: errors_out, time: @last_poll)
 
-    # Component series
-    @interfaces.each { |index, interface| interface.write_influxdb }
-    @cpus.each { |index, cpu| cpu.write_influxdb }
-    @memory.each { |index, memory| memory.write_influxdb }
-    @temps.each { |index, temp| temp.write_influxdb }
-
+      # Component series
+      @interfaces.each { |index, interface| interface.write_influxdb }
+      @cpus.each { |index, cpu| cpu.write_influxdb }
+      @memory.each { |index, memory| memory.write_influxdb }
+      @temps.each { |index, temp| temp.write_influxdb }
+    end
   end
 
 

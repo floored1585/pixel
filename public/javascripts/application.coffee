@@ -139,6 +139,10 @@ set_onclicks = (el) ->
       set_refresh()
     set_focus()
   parent.find('.pxl-set-focus').on click: -> set_focus()
+  parent.find('.pxl-text-swap').on click: ->
+    newText = $(this).data('text-swap')
+    $(this).data('text-swap', $(this).text())
+    $(this).text(newText)
 
 
 tooltips = ->
@@ -325,7 +329,7 @@ d3_update = (jq_table, data, meta) ->
   table = d3.select("##{table_id}")
 
   # If the column have changed (or didn't exist), we need to rebuild them from scratch
-  # to avoid issues with hovering and sorting
+  # to avoid issues with hovering and sorting.  Also initialize the filters here!
   if jq_table.first('th').length == 0 || columns.length != jq_table.find('th').length
     table.select('thead').selectAll('th').remove() # kill all the existing <th>s
     thead = table.select('thead').select('tr').selectAll('th') # create new ones
@@ -344,6 +348,31 @@ d3_update = (jq_table, data, meta) ->
     set_hovers(jq_table)
     set_onclicks(jq_table)
 
+    # Type picker
+    d3.select("##{table_id}_types").selectAll('option')
+      .data(meta['_types_'], (d) -> d3.keys(d)[0])
+      .enter()
+      .append('option')
+      .text((type) -> d3.values(type)[0])
+      .attr('value', (type) -> d3.keys(type)[0])
+
+    $("##{table_id}_types").multiselect({
+      buttonWidth: '100%',
+      enableHTML: true,
+      nonSelectedText: "<span class='pxl-placeholder'>Select event types to display</span>",
+      numberDisplayed: 2,
+      dropRight: true,
+      enableFiltering: true,
+      enableCaseInsensitiveFiltering: true,
+      onDropdownHide: (e) -> set_focus()
+    })
+    # When the clear button is clicked, unselect all the types
+    $("##{table_id}_types_reset").on click: ->
+      select_id = $(this).attr('id').replace('_reset', '')
+      $("##{select_id} option:selected").each( -> $(this).prop('selected', false))
+      $("##{select_id}").multiselect('refresh')
+      set_focus()
+
     params = $.each(jq_table.data('api-params').split(','), (i, pair) ->
       param = pair.split('=')[0]
       value = pair.split('=')[1]
@@ -351,6 +380,7 @@ d3_update = (jq_table, data, meta) ->
       if(input.length > 0)
         input.val(value)
     )
+
     # Apply button should update api-params data and refresh the data
     $("##{table_id}_apply").on click: ->
       # Reset the refresh timer
@@ -362,7 +392,9 @@ d3_update = (jq_table, data, meta) ->
       params = []
       $.each(meta['_filters_'], (i, filter) ->
         element = $("##{table_id}_#{filter}")
-        if element.is(':checkbox')
+        if element.is('select')
+          value = element.find(':selected').map(-> this.value).get().join('$')
+        else if element.is(':checkbox')
           value = if element.is(':checked') then 'true' else ''
         else if filter.match(/(start|end)_time/)
           value = element?.val()

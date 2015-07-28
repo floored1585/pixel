@@ -2,10 +2,23 @@
 
 .rickshaw_graph .detail .x_label { display: none }
 
+.multiselect { text-align: left; }
+.multiselect b.caret {
+  float: right;
+  margin-top: 8px;
+}
+.pxl-ms-container > div.btn-group {
+  width: 80% !important;
+}
+
 /* boostrap mixin */
 
 label {
   font-weight: normal !important;
+}
+
+span.input-group-addon {
+  min-width: 100px;
 }
 
 .pxl-container {
@@ -52,6 +65,10 @@ li.list-group-item-danger a:hover {
 }
 .tooltip-lighter + .tooltip > .tooltip-inner {
   opacity: .8;
+}
+
+.pxl-placeholder {
+  color: #777;
 }
 
 .pxl-bottom-5 {

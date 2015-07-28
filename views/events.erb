@@ -4,9 +4,10 @@
   <div class='col-md-3'></div>
   <div class='col-md-6'>
     <center>
-      <button class="btn btn-default pxl-set-focus" type="button" data-toggle="collapse"
-        data-target="#event_stream_filters" aria-expanded="false" aria-controls="collapseExample">
-        Filters
+      <button class="btn btn-default pxl-set-focus pxl-text-swap" type="button" data-toggle="collapse"
+        data-target="#event_stream_filters" aria-expanded="false" aria-controls="collapseExample"
+        data-text-swap='Hide Filters'>
+        Show Filters
       </button>
     </center>
 
@@ -46,6 +47,12 @@
         $('#event_stream_end_time').datetimepicker({ format: 'Y-m-d @ H:i' });
       </script>
 
+      <div class="input-group pxl-bottom-5 btn-group pxl-ms-container">
+        <span class="input-group-addon" id="es_types">Event Type</span>
+        <select id='event_stream_types' multiple='multiple'></select>
+        <button id="event_stream_types_reset" class="btn btn-default" style='width: 20%;'>Clear</button>
+      </div>
+
       <div class="input-group">
         <span class="input-group-addon" id="es_limit">Result Limit</span>
         <input type="text" id='event_stream_limit' class="api-limit form-control" size='5'
@@ -55,7 +62,7 @@
 
       <center>
         <button id='event_stream_apply' class="btn btn-default pxl-set-focus" type="button">
-          Apply
+          Apply Filters
         </button>
       </center>
 
@@ -75,7 +82,7 @@
     data-api-url="/v2/ajax/events"
     data-api-refresh='10'
     data-api-params="limit=30"
-    data-api-columns="time:Time ,subtype:Type ,device:Device ,details:Details "
+    data-api-columns="time:Time ,friendly_subtype:Type ,device:Device ,details:Details "
     data-api-key="event_id">
     <thead>
       <tr>

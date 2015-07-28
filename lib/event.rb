@@ -8,6 +8,19 @@ $LOG ||= Logger.new(STDOUT)
 class Event
 
 
+  # Returns hash where keys are the class and values are the friendly event name
+  def self.get_types(db)
+    db[:component_event].distinct.select_map(:subtype).map do |type|
+      { type => Object::const_get(type).friendly_subtype }
+    end
+  end
+
+
+  def self.friendly_subtype
+    'Event'
+  end
+
+
   def initialize(time:)
     unless time.to_s =~ /^[0-9]+$/
       raise TypeError.new("timestamp (#{time}) must look like an Integer!")

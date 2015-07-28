@@ -4,6 +4,12 @@ require_relative 'component_status_event'
 
 class DescriptionEvent < ComponentStatusEvent
 
+
+  def self.friendly_subtype
+    'Description'
+  end
+
+
   def html_details(component=nil)
     if @hw_type == 'Interface' && component
       details = "Description for #{@hw_type} #{component.name} on #{@device} changed from \"#{@old}\" to \"#{@new}\""
@@ -12,5 +18,6 @@ class DescriptionEvent < ComponentStatusEvent
     end
     return details
   end
+
 
 end

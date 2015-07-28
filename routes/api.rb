@@ -43,7 +43,7 @@ class Pixel < Sinatra::Base
     device = params[:device]
     device_partial = params[:device_partial]
     hw_type = params[:hw_type]
-    types = params[:types] ? params[:types].split(',') : nil
+    types = params[:types] ? params[:types].split('$') : nil
 
     events = ComponentEvent.fetch_from_db(
       start_time: start_time, end_time: end_time, types: types, db: @@db, limit: limit,
@@ -64,14 +64,17 @@ class Pixel < Sinatra::Base
         'hw_type',
         'types',
         'limit',
-      ]
+      ],
+      '_types_' => Event.get_types(@@db)
     }
     data['data'] = []
+
     events.each do |event|
       temp = JSON.parse(event.to_json)['data']
       component = Component.fetch_from_db(id: event.component_id, db: @@db).first
       # Create the details field as appropriate for the event
       temp['details'] = event.html_details(component)
+      temp['friendly_subtype'] = event.class.friendly_subtype
       temp['rawtime'] = temp['time']
       temp['_attrs_'] = { 'time' => { 'pxl-meta' => event.time }}
       temp.merge!(JSON.parse(component.to_json)['data'])
@@ -89,7 +92,7 @@ class Pixel < Sinatra::Base
     limit = params[:limit]
     device = params[:device]
     hw_type = params[:hw_type]
-    types = params[:types] ? params[:types].split(',') : nil
+    types = params[:types] ? params[:types].split('$') : nil
 
     JSON.generate(ComponentEvent.fetch_from_db(
       start_time: start_time, end_time: end_time, types: types, db: @@db, limit: limit,

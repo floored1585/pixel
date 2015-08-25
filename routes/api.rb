@@ -36,56 +36,6 @@ class Pixel < Sinatra::Base
     ))
   end
 
-  get '/v2/ajax/events' do
-    start_time = params[:start_time].to_i_if_numeric
-    end_time = params[:end_time].to_i_if_numeric
-    limit = params[:limit] || 100 # return a max of 100 results
-    device = params[:device]
-    device_partial = params[:device_partial]
-    hw_type = params[:hw_type]
-    types = params[:types] ? params[:types].split('$') : nil
-
-    events = ComponentEvent.fetch_from_db(
-      start_time: start_time, end_time: end_time, types: types, db: @@db, limit: limit,
-      device: device, hw_type: hw_type, device_partial: device_partial
-    )
-
-    data = {}
-    data['meta'] = {
-      '_th_' => {
-        'pxl-sort' => true
-      },
-      '_filters_' => [
-        'device',
-        'device_partial',
-        'label',
-        'start_time',
-        'end_time',
-        'hw_type',
-        'types',
-        'limit',
-      ],
-      '_types_' => Event.get_types(@@db)
-    }
-    data['data'] = []
-
-    events.each do |event|
-      temp = JSON.parse(event.to_json)['data']
-      component = Component.fetch_from_db(id: event.component_id, db: @@db).first
-      # Create the details field as appropriate for the event
-      temp['details'] = event.html_details(component)
-      temp['friendly_subtype'] = event.class.friendly_subtype
-      temp['rawtime'] = temp['time']
-      temp['_attrs_'] = { 'time' => { 'pxl-meta' => event.time }}
-      temp.merge!(JSON.parse(component.to_json)['data'])
-      # make the device a link instead of raw device name
-      temp['device'] = device_link(temp['device'])
-      data['data'].push(temp)
-    end
-    return JSON.generate(data)
-
-  end
-
   get '/v2/events/component' do
     start_time = params[:start_time]
     end_time = params[:end_time]

@@ -48,9 +48,9 @@
       </script>
 
       <div class="input-group pxl-bottom-5 btn-group pxl-ms-container">
-        <span class="input-group-addon" id="es_types">Event Type</span>
-        <select id='event_stream_types' multiple='multiple'></select>
-        <button id="event_stream_types_reset" class="btn btn-default" style='width: 20%;'>Clear</button>
+        <span class="input-group-addon" id="es_type">Event Type</span>
+        <select id='event_stream_type' multiple='multiple'></select>
+        <button id="event_stream_type_reset" class="btn btn-default" style='width: 20%;'>Clear</button>
       </div>
 
       <div class="input-group">
@@ -79,7 +79,7 @@
   <table
     id='event_stream'
     class='table ajax_table table-hover table-condensed d3-tablesorter'
-    data-api-url="/v2/ajax/events"
+    data-api-url="/ajax/events"
     data-api-refresh='10'
     data-api-params="limit=30"
     data-api-columns="time:Time ,friendly_subtype:Type ,device:Device ,details:Details "

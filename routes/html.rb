@@ -32,6 +32,16 @@ class Pixel < Sinatra::Base
   end
 
 
+  get '/devices' do
+    erb :devices
+  end
+
+
+  get '/devices2' do
+    erb :devices2
+  end
+
+
   get '/events' do
     erb :events
   end

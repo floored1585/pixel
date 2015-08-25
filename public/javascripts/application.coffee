@@ -281,40 +281,246 @@ typeahead = ->
 
 
 d3_init = ->
-  # Only continue if we have ajax tables
+  # Only continue if we have ajax tables or lists
   if $('.ajax_table').length != 0
     clearInterval($.cookie('auto-refresh'))
     $('.ajax_table').each ->
       table = $(this)
       id = table.attr('id')
-      filters = $("##{id}_filters")
       refresh_time = table.data('api-refresh')
       if refresh_time?
-        ajaxRefreshID[id] = window.setInterval((-> d3_fetch(table)), refresh_time * 1000)
-      d3_fetch(table)
+        ajaxRefreshID[id] = window.setInterval((-> d3_table_fetch(table)), refresh_time * 1000)
+      d3_table_fetch(table)
+  if $('.ajax_list').length != 0
+    clearInterval($.cookie('auto-refresh'))
+    $('.ajax_list').each ->
+      list = $(this)
+      id = list.attr('id')
+      refresh_time = list.data('api-refresh')
+      if refresh_time?
+        ajaxRefreshID[id] = window.setInterval((-> d3_list_fetch(list)), refresh_time * 1000)
+      d3_list_fetch(list)
 
-d3_fetch = (table) ->
+
+d3_list_fetch = (list) ->
+    $.ajax list.data('api-url'),
+      success: (data, status, xhr) ->
+        data = $.parseJSON(data)
+        d3_list_update(list, data)
+
+      error: (xhr, status, err) ->
+      complete: (xhr, status) ->
+
+
+d3_list_update = (jq_list, data) ->
+  list_id = jq_list.attr('id')
+  list = d3.select("##{list_id}")
+
+  # Set up Configuration section
+  dropdown_id = "##{list_id}_dd"
+  selector_list = d3.select(dropdown_id).selectAll('li')
+    # The next line filters out _list_display_ from the keys
+    .data( $.grep(d3.keys(data[0]), (v) -> !v.match('_list_display_')) )
+  selector_list.enter()
+    .append('li')
+    .classed('pxl-list-dd-option', true)
+    .html((d) -> "<a href='#'>#{d}</a>")
+  selector_list.exit().remove()
+
+  selectors = $.parseJSON(decodeURIComponent($.url("?#{list_id}_selectors")))
+  selectors ?= [] # Set it to empty if we didn't get anything from the URL
+
+  add_selector = (selector, container) ->
+    selector_text = d3.keys(selector)[0]
+    regex = selector[selector_text]
+    newLayer = $("
+    <div id=\"#{selector_text}_id\" data-selector=\"#{selector_text}\"
+    class=\"input-group pxl-bottom-5 #{list_id}_layer\">
+      <span class=\"input-group-addon\">#{selector_text}</span>
+      <span class=\"input-group-addon\">
+        <label style='margin-bottom: 0px;'>
+          <input type=\"checkbox\" class=\" pxl-checkbox\" />&nbsp;Regex</input>
+        </label>
+      </span>
+      <input type=\"text\" class=\"#{list_id}_input form-control\"
+        placeholder=\"Don't include leading and trailing slashes\" disabled />
+      <span class=\"input-group-btn\">
+        <button class=\"btn btn-default\">
+          <span class=\"glyphicon glyphicon-remove\"></span>
+        </button>
+      </span>
+    </div>
+    ")
+    # Load the regex if we were passed one -- this is for saved links
+    if regex
+      newLayer.find('label input').prop('checked', true)
+      newLayer.find(".#{list_id}_input").prop('disabled', (i, v) -> !v)
+      newLayer.find(".#{list_id}_input").val(regex)
+    newLayer.hide().appendTo(container).show('slow')
+    newLayer.find('label input').first().on click: ->
+      newLayer.find(".#{list_id}_input").prop('disabled', (i, v) -> !v)
+      newLayer.find(".#{list_id}_input").val(null)
+      apply_layers(list_id, data)
+      set_focus()
+    newLayer.find(".#{list_id}_input").focusout( -> apply_layers(list_id, data) )
+    newLayer.find('span button').first().on click: ->
+      $(newLayer).hide('slow', ->
+        $(this).remove()
+        apply_layers(list_id, data)
+      )
+    apply_layers(list_id, data)
+
+  container = $("##{list_id}_layers")
+
+  $('.pxl-list-dd-option').each( ->
+    $(this).find('a').on click: ->
+      selector = {}
+      selector[$(this).text()] = null
+      add_selector(selector, container)
+  )
+
+  $.each(selectors, (k, selector) ->
+    add_selector(selector, container)
+  )
+
+  apply_layers(list_id, data)
+
+update_list_link = (list_id, selectors) ->
+  a = $("##{list_id}_link")
+  a.attr('href', "?#{list_id}_selectors=#{encodeURIComponent(JSON.stringify(selectors))}")
+
+apply_layers = (list_id, data) ->
+  jq_list = $("##{list_id}")
+  list = d3.select("##{list_id}")
+  selectors = []
+  $(".#{list_id}_layer").each( ->
+    hash = {}
+    key = $(this).data('selector')
+    value = $(this).find(".#{list_id}_input").val()
+    hash[key] = value
+    selectors.push(hash)
+  )
+
+  update_list_link(list_id, selectors)
+
+  display = '_list_display_'
+
+  new_data = { txt: 'root', children: [] }
+  # This function is used recursively to generate a custom tree of devices,
+  # which is later used to generate a D3 structure
+  generate_data = (nodes, index) ->
+    selector = selectors[index]
+    # If there are no more selectors to process, just list the devices
+    if selector == undefined
+      return $.map(nodes, (node, k) -> { txt: node[display], children: [] } )
+    selector_field = d3.keys(selector)[0]
+    selector_regex = d3.values(selector)[0]
+    tree = []
+    categories = {}
+    $.each(nodes, (k, node) ->
+      instance = node[selector_field] # vendor / device/ sw_descr etc
+      # REGEXP
+      if selector_regex
+        match = RegExp(selector_regex).exec(instance)
+        category = if match then match[1] else '(unmatched)'
+        category = match[0] if category == undefined
+      else
+        category = instance
+        category ?= '(unmatched)'
+      categories[category] ?= []
+      categories[category].push(node)
+    )
+    $.each(categories, (category, children) ->
+      tree.push {
+        txt: category,
+        children: generate_data(children, index + 1),
+        count: children.length
+      }
+    )
+    return tree
+
+  new_data['children'] = generate_data(data, 0)
+
+  generate_list = (parent_lists) ->
+    item = parent_lists.selectAll('ul')
+      .data((d) ->
+        # If there are no children, don't generate a new list
+        if $.isEmptyObject(d.children) then [] else [d]
+      )
+      .enter().append('ul')
+      .classed('list-group', true)
+      .attr('data-new-item', true)
+    children = item.selectAll('li')
+      .data((d) ->
+        # Sort the data alphabetically, and ensure (unmatched) is always at the end
+        d.children.sort((a, b) ->
+          if a.txt.match('(unmatched)') then return 1
+          if b.txt.match('(unmatched)') then return -1
+          d3.ascending(a.txt, b.txt)
+        )
+      )
+      .enter().append('li')
+      .html((d) ->
+        if d.count > 0 then "#{d.txt} <span class='badge'>#{d.count}</span>" else d.txt
+      )
+      .classed('list-group-item', true)
+      .classed('list-group-link', (d) -> $.isEmptyObject(d.children))
+    # Recurse if we have more layers to work through
+    if !(children.empty())
+      generate_list(children)
+
+  # Clear out the old data first
+  jq_list.empty()
+
+  # Generate a new list
+  root_list = list.selectAll('div').data([new_data]).enter().append('div')
+  generate_list(root_list)
+
+  # el should be a ul
+  set_toggles = (el) ->
+    if !el.data('new-item') then return
+    if el.length == 0 then return
+    el.children('li').on click: (event) ->
+      $(this).children('ul').toggle(200)
+      event.stopPropagation()
+    # Set the hover classes. This is retarded why can't CSS do this
+    el.children('li').mouseover((event) ->
+      $(this).addClass('hover')
+      event.stopPropagation()
+    )
+    el.children('li').mouseout((event) -> $(this).removeClass('hover'))
+    el.children('li').children('ul').hide()
+    # Remove the new tag
+    el.removeData('new-item')
+    set_toggles($(this).children('li').children('ul'))
+
+  set_toggles(jq_list.find('div ul'))
+
+
+d3_table_fetch = (table) ->
     url = table.data('api-url')
     params = table.data('api-params').split(',').join('&')
 
-    $.ajax "#{url}?#{params}&ajax=true",
+    $.ajax "#{url}?#{params}",
       success: (data, status, xhr) ->
         data = $.parseJSON(data)
         meta = data['meta']
         meta ?= {}
         data = data['data']
         data = parse_event_data(data)
-        d3_update(table, data, meta)
+        d3_table_update(table, data, meta)
       error: (xhr, status, err) ->
       complete: (xhr, status) ->
         # trigger tablesorter update, and perform initial sort if
         # we previously had no data
         fresh_data = true if table[0].config.totalRows == 0
+        # Default is to sort ascending, unless data-sort attribute is set to 'desc'
+        sort = if table.data('sort')?.match('desc') then 0 else 1
         table.trigger('updateAll')
-        table.trigger('sorton', [[[0,1]]]) if fresh_data
+        table.trigger('sorton', [[[0,sort]]]) if fresh_data
 
 
-d3_update = (jq_table, data, meta) ->
+d3_table_update = (jq_table, data, meta) ->
 
   columns = $.map(jq_table.data('api-columns').split(','), (pair) ->
     split = pair.split(':')
@@ -323,7 +529,10 @@ d3_update = (jq_table, data, meta) ->
     c
   )
 
-  ident = (d) -> d
+  ident = (d) ->
+    if ('object'.match typeof d)
+      return d['data']
+    return d
 
   table_id = jq_table.attr('id')
   table = d3.select("##{table_id}")
@@ -348,30 +557,39 @@ d3_update = (jq_table, data, meta) ->
     set_hovers(jq_table)
     set_onclicks(jq_table)
 
-    # Type picker
-    d3.select("##{table_id}_types").selectAll('option')
-      .data(meta['_types_'], (d) -> d3.keys(d)[0])
-      .enter()
-      .append('option')
-      .text((type) -> d3.values(type)[0])
-      .attr('value', (type) -> d3.keys(type)[0])
-
-    $("##{table_id}_types").multiselect({
-      buttonWidth: '100%',
-      enableHTML: true,
-      nonSelectedText: "<span class='pxl-placeholder'>Select event types to display</span>",
-      numberDisplayed: 2,
-      dropRight: true,
-      enableFiltering: true,
-      enableCaseInsensitiveFiltering: true,
-      onDropdownHide: (e) -> set_focus()
-    })
-    # When the clear button is clicked, unselect all the types
-    $("##{table_id}_types_reset").on click: ->
-      select_id = $(this).attr('id').replace('_reset', '')
-      $("##{select_id} option:selected").each( -> $(this).prop('selected', false))
-      $("##{select_id}").multiselect('refresh')
-      set_focus()
+    # Get dropdown data
+    $.each(meta['_dropdowns_'], (field, dd_data) ->
+      url = dd_data['url']
+      placeholder = dd_data['placeholder']
+      dropdown_id = "##{table_id}_#{field}"
+      $.ajax url,
+        success: (data, status, xhr) ->
+          data = $.parseJSON(data)
+          d3.select(dropdown_id).selectAll('option')
+            .data(data)
+            .enter()
+            .append('option')
+            .text((d) -> d3.values(d)[0])
+            .attr('value', (d) -> d3.keys(d)[0])
+          $(dropdown_id).multiselect({
+            buttonWidth: '100%',
+            enableHTML: true,
+            nonSelectedText: "<span class='pxl-placeholder'>#{placeholder}</span>",
+            numberDisplayed: 2,
+            dropRight: true,
+            enableFiltering: true,
+            enableCaseInsensitiveFiltering: true,
+            onDropdownHide: (e) -> set_focus()
+          })
+          # When the clear button is clicked, unselect all the options
+          $("#{dropdown_id}_reset").on click: ->
+            select_id = $(this).attr('id').replace('_reset', '')
+            $("##{select_id} option:selected").each( -> $(this).prop('selected', false))
+            $("##{select_id}").multiselect('refresh')
+            set_focus()
+        error: (xhr, status, err) ->
+        complete: (xhr, status) ->
+    )
 
     params = $.each(jq_table.data('api-params').split(','), (i, pair) ->
       param = pair.split('=')[0]
@@ -386,7 +604,7 @@ d3_update = (jq_table, data, meta) ->
       # Reset the refresh timer
       refresh_time = jq_table.data('api-refresh')
       window.clearInterval(ajaxRefreshID[table_id])
-      ajaxRefreshID[table_id] = window.setInterval((-> d3_fetch(jq_table)), refresh_time * 1000)
+      ajaxRefreshID[table_id] = window.setInterval((-> d3_table_fetch(jq_table)), refresh_time * 1000) if refresh_time
 
       # apply params to the table & get new dataset
       params = []
@@ -407,8 +625,7 @@ d3_update = (jq_table, data, meta) ->
         if (value? && value.trim()) then params.push("#{filter}=#{value}")
       )
       jq_table.data('api-params', params.join(','))
-      d3_fetch(jq_table)
-
+      d3_table_fetch(jq_table)
 
   tbody = table.select('tbody')
 
@@ -428,6 +645,7 @@ d3_update = (jq_table, data, meta) ->
     .transition().duration(500)
     .style('opacity', 1)
   tr.exit()
+    .classed('remove-me', true) # For tablesorter compatibility
     .transition().duration(300)
     .style('opacity', 0)
     .remove()
@@ -436,6 +654,9 @@ d3_update = (jq_table, data, meta) ->
     .data(get_cell_data)
     .enter()
     .append("td")
+    # Apply attr and class if the cell data is a hash and has pxl-meta key
+    .attr('data-pxl-meta', (d,i) -> d && d['pxl-meta'])
+    .classed('pxl-meta', (d,i) -> d && d['pxl-meta'])
     .html(ident)
 
 
@@ -445,7 +666,6 @@ parse_event_data = (data) ->
     obj['time'] = epoch_to_local(obj['time'], date_format) if obj['time'] != undefined
     return obj
   )
-
 
 epoch_to_local = (epoch, format) -> $.format.date(new Date(epoch * 1000), format)
 

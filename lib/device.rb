@@ -17,6 +17,26 @@ $LOG ||= Logger.new(STDOUT)
 class Device
 
 
+  def self.fetch_from_db(device: nil, device_partial: nil, vendor: nil,
+                         db:, sw_descr: nil, limit: nil)
+    device_data = db[:device]
+    # Filter if options were passed
+    device_data = device_data.where(:vendor => vendor) if vendor
+    device_data = device_data.where(:sw_descr => sw_descr) if sw_descr
+    device_data = device_data.where(:device => device) if device && !device_partial
+    device_data = device_data.where(Sequel.ilike(:device, "%#{device}%")) if device && device_partial
+    device_data = device_data.order(Sequel.desc(:device))
+    device_data = device_data.limit(limit) if limit && limit.to_s =~ /^\d+$/
+
+    devices = []
+    device_data.select_all.each do |row|
+      devices.push(Device.new(row[:device]).populate(row))
+    end
+
+    return devices
+  end
+
+
   def self.fetch(device, components=[])
     # Get the device via API
     device = API.get(
@@ -34,6 +54,20 @@ class Device
       device.populate(nil, components)
     end
     return device
+  end
+
+
+  def self.get_vendors(db)
+    db[:device].exclude(vendor: nil).distinct.select_map(:vendor).map do |vendor|
+      { vendor => vendor }
+    end
+  end
+
+
+  def self.get_sw_descrs(db)
+    db[:device].exclude(sw_descr: nil).distinct.select_map(:sw_descr).map do |sw_descr|
+      { sw_descr => sw_descr }
+    end
   end
 
 

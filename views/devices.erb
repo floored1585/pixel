@@ -1,0 +1,59 @@
+<h1 id='event-refresh' class='pxl-h1-events'>Device Tree</h1>
+
+<div class='row'>
+  <div class='col-md-3'></div>
+  <div class='col-md-6'>
+
+    <center>
+      <div class='btn-group'>
+        <button class="btn btn-default pxl-set-focus pxl-text-swap" type="button" data-toggle="collapse"
+          data-target="#device_list_selectors" aria-expanded="false" aria-controls="collapseExample"
+          data-text-swap='Hide Configuration'>
+          Show Configuration
+        </button>
+        <div class="btn-group dropdown">
+          <button class="btn btn-default dropdown-toggle" type="button" id="saved-trees" data-toggle="dropdown" aria-haspopup="true" aria-expanded="true">
+            Saved Trees
+            <span class="caret"></span>
+          </button>
+          <ul id='device_list_saved' class="dropdown-menu" aria-labelledby="saved-trees">
+          </ul>
+        </div>
+      </div>
+    </center>
+
+    <div class="collapse" id="device_list_selectors">
+      <br />
+      <center>
+        <h5><a id='device_list_link' href=''>Link to this tree</a></h5>
+
+      <div class="input-group dropdown">
+
+        <button class="btn btn-default dropdown-toggle" type="button" id="dropdownMenu1" data-toggle="dropdown" aria-haspopup="true" aria-expanded="true">
+          Add a Layer
+          <span class="caret"></span>
+        </button>
+        <ul id='device_list_dd' class="dropdown-menu" aria-labelledby="dropdownMenu1">
+        </ul>
+      </div>
+
+      <br />
+
+      <div id='device_list_layers'>
+      </div>
+
+    </center>
+    </div> <!-- collapse -->
+  </div>
+  <div class='col-md-3'></div>
+</div>
+
+<br />
+
+<div class='pxl-dynamic-content'>
+  <div class='row'>
+    <div class='col-md-5'>
+      <div id='device_list' class='ajax_list' data-api-url='/ajax/devices'></div>
+    </div>
+  </div>
+</div>

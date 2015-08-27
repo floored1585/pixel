@@ -27,6 +27,7 @@
     "js-url": "websanova/js-url#8bf3b91598ac153192675f4bc5060dd357f8f3ba",
     "moment": "~2.10.6",
     "rickshaw": "~1.5.1",
+    "tablesorter": "jquery.tablesorter#~2.23.2",
     "typeahead.js": "~0.10.5"
   }
 }

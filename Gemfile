@@ -9,12 +9,13 @@ gem 'mysql'
 gem 'rack-coffee'
 gem 'influxdb'
 gem 'snmp'
-gem 'rvm-capistrano'
 
 group :development do
   gem 'hashdiff'
   gem 'rspec'
+  gem 'rvm-capistrano'
   gem 'capistrano'
   gem 'capistrano-rvm'
   gem 'capistrano-bundler'
+  gem 'capistrano-bower'
 end

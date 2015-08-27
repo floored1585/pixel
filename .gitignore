@@ -31,7 +31,7 @@ config/deploy.rb
 config/hosts.yaml
 config/deploy/
 
-public/assets/
+public/components
 
 spec/rspec.log
 

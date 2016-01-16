@@ -9,8 +9,15 @@ $LOG ||= Logger.new(STDOUT)
 class Instance
 
   # Return the current master instance, or nil if there is no current master
-  def self.get_master(db:)
-    return Instance.fetch_from_db(db: db, master: true).first
+  def self.get_master
+    instance = API.get(
+      src: 'instance',
+      dst: 'core',
+      resource: '/v2/instance/get_master',
+      what: 'master instance'
+    )
+    return nil unless instance.class == Instance
+    return instance
   end
 
 
@@ -86,14 +93,17 @@ class Instance
     new_hostname = Socket.gethostname
     new_ip = IPAddr.new(UDPSocket.open {|s| s.connect("8.8.8.8", 1); s.addr.last})
     new_core = true if settings['this_is_core']
+    new_core ||= false
     new_master = true if (db[:instance].where(:master => true).count == 0) && new_core
+    new_master ||= false
     new_poller = true if settings['this_is_poller']
+    new_poller ||= false
     new_config_hash = Digest::MD5.hexdigest(Marshal::dump(settings))
 
     @hostname = new_hostname
     @ip = new_ip
     @core = new_core || false
-    @master = new_master || false
+    @master ||= new_master
     @poller = new_poller || false
     @config_hash = new_config_hash
     @last_updated = Time.now.to_i

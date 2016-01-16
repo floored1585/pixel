@@ -81,7 +81,7 @@ describe Instance do
     end
 
     it 'should return 0 if nothing matches' do
-      expect(Instance.delete(db: DB, hostname: 'iad1-pixel-dev1')).to equal 0
+      expect(Instance.delete(db: DB, hostname: 'nothing_should_match')).to equal 0
     end
 
     it 'should return 1 if something matches' do
@@ -94,7 +94,7 @@ describe Instance do
   describe '#get_master' do
 
     it 'should return the master instance' do
-      expect(Instance.get_master(db: DB).hostname).to eql 'spec-test-master'
+      expect(Instance.get_master.hostname).to eql 'spec-test-master'
     end
   end
 

@@ -14,7 +14,7 @@ $LOG = Logger.new("#{APP_ROOT}/messages.log", 0, 100*1024*1024)
 
 class Pixel < Sinatra::Base
 
-  @@scheduler = Rufus::Scheduler.new
+  @@scheduler = Rufus::Scheduler.new(:lockfile => ".rufus-scheduler.lock")
   @@settings = Configfile.retrieve
   @@db = SQ.initiate
   @@db.disconnect
@@ -30,14 +30,18 @@ class Pixel < Sinatra::Base
     end
   end
 
-  @@scheduler.in('2s') do
-    @@instance = Instance.fetch(hostname: Socket.gethostname).first || Instance.new
-  end
+  # Don't set up recurring jobs if scheduler is down
+  unless @@scheduler.down?
 
-  @@scheduler.every('5s') do
-    @@instance.update!(settings: @@settings)
-    @@instance.send
-    $LOG.info('CORE: Instance update completed')
+    @@scheduler.in('2s') do
+      @@instance = Instance.fetch(hostname: Socket.gethostname).first || Instance.new
+    end
+
+    @@scheduler.every('5s') do
+      @@instance.update!(settings: @@settings)
+      @@instance.send
+    end
+
   end
 
   # COFFEESCRIPT PLZ

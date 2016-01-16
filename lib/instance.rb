@@ -8,7 +8,29 @@ $LOG ||= Logger.new(STDOUT)
 
 class Instance
 
-  # Return the current master instance, or nil if there is no current master
+
+  def self.fetch(hostname: nil)
+    resource = '/v2/instance'
+
+    params = "?hostname=#{hostname}" if hostname
+    params ||= ''
+
+    result = API.get(
+      src: 'instance',
+      dst: 'core',
+      resource: "#{resource}#{params}",
+      what: 'instances',
+    )
+    result.each do |object|
+      unless object.is_a?(Instance)
+        raise "Received bad object in Instance.fetch"
+        return []
+      end
+    end
+    return result
+  end
+
+
   def self.get_master
     instance = API.get(
       src: 'instance',

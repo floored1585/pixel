@@ -12,6 +12,14 @@ class Pixel < Sinatra::Base
     JSON.generate( Instance.fetch_from_db(db: @@db, master: true) )
   end
 
+  get '/v2/instance' do
+    hostname = params[:hostname]
+
+    instances = Instance.fetch_from_db(db: @@db, hostname: hostname)
+
+    return JSON.generate(instances)
+  end
+
   get '/v2/fetch_poll/*/*' do |poller, count|
     JSON.generate( fetch_poll(@@settings, @@db, count.to_i, poller) )
   end

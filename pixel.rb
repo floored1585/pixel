@@ -22,12 +22,16 @@ class Pixel < Sinatra::Base
   include Core
   include Helper
 
-  @@instance = Instance.fetch_from_db(db: @@db, hostname: Socket.gethostname).first || Instance.new
+  @@instance = nil
 
   if @@settings['this_is_poller']
     @@scheduler.every('2s') do
-      Poller.check_for_work(@@settings, @@instance) unless @@instance.hostname.empty?
+      Poller.check_for_work(@@settings, @@instance) unless @@instance && @@instance.hostname.empty?
     end
+  end
+
+  @@scheduler.in('2s') do
+    @@instance = Instance.fetch(hostname: Socket.gethostname).first || Instance.new
   end
 
   @@scheduler.every('5s') do

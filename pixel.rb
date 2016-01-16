@@ -23,16 +23,15 @@ class Pixel < Sinatra::Base
   include Helper
 
   @@instance = Instance.fetch_from_db(db: @@db, hostname: Socket.gethostname).first || Instance.new
-  @@instance.update!(db: @@db, settings: @@settings)
 
   if @@settings['this_is_poller']
     @@scheduler.every('2s') do
-      Poller.check_for_work(@@settings, @@instance)
+      Poller.check_for_work(@@settings, @@instance) unless @@instance.hostname.empty?
     end
   end
 
   @@scheduler.every('5s') do
-    @@instance.update!(db: @@db, settings: @@settings)
+    @@instance.update!(settings: @@settings)
     @@instance.save(@@db)
     $LOG.info('CORE: Instance update completed')
   end

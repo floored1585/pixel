@@ -260,14 +260,14 @@ describe Instance do
   describe '#update' do
 
     it 'should return an Instance' do
-      expect(Instance.new.update!(db: DB, settings: SETTINGS)).to be_a Instance
+      expect(Instance.new.update!(settings: SETTINGS)).to be_a Instance
     end
     it 'should populate an empty Instance' do
-      expect(Instance.new.update!(db: DB, settings: SETTINGS).hostname).to eql Socket.gethostname
+      expect(Instance.new.update!(settings: SETTINGS).hostname).to eql Socket.gethostname
     end
     it 'should update an existing Instance' do
       instance = Instance.fetch_from_db(db: DB, hostname: 'spec-test').first
-      instance.update!(db: DB, settings: SETTINGS)
+      instance.update!(settings: SETTINGS)
 
       expect(instance.hostname).to eql Socket.gethostname
       expect(instance.ip).to be_a IPAddr

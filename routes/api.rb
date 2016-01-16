@@ -9,7 +9,7 @@ class Pixel < Sinatra::Base
   end
 
   get '/v2/instance/get_master' do
-    JSON.generate( Instance.fetch_from_db(db: @@db, master: true).first )
+    JSON.generate( Instance.fetch_from_db(db: @@db, master: true) )
   end
 
   get '/v2/fetch_poll/*/*' do |poller, count|

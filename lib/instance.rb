@@ -15,7 +15,7 @@ class Instance
       dst: 'core',
       resource: '/v2/instance/get_master',
       what: 'master instance'
-    )
+    ).first
     return nil unless instance.class == Instance
     return instance
   end
@@ -89,12 +89,12 @@ class Instance
   end
 
 
-  def update!(db:, settings:)
+  def update!(settings:)
     new_hostname = Socket.gethostname
     new_ip = IPAddr.new(UDPSocket.open {|s| s.connect("8.8.8.8", 1); s.addr.last})
     new_core = true if settings['this_is_core']
     new_core ||= false
-    new_master = true if (db[:instance].where(:master => true).count == 0) && new_core
+    new_master = true if (Instance.get_master.nil?) && new_core
     new_master ||= false
     new_poller = true if settings['this_is_poller']
     new_poller ||= false

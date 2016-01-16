@@ -9,6 +9,7 @@ gem 'mysql'
 gem 'rack-coffee'
 gem 'influxdb'
 gem 'snmp'
+gem 'rufus-scheduler'
 
 group :development do
   gem 'hashdiff'

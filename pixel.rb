@@ -4,6 +4,7 @@ require 'pp'
 require 'rack/coffee'
 require 'json'
 require 'logger'
+require 'rufus-scheduler'
 
 # Load the modules
 Dir["#{File.dirname(__FILE__)}/lib/**/*.rb"].each { |file| require(file) }
@@ -13,6 +14,7 @@ $LOG = Logger.new("#{APP_ROOT}/messages.log", 0, 100*1024*1024)
 
 class Pixel < Sinatra::Base
 
+  @@scheduler = Rufus::Scheduler.new
   @@settings = Configfile.retrieve
   @@db = SQ.initiate
   @@db.disconnect
@@ -20,8 +22,19 @@ class Pixel < Sinatra::Base
   include Core
   include Helper
 
+  @@instance = Instance.fetch_from_db(db: @@db, hostname: Socket.gethostname).first || Instance.new
+  @@instance.update!(db: @@db, settings: @@settings)
+
   if @@settings['this_is_poller']
-    Core.start_cron(@@settings)
+    @@scheduler.every('2s') do
+      Poller.check_for_work(@@settings, @@instance)
+    end
+  end
+
+  @@scheduler.every('5s') do
+    @@instance.update!(db: @@db, settings: @@settings)
+    @@instance.save(@@db)
+    $LOG.info('CORE: Instance update completed')
   end
 
   # COFFEESCRIPT PLZ

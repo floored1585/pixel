@@ -136,6 +136,25 @@ class Instance
   end
 
 
+  def send
+    start = Time.now.to_i
+    if API.post(
+      src: 'instance',
+      dst: 'core',
+      resource: '/v2/instance',
+      what: "instance #{@hostname}",
+      data: to_json
+    )
+      elapsed = Time.now.to_i - start
+      $LOG.info("INSTANCE: POST successful for #{@hostname} (#{elapsed} seconds)")
+      return true
+    else
+      $LOG.error("INSTANCE: POST failed for #{@hostname}; Aborting")
+      return false
+    end
+  end
+
+
   def to_json(*a)
     hash = {
       "json_class" => self.class.name,

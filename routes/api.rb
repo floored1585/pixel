@@ -122,6 +122,13 @@ class Pixel < Sinatra::Base
   #  delete_devices(@@settings, @@db, devices, false)
   #end
 
+  post '/v2/instance' do
+    request.body.rewind
+    instance = JSON.load(request.body.read)
+    return 400 unless instance.class == Instance
+    post_instance(@@settings, @@db, instance)
+  end
+
   post '/v2/device' do
     request.body.rewind
     device = JSON.load(request.body.read)

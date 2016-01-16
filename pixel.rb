@@ -32,7 +32,7 @@ class Pixel < Sinatra::Base
 
   @@scheduler.every('5s') do
     @@instance.update!(settings: @@settings)
-    @@instance.save(@@db)
+    @@instance.send
     $LOG.info('CORE: Instance update completed')
   end
 

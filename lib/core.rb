@@ -194,6 +194,19 @@ module Core
   end
 
 
+  def post_instance(settings, db, instance)
+    db.disconnect
+    $LOG.info("CORE: Receiving instance #{instance.hostname}.")
+    begin
+      response = instance.save(db).class == Instance ? 200 : 400
+      $LOG.info("CORE: Saved instance #{instance.hostname}.")
+    rescue Sequel::PoolTimeout => e
+      $LOG.error("CORE: SQL error! \n#{e}")
+    end
+    return response
+  end
+
+
   def post_device(settings, db, device)
     db.disconnect
     uuid = device.poller_uuid

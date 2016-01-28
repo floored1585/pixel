@@ -15,31 +15,58 @@ $LOG = Logger.new("#{APP_ROOT}/messages.log", 0, 100*1024*1024)
 class Pixel < Sinatra::Base
 
   @@scheduler = Rufus::Scheduler.new(:lockfile => ".rufus-scheduler.lock")
-  @@settings = Configfile.retrieve
+
+  # Will return nil if this is an api_only instance
   @@db = SQ.initiate
-  @@db.disconnect
+
+  if @@db
+    @@db.disconnect
+    @@config = Config.fetch_from_db(db: @@db)
+    @@config.save(@@db)
+  else
+    @@config = Config.fetch
+  end
 
   include Core
   include Helper
 
   @@instance = nil
 
-  if @@settings['this_is_poller']
-    @@scheduler.every('2s') do
-      Poller.check_for_work(@@settings, @@instance) unless @@instance && @@instance.hostname.empty?
-    end
-  end
-
   # Don't set up recurring jobs if scheduler is down
   unless @@scheduler.down?
 
-    @@scheduler.in('2s') do
+    @@scheduler.in('1s') do
       @@instance = Instance.fetch(hostname: Socket.gethostname).first || Instance.new
     end
 
+    poller = @@scheduler.schedule_every('2s') do
+      Poller.check_for_work(@@instance) unless @@instance && @@instance.hostname.empty?
+    end
+    poller.pause
+
     @@scheduler.every('5s') do
-      @@instance.update!(settings: @@settings)
+      @@instance = Instance.fetch(hostname: @@instance.hostname || Socket.gethostname).first || Instance.new
+      @@instance.update!(config: @@config)
+
+      if @@instance.config_hash != Config.fetch_hash
+        $LOG.info('INSTANCE: Configuration is outdated, fetching new config...')
+        @@config.reload
+        @@instance.update!(config: @@config)
+      end
+
       @@instance.send
+
+      if @@instance.poller?
+        if poller.paused?
+          $LOG.info('INSTANCE: Starting poller!')
+          poller.resume
+        end
+      else
+        unless poller.paused?
+          $LOG.info('INSTANCE: Stopping poller!')
+          poller.pause
+        end
+      end
     end
 
   end

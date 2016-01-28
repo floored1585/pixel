@@ -1,9 +1,9 @@
 require 'influxdb'
-require_relative 'configfile'
+require_relative 'poller'
 
 module Influx
 
-  poll_cfg = Configfile.retrieve['poller'] || {}
+  poll_cfg = Poller.get_config
 
   @colors = [ 
     '#b2a470', '#92875a', '#ecb796', '#dc8f70', '#716c49', '#d2ed82',

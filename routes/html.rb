@@ -4,20 +4,20 @@ class Pixel < Sinatra::Base
     # Start timer
     beginning = Time.now
 
-    ints_down = get_ints_down(@@settings, @@db)
-    ints_saturated = get_ints_saturated(@@settings, @@db)
-    ints_discarding = get_ints_discarding(@@settings, @@db)
-    cpus_high = get_cpus_high(@@settings, @@db)
-    memory_high = get_memory_high(@@settings, @@db)
-    hw_problems = get_hw_problems(@@settings, @@db)
-    alarms = get_alarms(@@settings, @@db)
-    poller_failures = get_poller_failures(@@settings, @@db)
+    ints_down = get_ints_down(@@db)
+    ints_saturated = get_ints_saturated(@@db)
+    ints_discarding = get_ints_discarding(@@db)
+    cpus_high = get_cpus_high(@@db)
+    memory_high = get_memory_high(@@db)
+    hw_problems = get_hw_problems(@@db)
+    alarms = get_alarms(@@db)
+    poller_failures = get_poller_failures(@@db)
 
     db_elapsed = '%.2f' % (Time.now - beginning)
 
     erb :alerts, :locals => {
       :title => 'Alerts',
-      :settings => @@settings,
+      :settings => @@config.settings,
       :db => @@db,
       :poller_failures => poller_failures,
       :ints_discarding => ints_discarding,
@@ -54,12 +54,12 @@ class Pixel < Sinatra::Base
 
     # Start timer
     beginning = Time.now
-    interfaces = get_ints_saturated(@@settings, @@db, util: util, speed: speed)
+    interfaces = get_ints_saturated(@@db, util: util, speed: speed)
     db_elapsed = '%.2f' % (Time.now - beginning)
 
     erb :saturation, :locals => {
       :title => 'Saturation Data',
-      :settings => @@settings,
+      :settings => @@config.settings,
       :db => @@db,
       :interfaces => interfaces,
       :util => util,
@@ -86,7 +86,7 @@ class Pixel < Sinatra::Base
     db_elapsed = '%.2f' % (Time.now - beginning)
 
     erb :device, :locals => {
-      :settings => @@settings,
+      :settings => @@config.settings,
       :device_name => device_name,
       :device => device,
       :db_elapsed => db_elapsed,

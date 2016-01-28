@@ -3,7 +3,7 @@ require 'logger'
 require 'snmp'
 require_relative 'api'
 require_relative 'influx'
-require_relative 'configfile'
+require_relative 'poller'
 require_relative 'core_ext/object'
 require_relative 'components/interface'
 require_relative 'components/cpu'
@@ -78,7 +78,7 @@ class Device
 
     # optional
     @poll_ip = poll_ip
-    @poll_cfg = poll_cfg || Configfile.retrieve['poller']
+    @poll_cfg = poll_cfg || Poller.get_config
 
     @interfaces = {}
     @cpus = {}

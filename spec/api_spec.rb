@@ -1,9 +1,6 @@
 require_relative 'rspec'
 require_relative '../lib/api'
 require_relative '../lib/device'
-require_relative '../lib/configfile'
-
-settings = Configfile.retrieve
 
 
 describe API do

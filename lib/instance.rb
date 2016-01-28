@@ -111,22 +111,16 @@ class Instance
   end
 
 
-  def update!(settings:)
+  def update!(config:)
     new_hostname = Socket.gethostname
     new_ip = IPAddr.new(UDPSocket.open {|s| s.connect("8.8.8.8", 1); s.addr.last})
-    new_core = true if settings['this_is_core']
-    new_core ||= false
-    new_master = true if (Instance.get_master.nil?) && new_core
-    new_master ||= false
-    new_poller = true if settings['this_is_poller']
-    new_poller ||= false
-    new_config_hash = Digest::MD5.hexdigest(Marshal::dump(settings))
+    new_config_hash = Digest::MD5.hexdigest(Marshal::dump(config))
 
     @hostname = new_hostname
     @ip = new_ip
-    @core = new_core || false
-    @master ||= new_master
-    @poller = new_poller || false
+    @core = true if @core.nil?
+    @master = false if @master.nil?
+    @poller = false if @poller.nil?
     @config_hash = new_config_hash
     @last_updated = Time.now.to_i
 

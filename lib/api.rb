@@ -1,4 +1,3 @@
-require_relative 'configfile'
 require 'net/http'
 require 'uri'
 require 'json'
@@ -7,8 +6,7 @@ $LOG ||= Logger.new(STDOUT)
 
 module API
 
-  @settings = Configfile.retrieve
-
+  @core_url = YAML.load_file(File.expand_path('../../config/config.yaml', __FILE__))['core']
 
   def self.get(src:, dst:, resource:, what:, retries: 5, delay: 5)
     uri, http = get_http(dst, resource)
@@ -90,7 +88,7 @@ module API
 
 
   def self.get_http(dst, resource)
-    url = @settings[dst].to_s.gsub(/\/$/,'') + resource.to_s
+    url = @core_url.to_s.gsub(/\/$/,'') + resource.to_s
     uri = URI.parse(url)
     http = Net::HTTP.new(uri.host, uri.port)
     http.use_ssl = true if url =~ /^https/

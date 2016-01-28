@@ -4,6 +4,6 @@ require_relative 'objects'
 
 $LOG = Logger.new('/dev/null')
 
-SETTINGS = Configfile.retrieve
-
 DB = SQ.initiate
+
+SETTINGS = Config.fetch_from_db(db: DB).settings

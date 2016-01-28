@@ -3,14 +3,14 @@ require 'securerandom'
 
 module Core
 
-  def list_devices(settings, db)
+  def list_devices(db)
     devices = []
     db[:device].select(:device).each { |row| devices.push(row[:device]) }
     return devices
   end
 
 
-  def get_ints_down(settings, db)
+  def get_ints_down(db)
     #start = Time.now
     ints = []
     int_data = db[:interface].filter(
@@ -29,7 +29,7 @@ module Core
   end
 
 
-  def get_ints_saturated(settings, db, util: 90, speed: nil)
+  def get_ints_saturated(db, util: 90, speed: nil)
     #start = Time.now
     ints = []
     rows = db[:interface].filter{ (bps_util_in > util) | (bps_util_out > util) }.
@@ -44,7 +44,7 @@ module Core
   end
 
 
-  def get_ints_discarding(settings, db)
+  def get_ints_discarding(db)
     #start = Time.now
     ints = []
     int_data = db[:interface].natural_join(:component).where{ discards_out > 500 }
@@ -58,7 +58,7 @@ module Core
   end
 
 
-  def get_cpus_high(settings, db)
+  def get_cpus_high(db)
     #start = Time.now
     cpus = []
     db[:cpu].filter{ util > 85 }.natural_join(:component).each do |row|
@@ -70,7 +70,7 @@ module Core
   end
 
 
-  def get_memory_high(settings, db)
+  def get_memory_high(db)
     #start = Time.now
     memory = []
     db[:memory].filter{ util > 90 }.natural_join(:component).each do |row|
@@ -82,7 +82,7 @@ module Core
   end
 
 
-  def get_hw_problems(settings, db)
+  def get_hw_problems(db)
     #start = Time.now
     hw = { :fans => [], :psus => [], :temps => [] }
 
@@ -101,7 +101,7 @@ module Core
   end
 
 
-  def get_alarms(settings, db)
+  def get_alarms(db)
     #start = Time.now
     devices = []
     device_data = db[:device].exclude(
@@ -117,7 +117,7 @@ module Core
   end
 
 
-  def get_poller_failures(settings, db)
+  def get_poller_failures(db)
     #start = Time.now
     devices = []
     db[:device].filter(:last_poll_result => 1).each do |row|
@@ -129,7 +129,7 @@ module Core
   end
 
 
-  def get_interface(settings, db, device, index: nil, name: nil)
+  def get_interface(db, device, index: nil, name: nil)
     if index
       row = db[:interface].where(:device => device, :index => index.to_s).
         natural_join(:component).first
@@ -149,7 +149,7 @@ module Core
   end
 
 
-  def get_device(settings, db, device)
+  def get_device(db, device)
     db[:device].where(:device => device).each do |row|
       return Device.new(row[:device]).populate(row) || {}
     end
@@ -157,7 +157,7 @@ module Core
   end
 
 
-  def fetch_poll(settings, db, count, poller)
+  def fetch_poll(db, count, poller)
     db.disconnect
     currently_polling = db[:device].filter{Sequel.&(
       {:currently_polling => 1, :worker => poller},
@@ -194,7 +194,20 @@ module Core
   end
 
 
-  def post_instance(settings, db, instance)
+  def post_config(db, config)
+    db.disconnect
+    $LOG.info("CORE: Receiving config.")
+    begin
+      response = config.save(db).class == Config ? 200 : 400
+      $LOG.info("CORE: Saved config.")
+    rescue Sequel::PoolTimeout => e
+      $LOG.error("CORE: SQL error! \n#{e}")
+    end
+    return response
+  end
+
+
+  def post_instance(db, instance)
     db.disconnect
     $LOG.info("CORE: Receiving instance #{instance.hostname}.")
     begin
@@ -207,7 +220,7 @@ module Core
   end
 
 
-  def post_device(settings, db, device)
+  def post_device(db, device)
     db.disconnect
     uuid = device.poller_uuid
     $LOG.info("CORE: Receiving device #{device.name} from #{device.worker} (#{uuid})")
@@ -228,7 +241,7 @@ module Core
     return response
   end
 
-  def post_interface(settings, db, int)
+  def post_interface(db, int)
     db.disconnect
     $LOG.info("CORE: Received if #{int.index} (#{int.name}) on #{int.device} from #{int.worker}")
     begin
@@ -239,7 +252,7 @@ module Core
     return 200
   end
 
-  def post_cpu(settings, db, cpu)
+  def post_cpu(db, cpu)
     db.disconnect
     $LOG.info("CORE: Received cpu #{cpu.index} on #{cpu.device} from #{cpu.worker}")
     begin
@@ -250,7 +263,7 @@ module Core
     return 200
   end
 
-  def post_fan(settings, db, fan)
+  def post_fan(db, fan)
     db.disconnect
     $LOG.info("CORE: Received fan #{fan.index} on #{fan.device} from #{fan.worker}")
     begin
@@ -261,7 +274,7 @@ module Core
     return 200
   end
 
-  def post_memory(settings, db, memory)
+  def post_memory(db, memory)
     db.disconnect
     $LOG.info("CORE: Received memory #{memory.index} on #{memory.device} from #{memory.worker}")
     begin
@@ -272,7 +285,7 @@ module Core
     return 200
   end
 
-  def post_psu(settings, db, psu)
+  def post_psu(db, psu)
     db.disconnect
     $LOG.info("CORE: Received psu #{psu.index} on #{psu.device} from #{psu.worker}")
     begin
@@ -283,7 +296,7 @@ module Core
     return 200
   end
 
-  def post_temperature(settings, db, temp)
+  def post_temperature(db, temp)
     db.disconnect
     $LOG.info("CORE: Received temp #{temp.index} on #{temp.device} from #{temp.worker}")
     begin
@@ -295,20 +308,19 @@ module Core
   end
 
 
-  def populate_device_table(settings, db)
+  def populate_device_table(db)
     db.disconnect
     devices = {}
 
-    # Load from file
-    if settings['device_source']['type'] = 'file'
-      device_file = settings['device_source']['file_path']
-      if File.exists?(device_file)
-        devices = YAML.load_file(File.join(APP_ROOT, device_file))
-      else
-        $LOG.error("CORE: Error populating devices from file: File not found: #{device_file}")
-      end
-      $LOG.info("CORE: Importing #{devices.size} devices from file: #{device_file}")
+    # Load from file TODO: move this to the config somehow
+    device_file = 'config/hosts.yaml'
+
+    if File.exists?(device_file)
+      devices = YAML.load_file(File.join(APP_ROOT, device_file))
+    else
+      $LOG.error("CORE: Error populating devices from file: File not found: #{device_file}")
     end
+    $LOG.info("CORE: Importing #{devices.size} devices from file: #{device_file}")
 
     API.post(
       src: 'core',
@@ -320,7 +332,7 @@ module Core
   end
 
 
-  def add_devices(settings, db, new_devices, replace: false)
+  def add_devices(db, new_devices, replace: false)
     db.disconnect
 
     new_devices.each do |device, ip|
@@ -412,7 +424,7 @@ module Core
   end
 
 
-  def _fill_metadata!(devices, settings, name_to_index)
+  def _fill_metadata!(devices, config, name_to_index)
     devices.each do |device,data|
       interfaces = data[:interfaces] || {}
       interfaces.each do |index,oids|
@@ -422,19 +434,27 @@ module Core
         end
 
         time_since_poll = Time.now.to_i - oids[:last_updated]
-        oids[:stale] = time_since_poll if time_since_poll > settings['stale_timeout']
+        oids[:stale] = time_since_poll if time_since_poll > config.settings['stale_timeout'].value
 
         if oids[:pps_out] && oids[:discards_out]
           oids[:discards_out_pct] = '%.2f' % (oids[:discards_out].to_f / (oids[:pps_out] + oids[:discards_out]) * 100)
         end
 
         # Populate 'link_type' value (Backbone, Access, etc...)
+        # TODO: This stuff (regex and hash) should be in the config somewhere
+        link_types = {
+          bb: 'Backbone',
+          acc: 'Access',
+          sub: 'Child',
+          trn: 'Transit',
+          unknown: 'Unknown',
+        }
         if type = oids[:description].match(/^([a-z]+)(__|\[)/)
           type = type[1]
         else
           type = 'unknown'
         end
-        oids[:link_type] = settings['link_types'][type]
+        oids[:link_type] = link_types[type]
         if type == 'sub'
           oids[:is_child] = true
           # This will return po1 from sub[po1]__gar-k11u1-dist__g1/47
@@ -451,24 +471,6 @@ module Core
         oids[:oper_status] == 1 ? oids[:link_up] = true : oids[:link_up] = false
       end
     end
-  end
-
-
-  def self.start_cron(settings)
-    $LOG.info("POLLER: Starting cron poke task")
-    pidfile = 'proc.lock'
-    begin
-      if File.exists?(pidfile)
-        pid = File.read(pidfile).to_i
-        $LOG.warn("POLLER: Killing process #{pid}")
-        Process.kill(15, pid)
-      end
-    rescue Errno::ESRCH
-    end
-
-    pid = spawn "./cron.sh"
-    Process.detach(pid)
-    File.open(pidfile, 'w') { |f| f.write(pid) }
   end
 
 

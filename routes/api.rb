@@ -8,6 +8,14 @@ class Pixel < Sinatra::Base
     return 200
   end
 
+  get '/v2/config' do
+    JSON.generate( Config.fetch_from_db(db: @@db) )
+  end
+
+  get '/v2/config_hash' do
+    JSON.generate( [Config.fetch_from_db(db: @@db).hash] )
+  end
+
   get '/v2/instance/get_master' do
     JSON.generate( Instance.fetch_from_db(db: @@db, master: true) )
   end
@@ -17,11 +25,11 @@ class Pixel < Sinatra::Base
 
     instances = Instance.fetch_from_db(db: @@db, hostname: hostname)
 
-    return JSON.generate(instances)
+    JSON.generate(instances)
   end
 
   get '/v2/fetch_poll/*/*' do |poller, count|
-    JSON.generate( fetch_poll(@@settings, @@db, count.to_i, poller) )
+    JSON.generate( fetch_poll(@@db, count.to_i, poller) )
   end
 
   get '/v2/events/component/*/*/*' do |device, hw_type, index|
@@ -79,19 +87,19 @@ class Pixel < Sinatra::Base
       device: device, index: index, hw_types: hw_types, db: @@db, limit: limit
     )
 
-    return JSON.generate(components)
+    JSON.generate(components)
   end
 
   get '/v2/device/*' do |device|
-    JSON.generate( get_device(@@settings, @@db, device) )
+    JSON.generate( get_device(@@db, device) )
   end
 
   get '/v2/devices/populate' do
-    populate_device_table(@@settings, @@db)
+    populate_device_table(@@db)
   end
 
   get '/v2/devices' do
-    JSON.generate( list_devices(@@settings, @@db) )
+    JSON.generate( list_devices(@@db) )
   end
 
   get '/v1/series/rickshaw' do
@@ -105,85 +113,82 @@ class Pixel < Sinatra::Base
   #  JSON.generate( Influx.query(query) )
   #end
 
-  get '/v2/poller/poke' do
-    Poller.check_for_work(@@settings)
-  end
-
   #
   # POSTS
   #
   post '/v2/devices/replace' do
     request.body.rewind
     devices = JSON.parse(request.body.read)
-    add_devices(@@settings, @@db, devices, replace: true)
+    add_devices(@@db, devices, replace: true)
   end
 
   post '/v2/devices/add' do
     request.body.rewind
     devices = JSON.parse(request.body.read)
-    add_devices(@@settings, @@db, devices)
+    add_devices(@@db, devices)
   end
 
-  #post '/v1/devices/delete' do
-  #  request.body.rewind
-  #  devices = JSON.parse(request.body.read)
-  #  delete_devices(@@settings, @@db, devices, false)
-  #end
+  post '/v2/config' do
+    request.body.rewind
+    config = JSON.load(request.body.read)
+    return 400 unless config.class == Config
+    post_config(@@db, config)
+  end
 
   post '/v2/instance' do
     request.body.rewind
     instance = JSON.load(request.body.read)
     return 400 unless instance.class == Instance
-    post_instance(@@settings, @@db, instance)
+    post_instance(@@db, instance)
   end
 
   post '/v2/device' do
     request.body.rewind
     device = JSON.load(request.body.read)
     return 400 unless device.class == Device
-    post_device(@@settings, @@db, device)
+    post_device(@@db, device)
   end
 
   post '/v2/interface' do
     request.body.rewind
     interface = JSON.load(request.body.read)
     return 400 unless interface.class == Interface
-    post_interface(@@settings, @@db, interface)
+    post_interface(@@db, interface)
   end
 
   post '/v2/cpu' do
     request.body.rewind
     cpu = JSON.load(request.body.read)
     return 400 unless cpu.class == CPU
-    post_cpu(@@settings, @@db, cpu)
+    post_cpu(@@db, cpu)
   end
 
   post '/v2/fan' do
     request.body.rewind
     fan = JSON.load(request.body.read)
     return 400 unless fan.class == Fan
-    post_fan(@@settings, @@db, fan)
+    post_fan(@@db, fan)
   end
 
   post '/v2/memory' do
     request.body.rewind
     memory = JSON.load(request.body.read)
     return 400 unless memory.class == Memory
-    post_memory(@@settings, @@db, memory)
+    post_memory(@@db, memory)
   end
 
   post '/v2/psu' do
     request.body.rewind
     psu = JSON.load(request.body.read)
     return 400 unless psu.class == PSU
-    post_psu(@@settings, @@db, psu)
+    post_psu(@@db, psu)
   end
 
   post '/v2/temperature' do
     request.body.rewind
     temperature = JSON.load(request.body.read)
     return 400 unless temperature.class == Temperature
-    post_temperature(@@settings, @@db, temperature)
+    post_temperature(@@db, temperature)
   end
 
 end

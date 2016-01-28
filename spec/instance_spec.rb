@@ -247,7 +247,7 @@ describe Instance do
       expect(instance_new.config_hash).to be_a String
     end
 
-    it 'should be empty when first initialized' do
+    it 'should be nil when first initialized' do
       expect(instance_new.config_hash).to be_empty
     end
 
@@ -260,20 +260,20 @@ describe Instance do
   describe '#update' do
 
     it 'should return an Instance' do
-      expect(Instance.new.update!(settings: SETTINGS)).to be_a Instance
+      expect(Instance.new.update!(config: SETTINGS)).to be_a Instance
     end
     it 'should populate an empty Instance' do
-      expect(Instance.new.update!(settings: SETTINGS).hostname).to eql Socket.gethostname
+      expect(Instance.new.update!(config: SETTINGS).hostname).to eql Socket.gethostname
     end
     it 'should update an existing Instance' do
       instance = Instance.fetch_from_db(db: DB, hostname: 'spec-test').first
-      instance.update!(settings: SETTINGS)
+      instance.update!(config: SETTINGS)
 
       expect(instance.hostname).to eql Socket.gethostname
       expect(instance.ip).to be_a IPAddr
       expect(instance.ip.to_s).to eql UDPSocket.open {|s| s.connect("8.8.8.8", 1); s.addr.last}
-      expect(instance.core?).to eql !!SETTINGS['this_is_core']
-      expect(instance.poller?).to eql !!SETTINGS['this_is_poller']
+      expect(instance.core?).to eql true
+      expect(instance.poller?).to eql true
       expect(instance.master?).to equal false
       expect(instance.config_hash).to eql Digest::MD5.hexdigest(Marshal::dump(SETTINGS))
     end

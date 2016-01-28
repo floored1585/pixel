@@ -96,7 +96,7 @@
       </thead>
       <tbody>
       <% ints_discarding.each do |int| %>
-        <% parent = int.parent_name ? get_interface(settings, db, int.device, name: int.parent_name) : nil %>
+        <% parent = int.parent_name ? get_interface(db, int.device, name: int.parent_name) : nil %>
         <tr <%= tr_attributes(int) %>>
         <td class='pxl-hidden'><%= int.discards_out %></td>
         <td class='pxl-meta' data-pxl-meta='<%= int.discards_out %>'>

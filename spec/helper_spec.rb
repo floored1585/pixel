@@ -1,11 +1,11 @@
 require_relative 'rspec'
 require_relative '../lib/helper'
 require_relative '../lib/core'
-require_relative '../lib/configfile'
+require_relative '../lib/config'
 include Helper
 include Core
 
-settings = Configfile.retrieve
+settings = Config.fetch_from_db(db: DB).settings
 
 #TODO: bps_cell
 #TODO: total_bps_cell
@@ -131,7 +131,7 @@ describe '#interface_link' do
   it 'should generate a link' do
     int = JSON.load(DEV1_JSON).interfaces['10102']
     link = interface_link(settings, int)
-    correct_link = "<a href='#{settings['grafana_if_dash']}" +
+    correct_link = "<a href='#{settings[:grafana_if_dash].value}" +
     "?title=gar-v11u1-acc-y%20::%20Gi0%2F2" +
     "&name=gar-v11u1-acc-y.interface.10102.Gi0/2" +
     "&ifSpeedBps=1000" +

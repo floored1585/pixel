@@ -114,7 +114,7 @@ class Instance
   def update!(config:)
     new_hostname = Socket.gethostname
     new_ip = IPAddr.new(UDPSocket.open {|s| s.connect("8.8.8.8", 1); s.addr.last})
-    new_config_hash = Digest::MD5.hexdigest(Marshal::dump(config))
+    new_config_hash = Digest::MD5.hexdigest(Marshal::dump(config.to_json))
 
     @hostname = new_hostname
     @ip = new_ip

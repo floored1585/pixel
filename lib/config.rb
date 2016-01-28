@@ -110,7 +110,7 @@ class Config
 
 
   def hash
-    Digest::MD5.hexdigest(Marshal::dump(self))
+    Digest::MD5.hexdigest(Marshal::dump(self.to_json))
   end
 
 

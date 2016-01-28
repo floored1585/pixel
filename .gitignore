@@ -20,6 +20,7 @@ doc/
 .idea
 .secret
 .sass-cache
+.rufus-scheduler.lock
 Capfile
 
 messages.*

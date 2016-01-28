@@ -110,7 +110,7 @@ describe Config do
       expect(config_1.hash).to be_a String
     end
     it 'should be accurate' do
-      expect(config_1.hash).to eql '5a3825654dd526b980c7dd21e46ab5c6'
+      expect(config_1.hash).to eql 'dbacf3307131dceef19a70a3e3dc6402'
     end
   end
 

@@ -266,8 +266,9 @@ describe Instance do
       expect(Instance.new.update!(config: SETTINGS).hostname).to eql Socket.gethostname
     end
     it 'should update an existing Instance' do
+      config = Config.fetch_from_db(db: DB)
       instance = Instance.fetch_from_db(db: DB, hostname: 'spec-test').first
-      instance.update!(config: SETTINGS)
+      instance.update!(config: config)
 
       expect(instance.hostname).to eql Socket.gethostname
       expect(instance.ip).to be_a IPAddr
@@ -275,7 +276,7 @@ describe Instance do
       expect(instance.core?).to eql true
       expect(instance.poller?).to eql true
       expect(instance.master?).to equal false
-      expect(instance.config_hash).to eql Digest::MD5.hexdigest(Marshal::dump(SETTINGS))
+      expect(instance.config_hash).to eql Digest::MD5.hexdigest(Marshal::dump(config.to_json))
     end
 
   end

@@ -50,7 +50,7 @@ class Pixel < Sinatra::Base
 
       if @@instance.config_hash != Config.fetch_hash
         $LOG.info('INSTANCE: Configuration is outdated, fetching new config...')
-        @@config.reload
+        @@config = @@config.reload
         @@instance.update!(config: @@config)
       end
 

@@ -29,7 +29,11 @@ module Poller
 
       # Poll the device; send data back to core
       if device.poll(worker: instance.hostname, uuid: uuid)
+        $LOG.info("POLLER: Finished polling #{device_name}, processing...")
+        influx_start = Time.now.to_i
         device.write_influxdb
+        influx_total = Time.now.to_i - influx_start
+        $LOG.info("POLLER: InfluxDB data saved for #{device_name} in #{influx_total} seconds.")
       else
         $LOG.error("POLLER: Poll failed for #{device_name}")
       end

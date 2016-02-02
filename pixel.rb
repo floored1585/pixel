@@ -45,16 +45,28 @@ class Pixel < Sinatra::Base
     poller.pause
 
     @@scheduler.every('5s') do
-      @@instance = Instance.fetch(hostname: @@instance.hostname || Socket.gethostname).first || Instance.new
+      restart = false
+
+      new_instance = Instance.fetch(hostname: @@instance.hostname || Socket.gethostname).first || Instance.new
+      restart = true if new_instance.to_json != @@instance.to_json
+      @@instance = new_instance
+
       @@instance.update!(config: @@config)
 
       if @@instance.config_hash != Config.fetch_hash
         $LOG.info('INSTANCE: Configuration is outdated, fetching new config...')
         @@config = @@config.reload
         @@instance.update!(config: @@config)
+        restart = true
       end
 
       @@instance.send
+
+      if restart
+        $LOG.info('INSTANCE: Configuration or instance data was updated... restarting!')
+        FileUtils.touch('tmp/restart.txt')
+        break
+      end
 
       if @@instance.poller?
         if poller.paused?

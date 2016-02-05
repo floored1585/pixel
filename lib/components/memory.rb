@@ -46,12 +46,13 @@ class Memory < Component
   end
 
 
-  def write_influxdb
-    Influx.post(
-      series: "#{@device}.memory.#{@index}.#{@description}",
-      value: @util,
-      time: @last_updated,
-    )
+  def get_influxdb
+    [{
+      series: 'memory',
+      tags: { device: @device, index: @index, name: @description },
+      values: { value: @util },
+      timestamp: @last_updated
+    }]
   end
 
 

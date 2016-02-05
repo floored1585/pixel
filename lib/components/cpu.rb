@@ -45,12 +45,13 @@ class CPU < Component
   end
 
 
-  def write_influxdb
-    Influx.post(
-      series: "#{@device}.cpu.#{@index}.#{@description}",
-      value: @util,
-      time: @last_updated,
-    )
+  def get_influxdb
+    [{
+      series: 'cpu',
+      tags: { device: @device, index: @index, name: @description },
+      values: { value: @util },
+      timestamp: @last_updated
+    }]
   end
 
 

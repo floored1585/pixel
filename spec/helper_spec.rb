@@ -132,10 +132,7 @@ describe '#interface_link' do
     int = JSON.load(DEV1_JSON).interfaces['10102']
     link = interface_link(settings, int)
     correct_link = "<a href='#{settings[:grafana_if_dash].value}" +
-    "?title=gar-v11u1-acc-y%20::%20Gi0%2F2" +
-    "&name=gar-v11u1-acc-y.interface.10102.Gi0/2" +
-    "&ifSpeedBps=1000" +
-    "&ifMaxBps=35802192" +
+    "?device=gar-v11u1-acc-y&name=Gi0/2" +
     "' target='_blank'>Gi0/2</a>"
 
     expect(link).to eql correct_link

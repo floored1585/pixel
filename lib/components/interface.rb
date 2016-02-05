@@ -347,57 +347,37 @@ class Interface < Component
   end
 
 
-  def write_influxdb
-    Influx.post(
-      series: "#{@device}.interface.#{@index}.#{@name}.bps_in",
-      value: bps_in,
-      time: @last_updated,
-    )
-    Influx.post(
-      series: "#{@device}.interface.#{@index}.#{@name}.bps_out",
-      value: bps_out,
-      time: @last_updated,
-    )
-    Influx.post(
-      series: "#{@device}.interface.#{@index}.#{@name}.pps_in",
-      value: pps_in,
-      time: @last_updated,
-    )
-    Influx.post(
-      series: "#{@device}.interface.#{@index}.#{@name}.pps_out",
-      value: pps_out,
-      time: @last_updated,
-    )
-    Influx.post(
-      series: "#{@device}.interface.#{@index}.#{@name}.discards_in",
-      value: discards_in,
-      time: @last_updated,
-    )
-    Influx.post(
-      series: "#{@device}.interface.#{@index}.#{@name}.discards_out",
-      value: discards_out,
-      time: @last_updated,
-    )
-    Influx.post(
-      series: "#{@device}.interface.#{@index}.#{@name}.errors_in",
-      value: errors_in,
-      time: @last_updated,
-    )
-    Influx.post(
-      series: "#{@device}.interface.#{@index}.#{@name}.errors_out",
-      value: errors_out,
-      time: @last_updated,
-    )
-    Influx.post(
-      series: "#{@device}.interface.#{@index}.#{@name}.bps_util_in",
-      value: bps_util_in,
-      time: @last_updated,
-    )
-    Influx.post(
-      series: "#{@device}.interface.#{@index}.#{@name}.bps_util_out",
-      value: bps_util_out,
-      time: @last_updated,
-    )
+  def get_influxdb
+    [{
+      series: 'bps',
+      tags: { device: @device, name: @name, index: @index },
+      values: { in: bps_in, out: bps_out },
+      timestamp: @last_updated
+    },
+    {
+      series: 'pps',
+      tags: { device: @device, name: @name, index: @index },
+      values: { in: pps_in, out: pps_out },
+      timestamp: @last_updated
+    },
+    {
+      series: 'eps',
+      tags: { device: @device, name: @name, index: @index },
+      values: { in: errors_in, out: errors_out },
+      timestamp: @last_updated
+    },
+    {
+      series: 'dps',
+      tags: { device: @device, name: @name, index: @index },
+      values: { in: discards_in, out: discards_out },
+      timestamp: @last_updated
+    },
+    {
+      series: 'bps_util',
+      tags: { device: @device, name: @name, index: @index },
+      values: { in: bps_util_in, out: bps_util_out },
+      timestamp: @last_updated
+    }]
   end
 
 

@@ -47,11 +47,9 @@ module Influx
   end
 
 
-  def self.post(series:, value:, time: Time.now.to_i)
-    data_point = { :value => value, :time => time }
-
+  def self.post(data)
     begin # Attempt the connection
-      @influxdb.write_point(series, data_point)
+      @influxdb.write_points(data)
       return true
     rescue Timeout::Error, Errno::ETIMEDOUT, Errno::EINVAL, Errno::ECONNRESET,
       Errno::ECONNREFUSED, EOFError, Net::HTTPBadResponse,
@@ -59,7 +57,6 @@ module Influx
       $LOG.error("INFLUXDB: #{e}")
       return false
     end
-
   end
 
 

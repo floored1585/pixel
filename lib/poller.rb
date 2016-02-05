@@ -53,10 +53,10 @@ module Poller
     config = {}
 
     config[:concurrency] = 10
-    config[:influx_ip] = '10.201.134.6'
+    config[:influx_ip] = '172.18.0.4'
     config[:influx_user] = 'uUzSj1AZuj1QJro'
     config[:influx_pass] = 'c53G6RWiLVkaa5Q'
-    config[:influx_db] = 'snmp_data'
+    config[:influx_db] = 'pixel'
     config[:snmpv2_community] = 'TYtESdt28a2mn3H'
     # interesting_description is the regex that determines whether or not
     # we process & store data, based on the interface description.

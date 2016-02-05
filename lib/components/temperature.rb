@@ -62,12 +62,13 @@ class Temperature < Component
   end
 
 
-  def write_influxdb
-    Influx.post(
-      series: "#{@name}.temperature.#{@index}.#{@description}",
-      value: @temperature,
-      time: @last_updated,
-    )
+  def get_influxdb
+    [{
+      series: 'temperature',
+      tags: { device: @device, index: @index, name: @description },
+      values: { value: @temperature },
+      timestamp: @last_updated
+    }]
   end
 
 

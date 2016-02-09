@@ -393,6 +393,17 @@ class Device
     @cpus.each { |index, cpu| data += cpu.get_influxdb }
     @memory.each { |index, memory| data += memory.get_influxdb }
     @temps.each { |index, temp| data += temp.get_influxdb }
+    data.push({
+      series: 'device_totals',
+      tags: { device: @name },
+      values: {
+        bps_out: bps_out,
+        pps_out: pps_out,
+        eps_out: errors_out,
+        dps_out: discards_out
+      },
+      timestamp: @last_poll
+    })
     Influx.post(data)
   end
 

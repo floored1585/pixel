@@ -24,6 +24,7 @@ module Influx
     :read_timeout => 5,
     :open_timeout => 1,
     :retry => 1,
+    :epoch => 's'
   )
 
 
@@ -61,27 +62,27 @@ module Influx
 
 
   def self._transform_rickshaw(original, db, attribute)
+    transformed = {}
     response = []
     counter = 0
-    original.each do |series,points|
-      index = /#{attribute}\.([\.\d]+)\.[^\.]+$/.match(series)[1]
-      device = /(.+)\.#{attribute}/.match(series)[1]
-      row = db[:component].where(:device => device, :index => index).
-        natural_join(attribute.to_sym).first
-      next unless row
-      description = row[:description]
-      data = []
-      points.each do |point|
-        data.unshift({
+    if original[0] && original[0]['values']
+      original[0]['values'].each do |point|
+        index = point['index']
+
+        transformed[index] ||= {}
+        transformed[index]['name'] ||= point['name']
+        transformed[index]['data'] ||= []
+        transformed[index]['data'].unshift({
           'x' => point['time'],
-          'y' => point['value'].to_i,
+          'y' => point['value'].to_i
         })
       end
-      response.push({
-        'color' => @colors[counter],
-        'name' => description,
-        'data' => data,
-      })
+    end
+
+    counter = 0
+    transformed.each do |index, data|
+      data['color'] = @colors[counter]
+      response.push(data)
       counter += 1
     end
     return response

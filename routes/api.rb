@@ -105,8 +105,8 @@ class Pixel < Sinatra::Base
   get '/v1/series/rickshaw' do
     query = params[:query]
     attribute = params[:attribute]
-    JSON.generate( [] )
-    #JSON.generate( Influx.query(query, attribute, @@db, :rickshaw) )
+    #JSON.generate( [] )
+    JSON.generate( Influx.query(query, attribute, @@db, :rickshaw) )
   end
 
   #get '/v1/series' do

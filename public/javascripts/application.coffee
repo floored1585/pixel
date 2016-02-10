@@ -45,8 +45,8 @@ draw_charts = ->
     # 'next' unless all the variables are defined and not empty
     return true if (!device || !attribute || !timeframe)
 
-    url = '/v1/series/rickshaw?query=select%20*%20from%20%2F' + device + '.' + attribute +
-    '%2F%20where%20time%20>%20now()%20-%20' + timeframe + '&attribute=' + attribute
+    url = '/v1/series/rickshaw?query=select%20*%20from%20' + attribute + '%20where%20device%3D%27' + device +
+    '%27%20and%20time%20%3E%20now()%20-%20' + timeframe + '%20order%20by%20time%20desc&attribute=' + attribute
 
     generate_charts(element, url)
 

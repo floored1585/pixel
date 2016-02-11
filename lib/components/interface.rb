@@ -264,14 +264,14 @@ class Interface < Component
     @events ||= []
 
     # Status changes
-    if new_admin_status != @admin_status
+    if @admin_status && new_admin_status != @admin_status
       @events.push(AdminStatusEvent.new(
         device: @device, hw_type: @hw_type, index: @index,
         old: Interface.status_converter(@admin_status),
         new: Interface.status_converter(new_admin_status)
       ))
     end
-    if new_oper_status != @oper_status
+    if @oper_status && new_oper_status != @oper_status
       @events.push(OperStatusEvent.new(
         device: @device, hw_type: @hw_type, index: @index,
         old: Interface.status_converter(@oper_status),

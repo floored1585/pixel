@@ -211,6 +211,7 @@ module Core
     db.disconnect
     $LOG.info("CORE: Receiving instance #{instance.hostname}.")
     begin
+      instance.set_master(true) if instance.core? && Instance.fetch_from_db(db: db, master: true).empty?
       response = instance.save(db).class == Instance ? 200 : 400
       $LOG.info("CORE: Saved instance #{instance.hostname}.")
     rescue Sequel::PoolTimeout => e

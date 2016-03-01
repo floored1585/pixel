@@ -101,6 +101,11 @@ class Instance
   end
 
 
+  def set_master(value)
+    @master = value
+  end
+
+
   def poller?
     !!@poller
   end

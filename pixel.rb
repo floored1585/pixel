@@ -79,6 +79,11 @@ class Pixel < Sinatra::Base
           poller.pause
         end
       end
+
+      if @@instance.master?
+        AlertEngine.process_events(@@db)
+        AlertEngine.process_alerts
+      end
     end
 
   end

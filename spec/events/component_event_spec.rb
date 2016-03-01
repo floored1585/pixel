@@ -33,6 +33,7 @@ describe ComponentEvent do
         :component_id => @component_id,
         :subtype => 'DescriptionEvent',
         :time => Time.now.to_i,
+        :processed => true,
         :data => '{"old":"bb__iad1-trn-1__g0/1","new":"bb__iad1-trn-1__g0/2"}',
       )
     end
@@ -91,6 +92,7 @@ describe ComponentEvent do
         :component_id => @component_id,
         :subtype => subtype,
         :time => Time.now.to_i,
+        :processed => true,
         :data => '{"old":"bb__iad1-trn-1__g0/1","new":"bb__iad1-trn-1__g0/2"}',
       )
     end
@@ -235,9 +237,10 @@ describe ComponentEvent do
     it 'should exist after being saved' do
       event = ComponentEvent.new(device: 'test-v11u1-acc-y', index: '1', hw_type: 'CPU',
                                  time: Time.now.to_i)
+      event.process!
       event.save(db: DB, data: {'test'=>'data'})
       event1 = ComponentEvent.fetch(device: 'test-v11u1-acc-y', index: '1', hw_type: 'CPU').first
-      expect(event1).to be_a ComponentEvent
+      expect(event1.processed?).to eql true
     end
 
   end

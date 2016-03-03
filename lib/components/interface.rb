@@ -49,6 +49,9 @@ class Interface < Component
   def type
     return "Access" if @type == 'acc'
     return "Backbone" if @type == 'bb'
+    return "P2P" if @type == 'p2p'
+    return "Exchange" if @type == 'exc'
+    return "Transit" if @type == 'trn'
     return "Unknown" if @type == 'unknown'
   end
 

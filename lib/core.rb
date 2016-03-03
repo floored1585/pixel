@@ -447,6 +447,8 @@ module Core
           acc: 'Access',
           sub: 'Child',
           trn: 'Transit',
+          exc: 'Exchange',
+          p2p: 'P2P',
           unknown: 'Unknown',
         }
         if type = oids[:description].match(/^([a-z]+)(__|\[)/)

@@ -31,6 +31,8 @@ module AlertEngine
       $LOG.warn "ALERT_ENGINE: Alerts enabled, but no source email address defined!"
     end
 
+    email_count = 0
+
     events.each do |event|
       # Mark event as processed, so we don't process it again next time
       event.process!.save(db)
@@ -52,11 +54,17 @@ module AlertEngine
           subject  mail_data[:subject]
           body     mail_data[:body]
         end
+
+        email_count += 1
+
       rescue Net::SMTPFatalError => e
         $LOG.error "ALERT_ENGINE: Error sending alert email: #{e}"
       end
 
     end
+
+    $LOG.info "ALERT_ENGINE: Successfully sent #{email_count} emails" if email_count > 0
+
   end
 
 

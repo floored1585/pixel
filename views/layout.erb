@@ -66,15 +66,17 @@
   <!-- BEGIN FOOTER -->
   <footer class="footer">
     <small>
-      <a href='https://github.com/floored1585/pixel'>Pixel</a>
-      by Ian Clark
+      Pixel is <a href='https://github.com/floored1585/pixel', target='_blank'>open source</a> software!
     </small>
     <nav>
       <ul>
-        <li>Powered by <a href='http://www.slowbro.org/', target='_blank'>Nyan</a></li>
+        <li><small>Powered by <a href='http://www.slowbro.org/', target='_blank'>Nyan</a></small></li>
       </ul>
       <ul>
-        <li><%= "db lookup: #{db_elapsed}s" if defined? db_elapsed %></li>
+        <li><small><%= "db lookup: #{db_elapsed}s" if defined? db_elapsed %></small></li>
+      </ul>
+      <ul>
+      <li><small>Page rendered by <%= Socket.gethostname %></small></li>
       </ul>
     </nav>
   </footer>

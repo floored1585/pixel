@@ -170,6 +170,7 @@ class Config
 
 
   def hash
+    $LOG.error("CONFIG: #{self.to_json}"
     Digest::MD5.hexdigest(Marshal::dump(self.to_json))
   end
 

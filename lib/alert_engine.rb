@@ -41,11 +41,11 @@ module AlertEngine
       from_field << ">" unless from_name.empty?
     end
 
-    if recipients.empty?
+    if alerts_enabled && recipients.empty?
       $LOG.warn "ALERT_ENGINE: Alerts enabled, but no recipients defined!"
     end
 
-    if from_field.empty?
+    if alerts_enabled && from_field.empty?
       $LOG.warn "ALERT_ENGINE: Alerts enabled, but no source email address defined!"
     end
 

@@ -33,6 +33,9 @@ config/deploy.rb
 config/hosts.yaml
 config/deploy/
 
+copyright.txt
+copyright.sh
+
 public/components
 
 spec/rspec.log

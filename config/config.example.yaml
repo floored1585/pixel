@@ -1,0 +1,34 @@
+# Frontend URL for Pixel (API endpoint)
+#
+#core: 'http://127.0.0.1'
+
+# If api_only is set to true, this instance will never try
+# to connect to the database; it will use API calls for
+# all requred functions. Only set to true for non-frontend
+# instances (dedicated pollers, etc)
+#
+#api_only: false
+
+# Host where database is located
+#
+#host: '127.0.0.1'
+
+# Name of database
+#
+#db: 'pixel'
+
+# Database user (must have RW access)
+#
+#user: 'postgres'
+
+# Password for the database user
+#
+#pass: 'password'
+
+# Maximum connections to the database (per instance)
+#
+#max_connections: 10
+
+# Connection timeout
+#
+#pool_timeout: 10

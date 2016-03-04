@@ -121,7 +121,7 @@ class ComponentEvent < Event
 
 
   def html_details(component=nil)
-    "ERROR: html_details method not implemented in class #{self.class}"
+    $LOG.error "ERROR: html_details method not implemented in class #{self.class}"
   end
 
 

@@ -27,4 +27,13 @@ class OperStatusEvent < ComponentStatusEvent
   end
 
 
+  def get_email(db)
+    int = Component.fetch_from_db(device: @device, hw_types: ["Interface"], index: @index, db: db).first
+    {
+      subject: "Interface Oper #{@new}: #{int.name} on #{@device}",
+      body: ""
+    }
+  end
+
+
 end

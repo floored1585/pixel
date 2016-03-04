@@ -27,6 +27,9 @@ GEM
       cause
       json
     json (1.8.3)
+    mail (2.6.3)
+      mime-types (>= 1.16, < 3)
+    mime-types (2.99.1)
     multi_json (1.11.2)
     mysql (2.9.1)
     net-scp (1.2.1)
@@ -86,6 +89,7 @@ DEPENDENCIES
   capistrano-rvm
   hashdiff
   influxdb
+  mail
   mysql
   pg
   rack-coffee
@@ -96,3 +100,6 @@ DEPENDENCIES
   sinatra
   sinatra-contrib
   snmp
+
+BUNDLED WITH
+   1.11.2

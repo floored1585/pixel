@@ -2,7 +2,6 @@
 #
 require 'logger'
 require 'securerandom'
-require_relative 'alert'
 require_relative 'component'
 $LOG ||= Logger.new(STDOUT)
 
@@ -59,8 +58,8 @@ class Event
   end
 
 
-  def get_alert
-    $LOG.error("EVENT: get_alert method not implemented in class #{self.class}")
+  def get_email(db)
+    $LOG.error "ERROR: get_email method not implemented in class #{self.class}"
     return nil
   end
 

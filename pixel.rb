@@ -86,7 +86,7 @@ class Pixel < Sinatra::Base
         end
 
         if @@instance.master?
-          AlertEngine.process_events(@@db)
+          AlertEngine.process_events(@@db, @@config)
         end
       end
     end

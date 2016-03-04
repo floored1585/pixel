@@ -71,6 +71,8 @@ class Config
       @settings[setting.to_sym] = ConfigItem.populate(table_name: 'global_config', data: data)
     end
 
+    # NOTE: 'value' should always be a string here.  It is casted when accessed based on 'type'.
+
     @settings[:grafana_if_dash] ||= ConfigItem.new(
       table_name: 'global_config',
       setting: 'grafana_if_dash',
@@ -98,7 +100,7 @@ class Config
     @settings[:alerts_enabled] ||= ConfigItem.new(
       table_name: 'global_config',
       setting: 'alerts_enabled',
-      value: false,
+      value: "false",
       description: 'Whether or not to send alert emails',
       type: 'Boolean',
       last_updated: now

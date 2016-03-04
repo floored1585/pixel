@@ -127,12 +127,13 @@ describe Config do
     it 'should be the same before and after saving' do
       DB.transaction(:rollback=>:always, :auto_savepoint=>true) do
         DB[:global_config].truncate
-        hash = JSON.parse(CFG1)
-        JSON.load(CFG1).save(DB)
 
-        db_config = Config.fetch_from_db(db: DB)
+        db_config1 = Config.fetch_from_db(db: DB)
+        db_config1.save(DB)
+        db_config1 = JSON.parse(db_config1.to_json)
+        db_config2 = JSON.parse(Config.fetch_from_db(db: DB).to_json)
 
-        expect(JSON.parse(db_config.to_json)).to eql hash
+        expect(db_config2).to eql db_config1
       end
     end
   end

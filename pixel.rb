@@ -48,7 +48,14 @@ class Pixel < Sinatra::Base
       restart = false
 
       new_instance = Instance.fetch(hostname: @@instance.hostname || Socket.gethostname).first || Instance.new
-      restart = true if new_instance.to_json != @@instance.to_json
+
+      if new_instance.to_json != @@instance.to_json
+        # Our instance data doesn't match the database, restart!
+        restart = true
+      else
+        restart = false
+      end
+
       @@instance = new_instance
 
       @@instance.update!(config: @@config)
@@ -65,18 +72,21 @@ class Pixel < Sinatra::Base
       if restart
         $LOG.info('INSTANCE: Configuration or instance data was updated... restarting!')
         FileUtils.touch('tmp/restart.txt')
-        break
-      end
-
-      if @@instance.poller?
-        if poller.paused?
-          $LOG.info('INSTANCE: Starting poller!')
-          poller.resume
-        end
       else
-        unless poller.paused?
-          $LOG.info('INSTANCE: Stopping poller!')
-          poller.pause
+        if @@instance.poller?
+          if poller.paused?
+            $LOG.info('INSTANCE: Starting poller!')
+            poller.resume
+          end
+        else
+          unless poller.paused?
+            $LOG.info('INSTANCE: Stopping poller!')
+            poller.pause
+          end
+        end
+
+        if @@instance.master?
+          AlertEngine.process_events(@@db, @@config)
         end
       end
     end

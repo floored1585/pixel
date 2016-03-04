@@ -49,25 +49,32 @@ describe Event do
 
   # id
   describe '#id' do
-
     context 'when freshly created' do
-
       it 'should be nil' do
         expect(event.id).to eql nil
       end
-
     end
+  end
 
-=begin
-    context 'when saved' do
 
-      it 'should be an integer' do
-        expect().to be_a Numeric
+  # processed?
+  describe '#processed' do
+    context 'when freshly created' do
+      it 'should be false' do
+        expect(event.processed?).to eql false
       end
-
     end
-=end
+  end
 
+
+  # process!
+  describe '#process!' do
+    it 'should return self' do
+      expect(Event.new(time: Time.now.to_i).process!).to be_a Event
+    end
+    it 'should set @processed true' do
+      expect(Event.new(time: Time.now.to_i).process!.processed?).to eql true
+    end
   end
 
 

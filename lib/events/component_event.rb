@@ -8,7 +8,7 @@ $LOG ||= Logger.new(STDOUT)
 class ComponentEvent < Event
 
 
-  def self.fetch(device: nil, hw_type: nil, index: nil, comp_id: nil,
+  def self.fetch(device: nil, hw_type: nil, index: nil, comp_id: nil, processed: nil,
                  start_time: nil, end_time: nil, types: [ 'all' ], limit: nil)
 
     if (device && hw_type && index)
@@ -20,6 +20,7 @@ class ComponentEvent < Event
     end
 
     params = "types=#{types.join(',')}"
+    params += "&processed=#{processed}" unless processed.nil?
     params += "&start_time=#{start_time}" if start_time
     params += "&end_time=#{end_time}" if end_time
     params += "&limit=#{limit}" if limit && limit.to_s =~ /^[0-9]+$/
@@ -40,7 +41,7 @@ class ComponentEvent < Event
   end
 
 
-  def self.fetch_from_db(device: nil, device_partial: nil, index: nil, hw_type: nil,
+  def self.fetch_from_db(device: nil, device_partial: nil, index: nil, hw_type: nil, processed: nil,
                          comp_id: nil, types:, db:, start_time: nil, end_time: nil, limit: nil)
     if (device && hw_type && index)
       comp_id = Component.id_from_db(device: device, index: index, hw_type: hw_type, db: db)
@@ -52,6 +53,7 @@ class ComponentEvent < Event
     event_data = event_data.where(:device => device) if device && !device_partial
     event_data = event_data.where(Sequel.ilike(:device, "%#{device}%")) if device && device_partial
     event_data = event_data.where(:hw_type => hw_type) if hw_type
+    event_data = event_data.where(:processed => processed) unless processed.nil?
     event_data = event_data.where{time >= start_time} if start_time
     event_data = event_data.where{time <= end_time} if end_time
     event_data = event_data.where(:subtype => types) unless (types.nil? || types.include?('all'))
@@ -119,7 +121,7 @@ class ComponentEvent < Event
 
 
   def html_details(component=nil)
-    "ERROR: html_details method not implemented in class #{self.class}"
+    $LOG.error "ERROR: html_details method not implemented in class #{self.class}"
   end
 
 
@@ -138,6 +140,7 @@ class ComponentEvent < Event
     @device = data[:device]
     @hw_type = data[:hw_type]
     @index = data[:index]
+    @processed = data[:processed]
 
     return self
   end
@@ -158,10 +161,16 @@ class ComponentEvent < Event
         :component_id => @component_id,
         :subtype => @subtype,
         :time => @time,
+        :processed => @processed,
         :data => data.to_json
       }
 
-      @id = db[:component_event].insert(data)
+      if @id
+        data[:event_id] = @id
+        db[:component_event].where(:event_id => @id).update(data)
+      else
+        @id = db[:component_event].insert(data)
+      end
       raise "Didn't get event ID for new event!" unless @id
     rescue Sequel::NotNullConstraintViolation, Sequel::ForeignKeyConstraintViolation => e
       $LOG.error("Component Event: Save failed. #{e.to_s.gsub(/\n/,'. ')}")
@@ -183,6 +192,7 @@ class ComponentEvent < Event
     hash['data']["hw_type"] = @hw_type
     hash['data']["device"] = @device
     hash['data']["index"] = @index
+    hash['data']["processed"] = @processed
     hash['data'].merge!( JSON.parse(super)['data'] )
 
     hash.to_json(*a)

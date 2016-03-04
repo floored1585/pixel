@@ -57,6 +57,11 @@ class Pixel < Sinatra::Base
   end
 
   get '/v2/events/component' do
+    if params[:processed]
+      processed = (params[:processed] == 'true')
+    else
+      processed = nil
+    end
     start_time = params[:start_time]
     end_time = params[:end_time]
     limit = params[:limit]
@@ -66,7 +71,7 @@ class Pixel < Sinatra::Base
 
     JSON.generate(ComponentEvent.fetch_from_db(
       start_time: start_time, end_time: end_time, types: types, db: @@db, limit: limit,
-      device: device, hw_type: hw_type
+      device: device, hw_type: hw_type, processed: processed
     ))
   end
 

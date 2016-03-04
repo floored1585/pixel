@@ -71,6 +71,8 @@ class Config
       @settings[setting.to_sym] = ConfigItem.populate(table_name: 'global_config', data: data)
     end
 
+    # NOTE: 'value' should always be a string here.  It is casted when accessed based on 'type'.
+
     @settings[:grafana_if_dash] ||= ConfigItem.new(
       table_name: 'global_config',
       setting: 'grafana_if_dash',
@@ -95,6 +97,45 @@ class Config
       type: 'Integer',
       last_updated: now
     )
+    @settings[:alerts_enabled] ||= ConfigItem.new(
+      table_name: 'global_config',
+      setting: 'alerts_enabled',
+      value: "false",
+      description: 'Whether or not to send alert emails',
+      type: 'Boolean',
+      last_updated: now
+    )
+    @settings[:alert_recipients] ||= ConfigItem.new(
+      table_name: 'global_config',
+      setting: 'alert_recipients',
+      value: "",
+      description: 'Comma separated list of email addresses that will alerts',
+      type: 'String',
+      last_updated: now
+    )
+    @settings[:alert_from_email] ||= ConfigItem.new(
+      table_name: 'global_config',
+      setting: 'alert_from_email',
+      value: "",
+      description: 'Email address from which alert emails will originate',
+      type: 'String',
+      last_updated: now
+    )
+    @settings[:alert_from_name] ||= ConfigItem.new(
+      table_name: 'global_config',
+      setting: 'alert_from_name',
+      value: "Pixel Alert",
+      description: 'Name from which alert emails will originate',
+      type: 'String',
+      last_updated: now
+    )
+
+    # Allow acessing config items with @@config.config_item_name
+    @settings.each do |config_item_name, config_item|
+      self.class.send(:define_method, config_item_name) do
+        config_item
+      end
+    end
 
   end
 

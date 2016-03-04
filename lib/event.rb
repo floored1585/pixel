@@ -16,6 +16,12 @@ class Event
   end
 
 
+  def self.get_unprocessed
+    events = []
+    events += ComponentEvent.fetch(processed: false)
+  end
+
+
   def self.friendly_subtype
     'Event'
   end
@@ -27,6 +33,7 @@ class Event
     end
 
     @time = time.to_i
+    @processed = false
   end
 
 
@@ -37,6 +44,23 @@ class Event
 
   def id
     @id
+  end
+
+
+  def processed?
+    !!@processed
+  end
+
+
+  def process!
+    @processed = true
+    return self
+  end
+
+
+  def get_email(db)
+    $LOG.error "ERROR: get_email method not implemented in class #{self.class}"
+    return nil
   end
 
 

@@ -56,7 +56,8 @@ class Config
 
 
   def self.fetch_from_db(db:)
-    config_db = db[:global_config].to_hash(:setting)
+    # .order is important here, to get a consistent hash of the config
+    config_db = db[:global_config].order(:setting).to_hash(:setting)
     Config.new(config_db)
   end
 

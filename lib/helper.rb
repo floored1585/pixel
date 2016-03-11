@@ -1,141 +1,200 @@
+#
+# Pixel is an open source network monitoring system
+# Copyright (C) 2016 all Pixel contributors!
+#
+# This program is free software: you can redistribute it and/or modify
+# it under the terms of the GNU Affero General Public License as
+# published by the Free Software Foundation, either version 3 of the
+# License, or (at your option) any later version.
+#
+# This program is distributed in the hope that it will be useful,
+# but WITHOUT ANY WARRANTY; without even the implied warranty of
+# MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+# GNU Affero General Public License for more details.
+#
+# You should have received a copy of the GNU Affero General Public License
+# along with this program.  If not, see <http://www.gnu.org/licenses/>.
+#
+
 module Helper
 
-  def humanize_time secs
-    [[60, :seconds], [60, :minutes], [24, :hours], [1000, :days]].map{ |count, name|
-      if secs > 0
-        secs, n = secs.divmod(count)
+
+  def humanize_time seconds
+    [[60, :seconds], [60, :minutes], [24, :hours], [1000000, :days]].map{ |count, name|
+      if seconds > 0
+        seconds, n = seconds.divmod(count)
         if n.to_i > 1
           "#{n.to_i} #{name}"
         else
           "#{n.to_i} #{name.to_s.gsub(/s$/,'')}"
         end
+      else
+        return '0 seconds' if name == :seconds
       end
     }.compact[-1]
   end
 
+
   def full_title(page_title)
     base_title = "Pixel"
-    if page_title.empty?
+    if page_title.nil? || page_title.empty?
       base_title
     else
       "#{base_title} | #{page_title}"
     end
   end
 
-  def tr_attributes(oids, opts={})
+
+  def tr_attributes(int, parent=nil, hl_relation: false, hide_if_child: false)
+    classes = []
     attributes = [
       "data-toggle='tooltip'",
       "data-container='body'",
-      "title='index: #{oids[:if_index]}'",
+      "title='index: #{int.index}'",
       "data-rel='tooltip-left'",
-      "data-pxl-index='#{oids[:if_index]}'"
+      "data-pxl-index='#{int.index}'",
     ]
-    attributes.push "data-pxl-parent='#{oids[:my_parent]}'" if oids[:is_child] && opts[:hl_relation]
-    classes = []
 
-    if oids[:is_child]
-      classes.push("#{oids[:my_parent]}_child") if opts[:hl_relation]
-      classes.push('panel-collapse collapse out') if opts[:hide_if_child]
-      classes.push('pxl-child-tr') if opts[:hl_relation]
+    if parent && (hl_relation || hide_if_child)
+      if parent.class == Interface
+        attributes.push "data-pxl-parent='#{parent.index}'" if hl_relation
+        classes.push("#{parent.index}_child") if hl_relation
+        classes.push('panel-collapse collapse out') if hide_if_child
+        classes.push('pxl-child-tr') if hl_relation
+      else
+        $LOG.error("HELPER: Non-existent parent '#{int.parent_name}' on #{int.device}. Child: #{int.name}")
+      end
     end
 
     attributes.join(' ') + " class='#{classes.join(' ')}'"
   end
 
-  def bps_cell(direction, oids, opts={:pct_precision => 2})
-    pct_precision = opts[:pct_precision]
+
+  def bps_cell(direction, int, sigfigs: 3, bps_only: false, pct_only: false, units: :bps)
     # If bps_in/Out doesn't exist, return blank
-    return '' unless oids["bps_#{direction}".to_sym] && oids[:link_up]
-    util = ("%.3g" % oids["bps_#{direction}_util".to_sym]) + '%'
-    util.gsub!(/\.[0-9]+/,'') if opts[:compact]
-    traffic = number_to_human(oids["bps_#{direction}".to_sym], :bps, true, '%.3g')
-    return traffic if opts[:bps_only]
-    return util if opts[:pct_only]
+    return '' unless int.up?
+
+    if direction == :in
+      bps = int.bps_in
+      bps_util = int.bps_util_in
+    elsif direction == :out
+      bps = int.bps_out
+      bps_util = int.bps_util_out
+    else
+      return 'error'
+    end
+
+    util = "#{bps_util.sigfig(sigfigs)}%"
+
+    traffic = number_to_human(bps, units: units, sigfigs: sigfigs)
+    return traffic if bps_only
+    return util if pct_only
     return "#{util} (#{traffic})"
   end
 
-  def total_bps_cell(interfaces, oids)
+
+  def total_bps_cell(int, parent=nil)
     # If interface is child, set total to just under parent total,
     # so that the interface is sorted to sit directly under parent
     # when tablesorter runs.
-    if oids[:is_child]
-      p_oids = interfaces[oids[:my_parent]]
-      if p_oids && p_oids[:bps_in] && p_oids[:bps_out]
-        p_total = p_oids[:bps_in] + p_oids[:bps_out]
-        me_total = (oids[:bps_in] || 0) + (oids[:bps_out] || 0)
-        offset = me_total / (oids[:if_high_speed].to_f * 1000000) * 10
-        return p_total - 20 + offset
-      else
-        return '0'
-      end
+    total = int.bps_in + int.bps_out
+    if parent && parent.class == Interface
+      parent_total = parent.bps_in + parent.bps_out
+      offset = total / (int.speed.to_f) * 10
+      return parent_total - 20 + offset
     end
     # If not child, just return the total bps
-    oids[:bps_in] + oids[:bps_out] if oids[:bps_in] && oids[:bps_out]
+    return total
   end
 
-  def speed_cell(oids)
-    return '' unless oids[:link_up]
-    speed_in_bps = oids[:if_high_speed] * 1000000
-    number_to_human(speed_in_bps, :bps, true, '%.0f')
+
+  def speed_cell(int)
+    return '' if int.down?
+    number_to_human(int.speed, units: :bps, sigfigs: 2)
   end
 
-  def neighbor_link(oids, opts={})
-    if oids[:neighbor]
-      neighbor = oids[:neighbor] ? "<a href='/device/#{oids[:neighbor]}'>#{oids[:neighbor]}</a>" : oids[:neighbor]
-      port = oids[:if_alias][/__[0-9a-zA-Z-.: \/]+$/] || ''
-      port.empty? || opts[:device_only] ? neighbor : "#{neighbor} (#{port.gsub('__','')})"
+
+  def neighbor_link(int, opts={})
+    if int.neighbor
+      neighbor = "<a href='/device/#{int.neighbor}'>#{int.neighbor}</a>"
+      port = int.neighbor_port || ''
+      return port.empty? || opts[:device_only] ? neighbor : "#{neighbor} (#{port})"
     else
-      ''
+      return int.description
     end
   end
 
-  def interface_link(settings, oids)
-    "<a href='#{settings['grafana_if_dash']}" +
-      "?title=#{oids[:device]}%20::%20#{CGI::escape(oids[:if_name])}" +
-    "&name=#{oids[:device]}.#{oids[:if_index]}" +
-    "&ifSpeedBps=#{oids[:if_high_speed].to_i * 1000000 }" +
-    "&ifMaxBps=#{[ oids[:bps_in].to_i, oids[:bps_out].to_i ].max}" + 
-                   "' target='_blank'>" + oids[:if_name] + '</a>'
+
+  def device_link_graph(settings, device, text)
+    "<a href='#{settings[:grafana_dev_dash].value}?device=#{device}" +
+    "' target='_blank'>#{text}</a>"
   end
 
-  def device_link(oids)
-    "<a href='/device/#{oids[:device]}'>#{oids[:device]}</a>"
+
+  def interface_link(settings, int)
+    "<a href='#{settings[:grafana_if_dash].value}" +
+    "?device=#{int.device}&name=#{int.name}" +
+    "' target='_blank'>#{int.name}</a>"
   end
 
-  def link_status_color(interfaces,oids)
-    return 'grey' if oids[:stale]
-    return 'red' unless oids[:link_up]
-    return 'orange' if !oids[:discards_out].to_s.empty? && oids[:discards_out] != 0
-    return 'orange' if !oids[:errors_in].to_s.empty? && oids[:errors_in] != 0
-    # Check children -- return orange unless all children are up
-    if oids[:is_parent]
-      oids[:children].each do |child_index|
-        return 'orange' unless interfaces[child_index][:link_up]
-      end
+
+  def alarm_type_text(device)
+    text = ''
+    text << "<span class='text-danger'>RED</span> " if device.red_alarm
+    text << "and " if device.red_alarm && device.yellow_alarm
+    text << "<span class='text-warning'>YELLOW</span>" if device.yellow_alarm
+    return text
+  end
+
+
+  def device_link(name)
+    "<a href='/device/#{name}'>#{name}</a>"
+  end
+
+
+  def link_status_color(int, children=[])
+    # hardcoded 10m -- TODO: Change to config value
+    return 'grey' if int.stale?
+    return 'darkRed' if int.status(:admin) == 'Down'
+    return 'red' if int.down?
+    return 'orange' if int.discards_in > 0 || int.discards_out > 0
+    return 'orange' if int.errors_in > 0 || int.errors_out > 0
+    # Check children -- return orange if any children are down
+    children.each do |child|
+      return 'orange' if child.down?
     end
     return 'green'
   end
 
-  def link_status_tooltip(interfaces,oids)
-    discards = oids[:discards_out] || 0
-    errors = oids[:errors_in] || 0
-    stale_warn = oids[:stale] ? "Last polled: #{humanize_time(oids[:stale])} ago\n" : ''
-      discard_warn = discards == 0 ? '' : "#{discards} outbound discards/sec\n"
-    error_warn = errors == 0 ? '' : "#{errors} receive errors/sec\n"
-    child_warn = ''
-    if oids[:is_parent]
-      oids[:children].each do |child_index|
-        child_warn = "Child link down\n" unless interfaces[child_index][:link_up]
-      end
+
+  def link_status_tooltip(int, children)
+    tooltip = ''
+    tooltip << "Shutdown\n" if int.status(:admin) == 'Down'
+    tooltip << "Last polled: #{humanize_time(int.stale?)} ago\n" if int.stale?
+    tooltip << "#{int.discards_in} inbound discards/sec\n" if int.discards_in > 0
+    tooltip << "#{int.discards_out} outbound discards/sec\n" if int.discards_out > 0
+    tooltip << "#{int.errors_out} inbound errors/sec\n" if int.errors_in > 0
+    tooltip << "#{int.errors_out} outbound errors/sec\n" if int.errors_out > 0
+    children.each do |child|
+      tooltip << "Child link down\n" if child.down?
     end
-    state = oids[:link_up] ? 'Up' : 'Down'
-    time = humanize_time(Time.now.to_i - oids[:if_oper_status_time])
-    return stale_warn + discard_warn + error_warn + child_warn + "#{state} for #{time}"
+    time = humanize_time(Time.now.to_i - int.oper_status_time)
+    return "#{tooltip}#{int.status} for #{time}"
   end
 
-  def number_to_human(raw, unit, si, format='%.2f')
+
+  def sw_tooltip(device)
+    if device.vendor && device.sw_descr && device.sw_version
+      "running #{device.sw_descr} #{device.sw_version}"
+    else
+      "No software data found"
+    end
+  end
+
+
+  def number_to_human(raw, units:, si: true, sigfigs: 3)
     i = 0
-    units = {
+    unit_list = {
       :bps => [' bps', ' Kbps', ' Mbps', ' Gbps', ' Tbps', ' Pbps', ' Ebps', ' Zbps', ' Ybps'],
       :pps => [' pps', ' Kpps', ' Mpps', ' Gpps', ' Tpps', ' Ppps', ' Epps', ' Zpps', ' Ypps'],
       :si_short => [' b', ' K', ' M', ' G', ' T', ' P', ' E', ' Z', ' Y'],
@@ -146,6 +205,40 @@ module Helper
       i += 1
     end
 
-    return (sprintf format % raw).to_s + ' ' + units[unit][i]
+    return "#{raw.sigfig(sigfigs)} #{unit_list[units][i]}"
+    # ^-- Example: "234 Mbps"
   end
+
+
+  def epoch_to_date(value, format='%-d %B %Y, %H:%M:%S UTC')
+    DateTime.strptime(value.to_s, '%s').strftime(format)
+  end
+
+
+  def devicedata_to_human(oid, value, opts={})
+    oid = oid.to_sym
+    oids_to_modify = [
+      :bps_out, :pps_out, :discards_out, :errors_out,  :uptime,
+      :last_poll_duration, :last_poll, :next_poll, :currently_polling, :last_poll_result,
+      :yellow_alarm, :red_alarm
+    ]
+    pps_oids = [ :discards_out, :errors_out, :pps_out ]
+    # abort on empty or non-existant values
+    return value unless value && !value.to_s.empty?
+    return value unless oids_to_modify.include?(oid)
+
+    output = "#{value} (" if opts[:add]
+
+    output << number_to_human(value, units: :bps) if oid == :bps_out
+    output << number_to_human(value, units: :pps) if pps_oids.include?(oid)
+    output << humanize_time(value) if [ :uptime, :last_poll_duration ].include?(oid)
+    output << epoch_to_date(value) if [ :last_poll, :next_poll ].include?(oid)
+    output << (value == 1 ? 'Yes' : 'No') if oid == :currently_polling
+    output << (value == 1 ? 'Failure' : 'Success') if oid == :last_poll_result
+    output << (value == 2 ? 'Inactive' : 'Active') if [ :yellow_alarm, :red_alarm ].include?(oid)
+
+    output << ")" if opts[:add]
+    return output
+  end
+
 end

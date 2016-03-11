@@ -1,45 +1,272 @@
-<% locals[:title] = device %>
+<%
+#
+# Pixel is an open source network monitoring system
+# Copyright (C) 2016 all Pixel contributors!
+#
+# This program is free software: you can redistribute it and/or modify
+# it under the terms of the GNU Affero General Public License as
+# published by the Free Software Foundation, either version 3 of the
+# License, or (at your option) any later version.
+#
+# This program is distributed in the hope that it will be useful,
+# but WITHOUT ANY WARRANTY; without even the implied warranty of
+# MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+# GNU Affero General Public License for more details.
+#
+# You should have received a copy of the GNU Affero General Public License
+# along with this program.  If not, see <http://www.gnu.org/licenses/>.
+#
+%>
+<% locals[:title] = device_name %>
 
-<h1><%= device %></h1>
-<div>
-  <% if !interfaces.empty? %>
-  <table id='ifTable' class='table table-hover table-condensed tablesorter'>
+<% if device.class == Device %>
+  <div class='pxl-minibar-wrapper pxl-fadescroll'>
+    <div class='pxl-minibar'>
+      <span class='pxl-minibar-span'>IP: <b><%= device.poll_ip %></b></span>
+      <span>Hardware:
+        <span data-toggle='tooltip' data-rel='tooltip-bottom'
+          title='<%= sw_tooltip(device) %>' class='tooltip-lighter'>
+          <u><b><%=
+          device.vendor.gsub(/Force10 [\w\-]+/,'Force10') +
+            ' ' << device.hw_model
+            %></b></u>
+        </span>
+      </span>
+      <span>Uptime: <b><%= humanize_time(device.uptime)%></b></span>
+      <span>Pushing:
+        <span data-toggle='tooltip' data-rel='tooltip-bottom' class='tooltip-lighter'
+          title='<%= number_to_human(device.pps_out, units: :pps) %>'>
+          <u><b><%= number_to_human(device.bps_out, units: :bps) %></b></u>
+        </span>
+      </span>
+    </div>
+  </div>
+<% end %>
+
+<h1 class='pxl-h1-device'><%= device_name %></h1>
+<% if device.class == Device %>
+  <h5 class='pxl-h5-device'>
+    <%= device_link_graph(settings, device.name, '[ graphs ]') %>&nbsp;
+    <a href='#' data-toggle="modal" data-target="#deviceDetails">[ details ]</a>&nbsp;
+    <a href='#' data-toggle="modal" data-target="#deviceHardware">[ hardware ]</a>
+  </h5>
+  <div class='row'>
+    <div class='col-md-6'>
+      <div class="panel panel-grey">
+        <div class="panel-heading">
+          <div class="row">
+            <div>
+              <center>
+                <span>CPU Utilization</span>
+              </center>
+            </div>
+          </div>
+        </div>
+        <div class="panel-footer">
+          <div class='pxl-rickshaw-y'></div>
+          <div class='pxl-rickshaw' data-pxl-device='<%= device.name %>' data-pxl-attr='cpu' data-pxl-time='60m'></div>
+          <div class="clearfix"></div>
+        </div>
+      </div>
+    </div>
+    <div class='col-md-6'>
+      <div class="panel panel-grey">
+        <div class="panel-heading">
+          <div class="row">
+            <div>
+              <center>
+                <span>Memory Utilization</span>
+              </center>
+            </div>
+          </div>
+        </div>
+        <div class="panel-footer">
+          <div class='pxl-rickshaw-y'></div>
+          <div class='pxl-rickshaw' data-pxl-device='<%= device.name %>' data-pxl-attr='memory' data-pxl-time='60m'></div>
+          <div class="clearfix"></div>
+        </div>
+      </div>
+    </div>
+  </div>
+<% end %>
+
+<div class='row'>
+  <% if device.class == Device && device.interfaces.size > 0 %>
+    <table id='ifTable' class='table table-hover table-condensed tablesorter'>
     <thead>
       <tr>
         <th class='pxl-hidden'>Total</th>
-        <th colspan='2' class='pxl-th'>Name <span class='glyphicon glyphicon-sort pxl-sort-icon pxl-hidden'></span></th>
-        <th class='pxl-th'>Type  <span class='glyphicon glyphicon-sort pxl-sort-icon pxl-hidden'></span></th>
-        <th class='pxl-th'>Neighbor <span class='glyphicon glyphicon-sort pxl-sort-icon pxl-hidden'></span></th>
-        <th class='pxl-th'>Ingress <span class='glyphicon glyphicon-sort pxl-sort-icon pxl-hidden'></span></th>
-        <th class='pxl-th'>Egress <span class='glyphicon glyphicon-sort pxl-sort-icon pxl-hidden'></span></th>
-        <th class='pxl-th'>Speed <span class='glyphicon glyphicon-sort pxl-sort-icon pxl-hidden'></span></th>
+        <th colspan='2' class='pxl-sort'>Name <span class='glyphicon glyphicon-sort pxl-sort-icon pxl-hidden'></span></th>
+        <th class='pxl-sort'>Type  <span class='glyphicon glyphicon-sort pxl-sort-icon pxl-hidden'></span></th>
+        <th class='pxl-sort'>Neighbor <span class='glyphicon glyphicon-sort pxl-sort-icon pxl-hidden'></span></th>
+        <th class='pxl-sort'>Ingress <span class='glyphicon glyphicon-sort pxl-sort-icon pxl-hidden'></span></th>
+        <th class='pxl-sort'>Egress <span class='glyphicon glyphicon-sort pxl-sort-icon pxl-hidden'></span></th>
+        <th class='pxl-sort'>Speed <span class='glyphicon glyphicon-sort pxl-sort-icon pxl-hidden'></span></th>
       </tr>
     </thead>
     <tbody>
-    <% interfaces.each do |if_index,oids| %>
-      <tr <%= tr_attributes(oids, { hide_if_child: true, hl_relation: true }) %>>
-        <td class='pxl-hidden'><%= total_bps_cell(interfaces, oids) %></td>
-        <td class='pxl-td-shrink'><%= interface_link(settings, oids) %></td>
-        <td><table class='pxl-linkUp pxl-linkUp-<%= link_status_color(interfaces, oids) %>'><tr>
-              <td data-toggle='tooltip' data-container='body' title='<%= link_status_tooltip(interfaces, oids) %>' data-rel='tooltip-right'></td>
+    <% device.interfaces.values.each do |int| %>
+      <% parent = device.get_interface(name: int.parent_name) %>
+      <% children = device.get_children(parent_name: int.name) %>
+      <tr <%= tr_attributes(int, parent, hide_if_child: true, hl_relation: true) %>>
+        <td class='pxl-hidden'><%= total_bps_cell(int, parent) %></td>
+        <td class='pxl-td-shrink'><%= interface_link(settings, int) %></td>
+        <td><table class='pxl-linkUp pxl-linkUp-<%= link_status_color(int, children) %>'><tr>
+              <td data-toggle='tooltip' data-container='body' title='<%= link_status_tooltip(int, children) %>' data-rel='tooltip-right'></td>
           </tr></table></td>
-        <td class='<%= 'pxl-child-td' if oids[:is_child] %>'>
-          <%= oids[:link_type] %>
-          <% if oids[:is_parent] %>
-            <button type='button' class='swapPlusMinus btn btn-default btn-xs' data-toggle='collapse' data-target='.<%= if_index %>_child'>
+        <td class='<%= 'pxl-child-td' if parent %>'>
+          <%= int.type %>
+          <% if children.size > 0 %>
+            <button type='button' class='swapPlusMinus btn btn-default btn-xs' data-toggle='collapse' data-target='.<%= int.index %>_child'>
               <span class="glyphicon glyphicon-plus"></span>
             </button>
-          <% elsif oids[:is_child] %>
-            <span class='pxl-hidden'><%= "[#{oids[:my_parent_name]}]" %></span>
+          <% elsif parent %>
+            <span class='pxl-hidden'><%= "[#{parent.name}]" %></span>
           <% end %>
         </td>
-        <td><%= neighbor_link(oids) %></td>
-        <td class='pxl-histogram' data-pxl-meta='<%= oids[:bps_in_util] %>'><%= bps_cell('in', oids) %></td>
-        <td class='pxl-histogram' data-pxl-meta='<%= oids[:bps_out_util] %>'><%= bps_cell('out', oids) %></td>
-        <td><%= speed_cell(oids) %>&nbsp;&nbsp;&nbsp;&nbsp;</td>
+        <td><%= neighbor_link(int) %></td>
+        <td class='pxl-histogram pxl-meta' data-pxl-meta='<%= int.bps_util_in %>'><%= bps_cell(:in, int) %></td>
+        <td class='pxl-histogram pxl-meta' data-pxl-meta='<%= int.bps_util_out %>'><%= bps_cell(:out, int) %></td>
+        <td><%= speed_cell(int) %>&nbsp;&nbsp;&nbsp;&nbsp;</td>
       </tr>
     <% end %>
     </tbody>
   </table>
+  <% else # This means we don't have any interfaces, or the device doesn't exist %>
+    <% error = device.class == Device ? 'Device found, but no interfaces are being recorded.' : 'Device not found.' %>
+    <div class='col-md-2'></div>
+    <div class='col-md-8'>
+      <br \>
+      <ul class='list-group'>
+        <li class='center list-group-item list-group-item-danger'>
+        <b><%= error %></b>
+        </li>
+      </ul>
+    </div>
+    <div class='col-md-2'></div>
   <% end %>
 </div>
+
+<% if device.class == Device %>
+<!--88888888888888888-->
+<!--  DETAILS MODAL  -->
+<!--88888888888888888-->
+<div class="modal fade" id="deviceDetails" tabindex="-1" role="dialog" aria-labelledby="myModalLabel" aria-hidden="true">
+  <div class="modal-dialog">
+    <div class="modal-content">
+      <div class="modal-header">
+        <button type="button" class="close" data-dismiss="modal"><span aria-hidden="true">&times;</span><span class="sr-only">Close</span></button>
+        <h4 class="modal-title" id="myModalLabel"><%= device_name %> raw details</h4>
+      </div>
+      <div class="modal-body">
+        <table class='table table-condensed table-hover'>
+          <thead>
+            <tr>
+              <th>Attribute</th>
+              <th>Value</th>
+            </tr>
+          </thead>
+            <% JSON.parse(device.to_json)['data'].each do |oid,value| %>
+              <% next if %w( interfaces cpus fans memory psus temps ).include? oid %>
+            <tr>
+            <td><%= oid %></td>
+            <td class='pxl-break-word'><%= devicedata_to_human(oid, value, { :add => true }) %></td>
+          </tr>
+        <% end %>
+        </table>
+      </div>
+      <div class="modal-footer">
+        <button type="button" class="btn btn-default" data-dismiss="modal">Close</button>
+      </div>
+    </div>
+  </div>
+</div>
+<% end %>
+<!--888888888888888888888-->
+<!--  END DETAILS MODAL  -->
+<!--888888888888888888888-->
+
+<!--88888888888888888-->
+<!--  HARDWARE MODAL  -->
+<!--88888888888888888-->
+<% if device.class == Device %>
+<div class="modal fade" id="deviceHardware" tabindex="-1" role="dialog" aria-labelledby="myModalLabel" aria-hidden="true">
+  <div class="modal-dialog">
+    <div class="modal-content">
+      <div class="modal-header">
+        <button type="button" class="close" data-dismiss="modal"><span aria-hidden="true">&times;</span><span class="sr-only">Close</span></button>
+        <h4 class="modal-title" id="myModalLabel"><%= device_name %> hardware details</h4>
+      </div>
+      <div class="modal-body">
+        <div class='pxl-margin-left-right'>
+        <!-- Fans -->
+        <% if device.fans.size > 0 %>
+        <table class='table table-condensed table-hover' id='pxl-hw-table'>
+          <caption><h4 class='pxl-h4-hw'>Fans</h4></caption>
+          <thead>
+            <tr>
+              <th>Description</th>
+              <th>Status</th>
+            </tr>
+          </thead>
+          <% device.fans.each do |index, fan| %>
+            <tr>
+              <td><%= fan.description %></td>
+              <td><%= fan.status_text %></td>
+            </tr>
+          <% end %>
+        </table>
+        <% end %>
+        <!-- End Fans -->
+        <!-- PSUs -->
+        <% if device.psus.size > 0 %>
+        <table class='table table-condensed table-hover' id='pxl-hw-table'>
+          <caption><h4 class='pxl-h4-hw'>PSUs</h4></caption>
+          <thead>
+            <tr>
+              <th>Description</th>
+              <th>Status</th>
+            </tr>
+          </thead>
+          <% device.psus.each do |index, psu| %>
+            <tr>
+              <td><%= psu.description %></td>
+              <td><%= psu.status_text %></td>
+            </tr>
+          <% end %>
+        </table>
+        <% end %>
+        <!-- End PSUs -->
+        <!-- Temperatures -->
+        <% if device.temps.size > 0 %>
+        <table class='table table-condensed table-hover' id='pxl-hw-table'>
+          <caption><h4 class='pxl-h4-hw'>Temperatures</h4></caption>
+          <thead>
+            <tr>
+              <th>Description</th>
+              <th>Temperature</th>
+              <th>Status</th>
+            </tr>
+          </thead>
+          <% device.temps.each do |index, temp| %>
+            <tr>
+              <td><%= temp.description %></td>
+              <td><%= temp.temp %></td>
+              <td><%= temp.status_text %></td>
+            </tr>
+          <% end %>
+        </table>
+        <% end %>
+        <!-- End Temperatures -->
+    </div>
+      </div>
+      <div class="modal-footer">
+        <button type="button" class="btn btn-default" data-dismiss="modal">Close</button>
+      </div>
+    </div>
+  </div>
+</div>
+<% end %>
+<!--888888888888888888888-->
+<!--  END HARDWARE MODAL  -->
+<!--888888888888888888888-->

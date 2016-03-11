@@ -1,0 +1,482 @@
+/*************************************************************************
+
+Pixel is an open source network monitoring system
+Copyright (C) 2016 all Pixel contributors!
+
+This program is free software: you can redistribute it and/or modify
+it under the terms of the GNU Affero General Public License as
+published by the Free Software Foundation, either version 3 of the
+License, or (at your option) any later version.
+
+This program is distributed in the hope that it will be useful,
+but WITHOUT ANY WARRANTY; without even the implied warranty of
+MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+GNU Affero General Public License for more details.
+
+You should have received a copy of the GNU Affero General Public License
+along with this program.  If not, see <http://www.gnu.org/licenses/>.
+
+*************************************************************************/
+
+/* mixins, variables, etc. */
+
+.rickshaw_graph .detail .x_label { display: none }
+
+.multiselect { text-align: left; }
+.multiselect b.caret {
+  float: right;
+  margin-top: 8px;
+}
+.pxl-ms-container > div.btn-group {
+  width: 80% !important;
+}
+
+/* boostrap mixin */
+
+label {
+  font-weight: normal !important;
+}
+
+span.input-group-addon {
+  min-width: 100px;
+}
+
+.pxl-container {
+  width: 1280px;
+}
+.input-xs {
+  height: 22px;
+  padding: 2px 5px;
+  font-size: 12px;
+  line-height: 1.5;
+  border-radius: 3px;
+}
+li.list-group-item-danger a {
+  color: inherit;
+  text-decoration: none;
+  font-weight: bold;
+}
+li.list-group-item-danger a:hover {
+  text-decoration: inherit;
+}
+
+.table tbody tr.pxl-child-tr td {
+  border: none;
+}
+.table a {
+  color: inherit;
+}
+.table a:hover {
+  text-decoration: inherit;
+  color: #0000aa;
+}
+.table tr th div {
+  border-color: transparent;
+}
+
+.panel-footer {
+  background-color: white;
+}
+
+.tooltip-inner {
+  white-space: pre;
+  max-width: none;
+  text-align: left;
+}
+.tooltip-lighter + .tooltip > .tooltip-inner {
+  opacity: .8;
+}
+
+.pxl-placeholder {
+  color: #777;
+}
+
+.pxl-bottom-5 {
+  margin-bottom: 5px;
+}
+
+.pxl-bottom-10 {
+  margin-bottom: 10px;
+}
+
+.pxl-checkbox {
+  vertical-align: middle;
+  margin-bottom: 2px !important;
+}
+
+.pxl-btn-refresh {
+  background-color: Transparent;
+  border-color: Transparent;
+}
+.pxl-btn-refresh:hover {
+  background-color: Transparent;
+}
+
+.pxl-btn-refresh-white {
+  border-color: Transparent;
+}
+
+.pxl-btn-refresh-white span {
+  color: white;
+}
+
+.pxl-btn-refresh-white:hover {
+  border-color: limegreen;
+}
+
+.pxl-btn-refresh-green {
+  border-color: limegreen;
+}
+
+.pxl-btn-refresh-green:hover {
+  border-color: limegreen;
+}
+
+.pxl-btn-refresh-green span {
+  color: limegreen;
+}
+
+.pxl-rickshaw-title {
+  font-weight: bold;
+  text-align: center;
+}
+
+.pxl-break-word {
+  -ms-word-break: break-all;
+  word-break: break-all;
+
+  /* Non standard for webkit */
+  word-break: break-word;
+
+  -webkit-hyphens: auto;
+  -moz-hyphens: auto;
+  -ms-hyphens: auto;
+  hyphens: auto;
+}
+
+.canvas-container {
+  margin-bottom: 10px;
+}
+
+.panel-grey {
+  border-color: #777;
+}
+
+.panel-grey .panel-heading {
+  border-color: #777;
+  background-color: #EEE;
+}
+
+.pxl-minibar-wrapper {
+  position: fixed;
+  width: 100%;
+  left: 50%;
+  margin: 0 0 0 -50%;
+  text-align: center;
+  z-index: 999;
+}
+.pxl-minibar {
+  display: inline-block;
+  height: 2.5em;
+  line-height: 2.4em;
+  padding-left: 20px;
+  padding-right: 20px;
+  border-left: 1px solid #777;
+  border-right: 1px solid #777;
+  border-bottom: 1px solid #777;
+  border-bottom-left-radius: 20px 1.5em;
+  border-bottom-right-radius: 20px 1.5em;
+  background-color: #EEE;
+  text-align: center;
+}
+.pxl-minibar > span {
+  vertical-align: middle;
+  color: #555;
+  padding-right: 0.65em;
+  padding-left: 0.65em;
+}
+.pxl-minibar u {
+  /* for tooltip underline */
+  border-bottom: 1px dotted #000;
+  text-decoration: none;
+}
+
+.pxl-margin-left-right {
+  margin-left: 3em;
+  margin-right: 3em;
+}
+
+#pxl-hw-table td {
+  border-top: none;
+  border-bottom: none;
+}
+
+/* universal */
+
+.huge {
+  font-size: 20px;
+  font-weight: bold;
+}
+
+html {
+  overflow-y: scroll;
+}
+
+body {
+  padding-top: 50px;
+}
+
+section {
+  overflow: auto;
+}
+
+textarea {
+  resize: vertical;
+}
+
+.center {
+  text-align: center;
+}
+.center h1 {
+  margin-bottom: 10px;
+}
+
+table.tablesorter thead tr {
+  cursor: pointer;
+}
+
+table.d3-tablesorter thead tr {
+  cursor: pointer;
+}
+
+.pxl-hidden {
+  display: none;
+}
+
+.pxl-linkUp {
+  border-collapse: separate;
+  padding: none;
+}
+.pxl-linkUp td {
+  width: 20px;
+  height: 20px;
+  background-clip: padding-box;
+  color: #FFF;
+  border: 1px solid black !important;
+  border-radius: 100%;
+}
+
+.pxl-linkUp-green td {
+  background-color: #BFB;
+}
+
+.pxl-linkUp-yellow td {
+  background-color: #FFB;
+}
+
+.pxl-linkUp-orange td {
+  background-color: #F90;
+}
+
+.pxl-linkUp-red td {
+  background-color: #FBB;
+}
+
+.pxl-linkUp-darkRed td {
+  background-color: #D55;
+}
+
+.pxl-linkUp-grey td {
+  background-color: #e5e5e5;
+}
+
+.pxl-td-shrink {
+  width: 1em;
+  white-space: nowrap;
+}
+
+.pxl-rickshaw-y {
+  position: absolute;
+  height: 100px;
+}
+
+.pxl-rickshaw {
+  height: 100px;
+  margin-bottom: 20px;
+  margin-right: 5px;
+}
+
+.pxl-rickshaw .x_tick .title {
+  bottom: -18px;
+  left: -18px;
+}
+
+/* typography */
+h1, h2, h3, h4, h5, h6 {
+  text-align: center;
+  letter-spacing: -1px;
+}
+.pxl-h4-hw {
+  margin-bottom: 5px;
+}
+.pxl-h5-device {
+  margin-bottom: 30px;
+}
+.pxl-h1-device {
+  margin-top: 1.5em;
+}
+.pxl-h1-events {
+  margin-top: 1em;
+  margin-bottom: 0.4em;
+}
+.pxl-h1 {
+  margin-top: 1em;
+  margin-bottom: 30px;
+}
+
+p {
+  font-size: 1.1em;
+  line-height: 1.7em;
+}
+
+#logo {
+  float: left;
+  margin-right: 10px;
+  font-size: 2.3em;
+  color: #fff;
+  text-transform: uppercase;
+  letter-spacing: -1px;
+  padding-top: 9px;
+  font-weight: bold;
+  line-height: 1;
+}
+#logo:hover {
+  color: #fff;
+  text-decoration: none;
+}
+
+/* ajax_list */
+.ajax_list li {
+  cursor: pointer;
+}
+.ajax_list .hover {
+  background-color: #EEE;
+}
+.ajax_list ul {
+  margin-bottom: 5px;
+  margin-top: 5px;
+}
+.list-group-link {
+  padding: 0px;
+}
+.list-group-item {
+}
+.ajax_list li a {
+  font-weight: bold;
+  color: inherit;
+  text-decoration: none;
+  margin: 0px;
+  display: block;
+  width: 100%;
+  height: 100%;
+  padding: 10px 15px;
+}
+.ajax_list li a:hover {
+  color: inherit;
+  text-decoration: none;
+}
+
+/* footer */
+footer {
+  margin-top: 45px;
+  padding-top: 5px;
+  border-top: 1px solid #eaeaea;
+  color: #888;
+}
+footer a {
+  color: #555;
+}
+footer a:hover {
+  color: #333;
+}
+footer small {
+  float: left;
+}
+footer ul {
+  float: right;
+  list-style: none;
+}
+footer ul li {
+  float: left;
+  margin-left: 10px;
+}
+
+/* TWITTER FIXES */
+
+/* Twitter typeahead compatibility fixes */
+.twitter-typeahead {
+  float: left;
+  margin-right: 3px;
+}
+
+.pxl-tt-ig {
+  width: 100%;
+}
+
+.tt-suggestion {
+  display: block;
+  padding: 3px 20px;
+}
+
+.twitter-typeahead .tt-hint {
+  color:#a1a1a1;
+  padding: 6px 12px;
+  border:1px solid transparent;
+}
+
+.twitter-typeahead .tt-query {
+  border-radius: 4px!important;
+  border-top-right-radius: 0!important;
+  border-bottom-right-radius: 0!important;
+}
+
+.tt-dropdown-menu {
+  min-width: 160px;
+  margin-top: 2px;
+  padding: 5px 0;
+  background-color: #fff;
+  border: 1px solid #ccc;
+  border: 1px solid rgba(0,0,0,.2);
+  *border-right-width: 2px;
+  *border-bottom-width: 2px;
+  -webkit-border-radius: 6px;
+  -moz-border-radius: 6px;
+  border-radius: 6px;
+  -webkit-box-shadow: 0 5px 10px rgba(0,0,0,.2);
+  -moz-box-shadow: 0 5px 10px rgba(0,0,0,.2);
+  box-shadow: 0 5px 10px rgba(0,0,0,.2);
+  -webkit-background-clip: padding-box;
+  -moz-background-clip: padding;
+  background-clip: padding-box;
+}
+
+.tt-cursor {
+  cursor: pointer;
+  color: #fff;
+  background-color: #0081c2;
+  background-image: -moz-linear-gradient(top, #0088cc, #0077b3);
+  background-image: -webkit-gradient(linear, 0 0, 0 100%, from(#0088cc), to(#0077b3));
+  background-image: -webkit-linear-gradient(top, #0088cc, #0077b3);
+  background-image: -o-linear-gradient(top, #0088cc, #0077b3);
+  background-image: linear-gradient(to bottom, #0088cc, #0077b3);
+  background-repeat: repeat-x;
+  filter: progid:DXImageTransform.Microsoft.gradient(startColorstr='#ff0088cc', endColorstr='#ff0077b3', GradientType=0)
+}
+
+.tt-suggestion.tt-is-under-cursor a {
+  color: #fff;
+}
+
+.tt-suggestion p {
+  margin: 0;
+}

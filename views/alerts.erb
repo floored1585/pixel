@@ -1,0 +1,414 @@
+<%
+#
+# Pixel is an open source network monitoring system
+# Copyright (C) 2016 all Pixel contributors!
+#
+# This program is free software: you can redistribute it and/or modify
+# it under the terms of the GNU Affero General Public License as
+# published by the Free Software Foundation, either version 3 of the
+# License, or (at your option) any later version.
+#
+# This program is distributed in the hope that it will be useful,
+# but WITHOUT ANY WARRANTY; without even the implied warranty of
+# MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+# GNU Affero General Public License for more details.
+#
+# You should have received a copy of the GNU Affero General Public License
+# along with this program.  If not, see <http://www.gnu.org/licenses/>.
+#
+%>
+<h1 class='pxl-bottom-margin pxl-h1'>Alerts</h1>
+
+<!-- INTERFACE DOWN WARNINGS -->
+<% if !ints_down.empty? %>
+  <div class='row'>
+    <div class='col-md-2'></div>
+    <div class='col-md-8'>
+      <ul class='list-group'>
+        <% ints_down.each do |int| %>
+          <li class='center list-group-item list-group-item-danger'>
+          <%= device_link(int.device) + ' PORT ' + interface_link(settings, int) %> 
+          TO <%= neighbor_link(int) %> is <b>DOWN!</b>
+          <span class='badge' style='float: left;'>&nbsp;
+            <span class='glyphicon glyphicon-warning-sign'></span>
+            Link Down&nbsp;&nbsp;
+          </span>
+          <span class='badge'>
+            <%= humanize_time(Time.now.to_i - int.oper_status_time) %>
+          </span>
+          </li>
+        <% end %>
+      </ul>
+    </div>
+    <div class='col-md-2'></div>
+  </div>
+  <br />
+<% end %>
+
+<div class='row'>
+  <div class='col-md-6'>
+
+    <!-- LEFT COLUMN !!! -->
+
+    <!-- ALARMS -->
+    <% if !alarms.empty? %>
+      <div class="panel panel-grey">
+      <div class="panel-heading">
+        <div class="row">
+          <div class="col-xs-3">
+            <i class="fa fa-clock-o fa-2x"></i>
+          </div>
+          <div class="col-xs-9 text-right">
+            <span class="huge"><%= alarms.count %></span>
+            <span>&nbsp;Device<%= 's' if alarms.count != 1 %> with alarms</span>
+          </div>
+        </div>
+      </div>
+      <div class="panel-footer">
+        <table id='alarmTable' class='table table-hover table-condensed tablesorter'>
+          <thead>
+            <tr>
+              <th>Device</th>
+              <th>Alarm</th>
+            </tr>
+          </thead>
+          <tbody>
+          <% alarms.each do |device| %>
+            <tr>
+            <td><%= device_link(device.name) %></td>
+            <td><b><%= alarm_type_text(device) %></b></td>
+          </tr>
+        <% end %>
+          </tbody>
+        </table>
+        <div class="clearfix"></div>
+      </div>
+    </div>
+  <br />
+  <% end %>
+
+    <!-- DISCARDING INTERFACES -->
+    <% if !ints_discarding.empty? %>
+      <div class="panel panel-grey">
+      <div class="panel-heading">
+        <div class="row">
+          <div class="col-xs-3">
+            <i class="fa fa-trash-o fa-2x"></i>
+          </div>
+          <div class="col-xs-9 text-right">
+            <span class="huge"><%= ints_discarding.count %></span>
+            <span>&nbsp;Interface<%= 's' if ints_discarding.count != 1 %> discarding over thresholds</span>
+          </div>
+        </div>
+      </div>
+      <div class="panel-footer">
+      <table id='discardTable' class='table table-hover table-condensed tablesorter'>
+      <thead>
+        <tr>
+          <th class='pxl-hidden'>Total</th>
+          <th>Discards/sec </th>
+          <th>Device</th>
+          <th>Interface </th>
+          <th>Ingress </th>
+          <th>Egress </th>
+        </tr>
+      </thead>
+      <tbody>
+      <% ints_discarding.each do |int| %>
+        <% parent = int.parent_name ? get_interface(db, int.device, name: int.parent_name) : nil %>
+        <tr <%= tr_attributes(int) %>>
+        <td class='pxl-hidden'><%= int.discards_out %></td>
+        <td class='pxl-meta' data-pxl-meta='<%= int.discards_out %>'>
+          <span class='text-danger'><b><%= int.discards_out %></b></span>
+          <%= "(#{int.discards_out_pct}%)" %>
+        </td>
+        <td><%= device_link(int.device) %></td>
+        <td><%= interface_link(settings, int) %></td>
+        <td class='pxl-histogram pxl-meta pxl-hoverswap' data-pxl-meta='<%= int.bps_util_in %>'>
+          <span class='pxl-swap-pri'>
+            <%= bps_cell(:in, int, sigfigs: 2, bps_only: true, units: :si_short) %>
+          </span>
+          <span class='pxl-swap-alt'>
+            <%= bps_cell(:in, int, sigfigs: 2, pct_only: true, units: :si_short) %>
+          </span>
+        </td>
+        <td class='pxl-histogram pxl-meta pxl-hoverswap' data-pxl-meta='<%= int.bps_util_out %>'>
+          <span class='pxl-swap-pri'>
+            <%= bps_cell(:out, int, sigfigs: 2, bps_only: true, units: :si_short) %>
+          </span>
+          <span class='pxl-swap-alt'>
+            <%= bps_cell(:out, int, sigfigs: 2, pct_only: true, units: :si_short) %>
+          </span>
+        </td>
+        </tr>
+      <% end %>
+      </tbody>
+      </table>
+        <div class="clearfix"></div>
+      </div>
+    </div>
+  <% end %>
+
+    <!-- POLLER FAILURES -->
+    <% if !poller_failures.empty? %>
+      <div class="panel panel-grey">
+      <div class="panel-heading">
+        <div class="row">
+          <div class="col-xs-3">
+            <i class="fa fa-warning fa-2x"></i>
+          </div>
+          <div class="col-xs-9 text-right">
+            <span class="huge"><%= poller_failures.count %></span>
+            <span>&nbsp;Poller Failure<%= 's' if poller_failures.count != 1 %></span>
+          </div>
+        </div>
+      </div>
+      <div class="panel-footer">
+      <table id='pollerFailureTable' class='table table-hover table-condensed tablesorter'>
+      <thead>
+        <tr>
+          <th>Device</th>
+          <th>IP Address</th>
+          <th>Last Poller</th>
+        </tr>
+      </thead>
+      <tbody>
+      <% poller_failures.each do |device| %>
+        <tr>
+          <td><%= device_link(device.name) %></td>
+          <td><%= device.poll_ip %></td>
+          <td><%= device.worker %></td>
+        </tr>
+      <% end %>
+      </tbody>
+      </table>
+        <div class="clearfix"></div>
+      </div>
+    </div>
+  <% end %>
+</div>
+
+    <!-- END LEFT COLUMN !!! -->
+
+    <!-- RIGHT COLUMN !!! -->
+
+  <div class='col-md-6'>
+
+    <!-- HIGH CPU USAGE -->
+    <% if !cpus_high.empty? %>
+      <div class="panel panel-grey">
+      <div class="panel-heading">
+        <div class="row">
+          <div class="col-xs-3">
+            <i class="fa fa-clock-o fa-2x"></i>
+          </div>
+          <div class="col-xs-9 text-right">
+            <span class="huge"><%= count = cpus_high.count %></span>
+            <span>&nbsp;Device<%= 's' if cpus_high.count != 1 %> with high CPU utilization</span>
+          </div>
+        </div>
+      </div>
+      <div class="panel-footer">
+        <table id='highCpuTable' class='table table-hover table-condensed tablesorter'>
+          <thead>
+            <tr>
+              <th>Device</th>
+              <th>Component</th>
+              <th>CPU Utilization</th>
+            </tr>
+          </thead>
+          <tbody>
+          <% cpus_high.each do |cpu| %>
+            <tr>
+              <td><%= device_link(cpu.device) %></td>
+              <td><%= cpu.description %></td>
+              <td>
+                <span class='text-danger'><b><%= cpu.util %>%</b></span>
+              </td>
+            </tr>
+          <% end %>
+          </tbody>
+        </table>
+        <div class="clearfix"></div>
+      </div>
+    </div>
+  <br />
+  <% end %>
+
+    <!-- HIGH MEMORY USAGE -->
+    <% if !memory_high.empty? %>
+      <div class="panel panel-grey">
+      <div class="panel-heading">
+        <div class="row">
+          <div class="col-xs-3">
+            <i class="fa fa-tasks fa-2x"></i>
+          </div>
+          <div class="col-xs-9 text-right">
+            <span class="huge"><%= count = memory_high.count %></span>
+            <span>&nbsp;Device<%= 's' if memory_high.count != 1 %> with high memory utilization</span>
+          </div>
+        </div>
+      </div>
+      <div class="panel-footer">
+        <table id='highMemTable' class='table table-hover table-condensed tablesorter'>
+          <thead>
+            <tr>
+              <th>Device</th>
+              <th>Component</th>
+              <th>Memory Utilization</th>
+            </tr>
+          </thead>
+          <tbody>
+          <% memory_high.each do |memory| %>
+            <tr>
+            <td><%= device_link(memory.device) %></td>
+            <td><%= memory.description %></td>
+            <td>
+              <span class='text-danger'><b><%= memory.util %>%</b></span>
+            </td>
+          </tr>
+        <% end %>
+          </tbody>
+        </table>
+        <div class="clearfix"></div>
+      </div>
+    </div>
+  <br />
+  <% end %>
+
+    <!-- HW PROBLEMS -->
+    <% if !hw_problems.empty? %>
+      <div class="panel panel-grey">
+      <div class="panel-heading">
+        <div class="row">
+          <div class="col-xs-3">
+            &nbsp;<i class="fa fa-bolt fa-2x"></i>
+          </div>
+          <div class="col-xs-9 text-right">
+            <% count = hw_problems[:fans].count + hw_problems[:psus].count + hw_problems[:temps].count %>
+            <span class="huge"><%= count %></span>
+            <span>&nbsp;Hardware Problem<%= 's' if count != 1 %></span>
+          </div>
+        </div>
+      </div>
+      <div class="panel-footer">
+        <table id='hwProblemTable' class='table table-hover table-condensed tablesorter'>
+          <thead>
+            <tr>
+              <th>Device</th>
+              <th>Sensor</th>
+              <th>Description</th>
+              <th>Status</th>
+            </tr>
+          </thead>
+          <tbody>
+          <% hw_problems[:fans].each do |fan| %>
+            <tr>
+            <td><%= device_link(fan.device) %></td>
+            <td>Fan</td>
+            <td><%= fan.description %></td>
+            <td>
+              <span class='text-danger'>
+                <b><%= fan.status_text.upcase %></b>
+              </span>
+            </td>
+            </tr>
+          <% end %>
+          <% hw_problems[:psus].each do |psu| %>
+            <tr>
+            <td><%= device_link(psu.device) %></td>
+            <td>PSU</td>
+            <td><%= psu.description %></td>
+            <td>
+              <span class='text-danger'>
+                <b><%= psu.status_text.upcase %></b>
+              </span>
+            </td>
+            </tr>
+          <% end %>
+          <% hw_problems[:temps].each do |temp| %>
+            <tr>
+            <td><%= device_link(temp.device) %></td>
+            <td>Temp</td>
+            <td><%= temp.description %></td>
+            <td>
+              <span class='text-danger'>
+                <b><%= temp.status_text.upcase %><%= " (#{temp.temp}&deg;)" %></b>
+              </span>
+            </td>
+            </tr>
+          <% end %>
+          </tbody>
+        </table>
+        <div class="clearfix"></div>
+      </div>
+    </div>
+  <br />
+  <% end %>
+
+  <!-- SATURATED PORTS -->
+    <% if !ints_saturated.empty? %>
+      <div class="panel panel-grey">
+      <div class="panel-heading">
+        <div class="row">
+          <div class="col-xs-3">
+            <i class="fa fa-exchange fa-2x"></i>
+          </div>
+          <div class="col-xs-9 text-right">
+            <span class="huge"><%= count = ints_saturated.count %></span>
+            <span>&nbsp;Saturated interface<%= 's' if ints_saturated.count != 1 %></span>
+          </div>
+        </div>
+      </div>
+      <div class="panel-footer">
+      <table id='saturatedTable' class='table table-hover table-condensed tablesorter'>
+      <thead>
+        <tr>
+          <th class='pxl-hidden'>Total</th>
+          <th class='pxl-sort'>Device</th>
+          <th class='pxl-sort'>Interface </th>
+          <th class='pxl-sort'>Type </th>
+          <th class='pxl-sort hidden-md hidden-sm hidden-xs'>Neighbor </th>
+          <th class='pxl-sort'>Ingress </th>
+          <th class='pxl-sort'>Egress </th>
+        </tr>
+      </thead>
+      <tbody>
+      <% ints_saturated.each do |int| %>
+        <tr <%= tr_attributes(int) %>>
+          <td class='pxl-hidden'><%= int.bps_out + int.bps_in %></td>
+          <td><%= device_link(int.device) %></td>
+          <td><%= interface_link(settings, int) %></td>
+          <td><%= int.type %>
+          <% if int.parent_name %>
+            <span> <%= "[#{int.parent_name}]" %></span>
+          <% end %>
+          </td>
+          <td class='hidden-md hidden-sm hidden-xs'><%= neighbor_link(int, { device_only: true }) %></td>
+          <td class='pxl-histogram pxl-meta <%= 'pxl-hoverswap' unless /^10+/.match(int.speed.to_s) %>' data-pxl-meta='<%= int.bps_util_in %>'>
+            <span class='pxl-swap-pri'>
+              <%= bps_cell(:in, int, sigfigs: 2, bps_only: true, units: :si_short) %>
+            </span>
+            <span class='pxl-swap-alt'>
+              <%= bps_cell(:in, int, sigfigs: 2, pct_only: true, units: :si_short) %>
+            </span>
+          </td>
+          <td class='pxl-histogram pxl-meta <%= 'pxl-hoverswap' unless /^10+/.match(int.speed.to_s) %>' data-pxl-meta='<%= int.bps_util_out %>'>
+            <span class='pxl-swap-pri'>
+              <%= bps_cell(:out, int, sigfigs: 2, bps_only: true, units: :si_short) %>
+            </span>
+            <span class='pxl-swap-alt'>
+              <%= bps_cell(:out, int, sigfigs: 2, pct_only: true, units: :si_short) %>
+            </span>
+          </td>
+        </tr>
+      <% end %>
+      </tbody>
+      </table>
+        <div class="clearfix"></div>
+      </div>
+    </div>
+  <% end %>
+</div>
+
+</div>

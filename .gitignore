@@ -20,9 +20,26 @@ doc/
 .idea
 .secret
 .sass-cache
+.rufus-scheduler.lock
 Capfile
 
+messages.*
+proc.lock
+
 config/settings.yaml
+config/config.yaml
+config/settings.production.yaml
 config/deploy.rb
+config/hosts.yaml
 config/deploy/
-public/assets/
+
+copyright.txt
+copyright.sh
+
+public/components
+
+spec
+spec/rspec.log
+rspec.log
+
+test.rb

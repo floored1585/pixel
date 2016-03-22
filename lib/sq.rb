@@ -34,7 +34,16 @@ module SQ
     pool_timeout = cfg['pool_timeout'] || 10
     max_connections = cfg['max_connections'] || 10
 
-    return nil unless (host && user && pass && database && pool_timeout && max_connections)
+    # Throw an error if we're missing something
+    unless (host && user && pass && database && pool_timeout && max_connections)
+      $LOG.error("DB: Missing host in config.yaml!") unless host
+      $LOG.error("DB: Missing user in config.yaml!") unless user
+      $LOG.error("DB: Missing pass in config.yaml!") unless pass
+      $LOG.error("DB: Missing database in config.yaml!") unless database
+      $LOG.error("DB: Missing pool_timeout in config.yaml!") unless pool_timeout
+      $LOG.error("DB: Missing max_connections in config.yaml!") unless max_connections
+      return nil
+    end
 
     db = Sequel.connect(
       :adapter => 'postgres',

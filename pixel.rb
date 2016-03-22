@@ -29,6 +29,7 @@ Dir["#{File.dirname(__FILE__)}/lib/**/*.rb"].each { |file| require(file) }
 
 APP_ROOT = File.dirname(__FILE__)
 $LOG = Logger.new("#{APP_ROOT}/messages.log", 0, 100*1024*1024)
+$LOG.info "Starting Pixel..."
 
 # When $DB_VERSION increases a schema update is triggered.  Make sure
 # there is a matching db_update_#.sql file in the config directory

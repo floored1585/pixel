@@ -61,8 +61,9 @@ Contributing
 
 Any form of contribution is welcome!  Feature requests, bug reports, pull requests, whatever!
 If you add features, make sure there are tests for them, and if you change any code, make sure
-the existing tests all pass _before_ creating a pull request. <b>NOTE: Tests currently do not work
-outside of my development environment.  I apologize, and will work on fixing this as I have time</b>
+the existing tests all pass _before_ creating a pull request. <b>NOTE: Tests currently are not in
+the repository due to a number of issues (security and portability mostly).  I apologize --
+fixing this is one of my top priorities.</b>
 
 License
 ============

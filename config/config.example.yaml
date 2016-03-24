@@ -1,6 +1,6 @@
 # Frontend URL for Pixel (API endpoint)
 #
-#core: 'http://127.0.0.1'
+core: 'http://127.0.0.1'
 
 # If api_only is set to true, this instance will never try
 # to connect to the database; it will use API calls for
@@ -19,11 +19,11 @@
 
 # Database user (must have RW access)
 #
-#user: 'postgres'
+user: 'postgres'
 
 # Password for the database user
 #
-#pass: 'password'
+pass: 'password'
 
 # Maximum connections to the database (per instance)
 #

@@ -17,20 +17,40 @@ Installation
 -------
 
 * Baseline a Linux machine with [pixel-cookbook](https://github.com/floored1585/pixel-cookbook), or take the steps
-in the [default recipe](https://github.com/floored1585/pixel-cookbook/blob/master/recipes/default.rb) manually.</li>
-* Install and configure a PostgreSQL database either locally or on a different machine.
-  * Create a database for Pixel and update Pixel's config/config.yaml appropriately.
+in the [default recipe](https://github.com/floored1585/pixel-cookbook/blob/master/recipes/default.rb) manually (not
+recommended -- the cookbook does a lot of stuff).
+* Install and configure a PostgreSQL (>= 9.4 *important*) database and user either locally or on a different machine.
+  * Create a database for Pixel: `sudo -u postgres psql -c 'CREATE DATABASE pixel'`
+  * Set a password for the `postgres` database user
+(`sudo -u postgres psql -c "ALTER USER postgres PASSWORD 'newPassword'`), or create your own user.
   * Pixel will generate the database schema when it detects an empty database.
-* Install Grafana either locally or on a different machine.
-  * Copy the files in Pixel's `grafana` folder to `/usr/share/grafana/public/dashboards/` wherever
-Grafana is installed.
 * Install InfluxDB >= 0.9 either locally or on a different machine.
-  * Create an InfluxDB database for Pixel.
-* Deploy/clone Pixel to `var/www/pixel/current` on the machine you baselined with
-[pixel-cookbook](https://github.com/floored1585/pixel-cookbook).
-  * Modify `config/config.yaml` if necessary.
-  * Restart Apache/Passenger.
+  * Create an InfluxDB database for Pixel by running `influx` and then `CREATE DATABASE pixel`.
+* Deploy Pixel (OPTION #1 - automatically using Capistrano and the provided `deploy.rb`)
+  * In your deploy environment, make sure that the `authorized_keys` you used with pixel-cookbook
+has a matching `pixel_rsa` file in your home folder (required for Capistrano to do its thing)
+  * Use Capistrano and the provided `deploy.rb`.  This takes care of everything done in Option #2
+automatically.
+* Deploy Pixel (OPTION #2 - manually, using the following commands)
+  * `sudo su - pixel`
+  * `git clone https://github.com/floored1585/pixel.git /var/www/pixel/current`
+  * `ln -s /var/www/pixel/shared/config/hosts.yaml /var/www/pixel/current/config/hosts.yaml`
+  * `ln -s /var/www/pixel/shared/config/config.yaml /var/www/pixel/current/config/config.yaml`
+  * `ln -s /var/www/pixel/shared/log/messages.log /var/www/pixel/current/messages.log`
+  * `cd /var/www/pixel/current`
+  * `bundle install`
+  * `bower install`
+  * `mkdir tmp`
+* Finish the deployment
+  * Modify `/var/www/pixel/shared/config/config.yaml` to enable the database connection (`user` and `pass`
+MUST be uncommented unless this is only a poller, in which case `api_only: true` needs to be uncommented).
+  * Restart Apache/Passenger with `service apache2 restart`. This may not be necessary.
+  * Force Pixel to initialize: `curl -s -D - http://127.0.0.1:80/v2/wakeup -o /dev/null`
   * Modify the `global_config` database table as appropriate *after* Pixel has started.
+* Install Grafana either locally or on a different machine.
+  * Create symlinks to Pixel's scripted dashboards with the following commands:
+  * `ln -s /var/www/pixel/current/grafana/device.js /usr/share/grafana/public/dashboards/device.js`
+  * `ln -s /var/www/pixel/current/grafana/interface.js /usr/share/grafana/public/dashboards/interface.js`
 
 Adding Devices
 -------

@@ -97,7 +97,7 @@ class Config
     @settings[:grafana_if_dash] ||= ConfigItem.new(
       table_name: 'global_config',
       setting: 'grafana_if_dash',
-      value: 'http://127.0.0.1/#/dashboard/script/ne_interface.js',
+      value: 'http://127.0.0.1:3000/#/dashboard/script/interface.js',
       description: 'Link to the Grafana interface scripted dashboard',
       type: 'String',
       last_updated: now
@@ -105,7 +105,7 @@ class Config
     @settings[:grafana_dev_dash] ||= ConfigItem.new(
       table_name: 'global_config',
       setting: 'grafana_dev_dash',
-      value: 'http://127.0.0.1/#/dashboard/script/ne_device.js',
+      value: 'http://127.0.0.1:3000/#/dashboard/script/device.js',
       description: 'Link to the Grafana device scripted dashboard',
       type: 'String',
       last_updated: now

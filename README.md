@@ -22,7 +22,7 @@ recommended -- the cookbook does a lot of stuff).
 * Install and configure a PostgreSQL (>= 9.4 *important*) database and user either locally or on a different machine.
   * Create a database for Pixel: `sudo -u postgres psql -c 'CREATE DATABASE pixel'`
   * Set a password for the `postgres` database user
-(`sudo -u postgres psql -c "ALTER USER postgres PASSWORD 'newPassword'`), or create your own user.
+(`sudo -u postgres psql -c "ALTER USER postgres PASSWORD 'password'"`), or create your own user.
   * Pixel will generate the database schema when it detects an empty database.
 * Install InfluxDB >= 0.9 either locally or on a different machine.
   * Create an InfluxDB database for Pixel by running `influx` and then `CREATE DATABASE pixel`.
@@ -42,8 +42,7 @@ automatically.
   * `bower install`
   * `mkdir tmp`
 * Finish the deployment
-  * Modify `/var/www/pixel/shared/config/config.yaml` to enable the database connection (`user` and `pass`
-MUST be uncommented unless this is only a poller, in which case `api_only: true` needs to be uncommented).
+  * Modify `/var/www/pixel/shared/config/config.yaml` if necessary (database connectivity and application URL)
   * Restart Apache/Passenger with `service apache2 restart`. This may not be necessary.
   * Force Pixel to initialize: `curl -s -D - http://127.0.0.1:80/v2/wakeup -o /dev/null`
   * Modify the `global_config` database table as appropriate *after* Pixel has started.
@@ -51,17 +50,19 @@ MUST be uncommented unless this is only a poller, in which case `api_only: true`
   * Create symlinks to Pixel's scripted dashboards with the following commands:
   * `ln -s /var/www/pixel/current/grafana/device.js /usr/share/grafana/public/dashboards/device.js`
   * `ln -s /var/www/pixel/current/grafana/interface.js /usr/share/grafana/public/dashboards/interface.js`
+  * Create a default InfluxDB datasource in Grafana that points to your InfluxDB installation.
 
 Adding Devices
 -------
 
 There is currently only one way of adding devices:
 
-You must first configure the list of devices (and IPs) that Pixel should monitor in `config/hosts.yaml`.
+You must first configure the list of devices (and IPs) that Pixel should monitor in `config/hosts.yaml` (see
+`config/hosts.example.yaml` for formatting example).
 
 Once you have valid YAML with devices and IPs, run `curl http://127.0.0.1/v2/devices/populate` on the
-application server. This will update Pixel's database to match what is in `hosts.yaml` (it will add new
-devices and remove devices no longer present in `hosts.yaml`).
+application server (or visit that URL in a browser). This will update Pixel's database to match
+your `hosts.yaml` (it will add new devices and remove devices no longer present in `hosts.yaml`).
 
 Configuration
 -------

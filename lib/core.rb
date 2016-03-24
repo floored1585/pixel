@@ -335,7 +335,7 @@ module Core
     device_file = 'config/hosts.yaml'
 
     if File.exists?(device_file)
-      devices = YAML.load_file(File.join(APP_ROOT, device_file))
+      devices = YAML.load_file(File.join(APP_ROOT, device_file)) || {}
     else
       $LOG.error("CORE: Error populating devices from file: File not found: #{device_file}")
     end

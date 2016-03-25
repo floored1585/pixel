@@ -17,7 +17,7 @@
 #
 
 set :application, 'pixel'
-set :repo_url, 'git@github.com:floored1585/pixel.git'
+set :repo_url, 'https://github.com/floored1585/pixel.git'
 set :rvm_ruby_version, '2.2.0@sinatra-2.2'
 
 # Default branch is :master
@@ -80,16 +80,6 @@ namespace :deploy do
     end
   end
 
-  desc 'Uploading pixel keys for GitHub access'
-  task :upload_key do
-    on roles(:all) do
-      home = File.expand_path '~'
-      upload! "#{home}/.ssh/pixel_rsa", "/home/pixel/.ssh/id_rsa"
-      upload! "#{home}/.ssh/pixel_rsa.pub", "/home/pixel/.ssh/id_rsa.pub"
-    end
-  end
-
-  before :starting, :upload_key
   after :updating, :symlinks
   after :publishing, :restart
   after :restart, :wakeup

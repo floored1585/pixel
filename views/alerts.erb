@@ -277,7 +277,7 @@
   <% end %>
 
     <!-- HW PROBLEMS -->
-    <% if !hw_problems.empty? %>
+    <% unless hw_problems[:fans].empty? && hw_problems[:psus].empty? && hw_problems[:temps].empty? %>
       <div class="panel panel-grey">
       <div class="panel-heading">
         <div class="row">

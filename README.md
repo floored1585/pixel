@@ -26,7 +26,7 @@ recommended -- the cookbook does a lot of stuff).
   * Pixel will generate the database schema when it detects an empty database.
 * Install InfluxDB >= 0.9 either locally or on a different machine.
   * Create an InfluxDB database for Pixel by running `influx` and then `CREATE DATABASE pixel`.
-* Deploy Pixel (OPTION #1 - automatically using Capistrano and the provided `deploy.rb`)
+* Deploy Pixel (OPTION #1 - automatically using Capistrano and the provided `config/deploy.rb`)
   * In your deploy environment, make sure that the `authorized_keys` you used with pixel-cookbook
 has a matching `pixel_rsa` file in your home folder (required for Capistrano to do its thing)
   * Use Capistrano and the provided `deploy.rb`.  This takes care of everything done in Option #2

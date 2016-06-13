@@ -55,8 +55,8 @@ class Pixel < Sinatra::Base
   end
 
 
-  get '/devices2' do
-    erb :devices2
+  get '/interfaces' do
+    erb :interfaces
   end
 
 

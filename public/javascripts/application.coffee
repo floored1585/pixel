@@ -143,12 +143,19 @@ set_focus = -> $('#device_input').focus()
 set_onclicks = (el) ->
   parent = if el? then el else $(':root')
 
-  parent.find('thead > tr > th').on click: ->
+  parent.find('thead > tr > th').unbind('click.pixel1')
+  parent.find('thead > tr > th').on 'click.pixel1': ->
     set_focus()
-  parent.find('.swapPlusMinus').on click: ->
+
+  parent.find('.swapPlusMinus').unbind('click.pixel2')
+  parent.find('.swapPlusMinus').on 'click.pixel2': ->
     $(this).find('span').toggleClass('glyphicon-plus glyphicon-minus')
+    $(this).closest('tr').toggleClass('tr-expanded')
+    $(this).closest('tr').nextUntil('tr:not(.tablesorter-childRow)').find('td:not(.pxl-hidden)').slideToggle(50)
     set_focus()
-  parent.find('.pxl-btn-refresh').on click: ->
+
+  parent.find('.pxl-btn-refresh').unbind('click.pixel3')
+  parent.find('.pxl-btn-refresh').on 'click.pixel3': ->
     $(this).toggleClass('pxl-btn-refresh-white pxl-btn-refresh-green')
     if $.cookie('auto-refresh') && $.cookie('auto-refresh') != 'false'
       clearInterval($.cookie('auto-refresh'))
@@ -156,8 +163,12 @@ set_onclicks = (el) ->
     else
       set_refresh()
     set_focus()
-  parent.find('.pxl-set-focus').on click: -> set_focus()
-  parent.find('.pxl-text-swap').on click: ->
+
+  parent.find('.pxl-set-focus').unbind('click.pixel4')
+  parent.find('.pxl-set-focus').on 'click.pixel4': -> set_focus()
+
+  parent.find('.pxl-text-swap').unbind('click.pixel5')
+  parent.find('.pxl-text-swap').on 'click.pixel5': ->
     newText = $(this).data('text-swap')
     $(this).data('text-swap', $(this).text())
     $(this).text(newText)
@@ -201,13 +212,6 @@ sort_table = ->
     resort: true,
     textExtraction: pxl_meta
   })
-
-  # This is run on each sort to separate the child parent relationship somewhat
-  $('table').bind 'sortStart', ->
-    $('.pxl-child-tr').removeClass('pxl-child-tr')
-    $('tbody tr td span.pxl-hidden').removeClass('pxl-hidden')
-    set_hoverswaps()
-  # Show the th sort arrows when hovering
 
 set_hovers = (el) ->
   parent = if el? then el else $(':root')
@@ -335,34 +339,51 @@ d3_table_fetch = (table) ->
         sort = if table.data('sort')?.match('desc') then 0 else 1
         table.trigger('updateAll')
         table.trigger('sorton', [[[0,sort]]]) if fresh_data
+        set_onclicks()
+        color_table()
+        tooltips()
+        # The data is resetting the td to glyphicon-plus -- need to reset the expanded/collapsed state:
+        # (this is specific to interfaces)
+        $('.glyphicon-plus').closest('tr').nextUntil('tr:not(.tablesorter-childRow)').find('td').hide()
+        $('.tr-expanded').each (s) ->
+          $(this).find('.swapPlusMinus span').each (s) ->
+            $(this).toggleClass('glyphicon-plus glyphicon-minus')
+            $(this).closest('tr').nextUntil('tr:not(.tablesorter-childRow)').find('td').toggle()
+            $(this).closest('tr').nextUntil('tr:not(.tablesorter-childRow)').find('.pxl-hidden').toggle()
 
 
 d3_table_update = (jq_table, data, meta) ->
 
+  number_of_cols = 0
+
   columns = $.map(jq_table.data('api-columns').split(','), (pair) ->
     split = pair.split(':')
     c = {}
-    c[split[0]] = split[1]
+    c[split[0]] = {
+      name: split[1],
+      colspan: split[2]
+    }
+    number_of_cols += 1 if split[2] > 0
     c
   )
-
-  ident = (d) ->
-    if ('object'.match typeof d)
-      return d['data']
-    return d
 
   table_id = jq_table.attr('id')
   table = d3.select("##{table_id}")
 
   # If the column have changed (or didn't exist), we need to rebuild them from scratch
   # to avoid issues with hovering and sorting.  Also initialize the filters here!
-  if jq_table.first('th').length == 0 || columns.length != jq_table.find('th').length
+  if jq_table.first('th').length == 0 || number_of_cols != jq_table.find('th').length
     table.select('thead').selectAll('th').remove() # kill all the existing <th>s
     thead = table.select('thead').select('tr').selectAll('th') # create new ones
-      .data(columns)
+      .data(columns.filter((d) ->
+        column = d3.values(d)[0]
+        column.colspan > 0
+      ))
       .enter()
       .append('th')
-      .text((column) -> d3.values(column)[0]) # Here 'column' looks like {'time': 'Time '}
+      .text((column) -> d3.values(column)[0].name)
+      .attr('colspan', (d,i) -> d3.values(d)[0].colspan)
+      .classed('pxl-hidden', (d,i) -> d3.values(d)[0].name == '_hidden_')
       .classed('pxl-sort', (column_data) ->
         column = d3.keys(column_data)[0]
         (meta['_th_']? && meta['_th_']['pxl-sort']?)
@@ -417,7 +438,8 @@ d3_table_update = (jq_table, data, meta) ->
     )
 
     # Apply button should update api-params data and refresh the data
-    $("##{table_id}_apply").on click: ->
+    $("##{table_id}_apply").unbind("click.pixel")
+    $("##{table_id}_apply").on 'click.pixel': ->
       # Reset the refresh timer
       refresh_time = jq_table.data('api-refresh')
       window.clearInterval(ajaxRefreshID[table_id])
@@ -448,6 +470,11 @@ d3_table_update = (jq_table, data, meta) ->
 
   # Helper functions for data binding
 
+  ident = (d) ->
+    if ('object'.match typeof d)
+      return d['data']
+    return d
+
   get_keys = (d) ->
     d[table.attr('data-api-key')]
 
@@ -455,9 +482,11 @@ d3_table_update = (jq_table, data, meta) ->
     columns.map((column) ->
       d[d3.keys(column)[0]]) # Here 'column' looks like {'time': 'Time '}
 
-  tr = tbody.selectAll("tr")
+  tr = tbody.selectAll("tr.dynamic")
     .data(data, get_keys)
   tr.enter().append("tr")
+    .attr('class', 'dynamic') # So we can separate this TR from any child TRs
+    .classed('tablesorter-childRow pxl-child-tr', (d,i) -> d.child)
     .style('opacity', 0)
     .transition().duration(500)
     .style('opacity', 1)
@@ -467,14 +496,19 @@ d3_table_update = (jq_table, data, meta) ->
     .style('opacity', 0)
     .remove()
 
-  td = tr.selectAll("td")
+  td = tr.selectAll("td.dynamic")
     .data(get_cell_data)
-    .enter()
+  td.enter()
     .append("td")
-    # Apply attr and class if the cell data is a hash and has pxl-meta key
+    .attr('class', 'dynamic') # So we can separate this TR from any child TRs
+    # Apply attrs and class if the cell data is a hash and has the attribute/class key
     .attr('data-pxl-meta', (d,i) -> d && d['pxl-meta'])
     .classed('pxl-meta', (d,i) -> d && d['pxl-meta'])
-    .html(ident)
+    .classed('pxl-td-shrink', (d,i) -> d && d['pxl-td-shrink'])
+    .classed('pxl-histogram', (d,i) -> d && d['pxl-histogram'])
+    .classed('pxl-hidden', (d,i) -> d && d['pxl-hidden'])
+
+  td.html(ident)
 
 
 parse_event_data = (data) ->

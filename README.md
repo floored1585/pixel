@@ -13,6 +13,8 @@ distributed with multiple instances of each component.
 This project is severely lacking documentation at the moment, and the test suite will fail miserably
 outside of a specifically crafted environment.  These are things that need work!
 
+Please join us in #pixel on Freenode if you have any questions, we'd be glad to help!
+
 Installation
 -------
 
@@ -63,6 +65,8 @@ You must first configure the list of devices (and IPs) that Pixel should monitor
 Once you have valid YAML with devices and IPs, run `curl http://127.0.0.1/v2/devices/populate` on the
 application server (or visit that URL in a browser). This will update Pixel's database to match
 your `hosts.yaml` (it will add new devices and remove devices no longer present in `hosts.yaml`).
+
+Over time additional methods of adding devices will be included.
 
 Configuration
 -------

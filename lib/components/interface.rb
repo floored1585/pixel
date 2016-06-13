@@ -70,7 +70,7 @@ class Interface < Component
     return "P2P" if @type == 'p2p'
     return "Exchange" if @type == 'exc'
     return "Transit" if @type == 'trn'
-    return "Unknown" if @type == 'unknown'
+    return "Unknown"
   end
 
 

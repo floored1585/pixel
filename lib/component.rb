@@ -51,12 +51,13 @@ class Component
   end
 
 
-  def self.fetch_from_db(device: nil, index: nil, hw_types: nil, id: nil, db:, limit: nil)
+  def self.fetch_from_db(device: nil, device_partial: nil, index: nil, hw_types: nil, id: nil, db:, limit: nil)
 
     comp_data = db[:component]
     # Filter if options were passed
     comp_data = comp_data.where(:component_id => id) if id
-    comp_data = comp_data.where(:device => device) if device
+    comp_data = comp_data.where(:device => device) if device && !device_partial
+    comp_data = comp_data.where(Sequel.ilike(:device, "%#{device}%")) if device && device_partial
     comp_data = comp_data.where(:hw_type => hw_types) unless (hw_types.nil? || hw_types.include?('all'))
     comp_data = comp_data.where(:index => index.to_s) if index
     comp_data = comp_data.limit(limit) if limit && limit.to_s =~ /^\d+$/

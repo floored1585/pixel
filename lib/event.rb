@@ -76,6 +76,7 @@ class Event
   end
 
 
+  # Overridden in individual event classes
   def get_email(db)
     $LOG.error "ERROR: get_email method not implemented in class #{self.class}"
     return nil

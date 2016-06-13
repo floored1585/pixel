@@ -81,6 +81,79 @@ class Pixel < Sinatra::Base
   end
 
 
+  get '/ajax/interfaces' do
+    limit = params[:limit] || 100 # return a max of 100 results
+    device_name = params[:device]
+    device_partial = params[:device_partial]
+
+    ints = Component.fetch_from_db(
+      hw_types: ['Interface'], db: @@db, limit: limit, device: device_name, device_partial: device_partial
+    )
+
+    data = {}
+    data['meta'] = {
+      '_th_' => {
+        'pxl-sort' => true
+      },
+      '_filters_' => [
+        'device',
+        'device_partial',
+        'limit',
+      ],
+      '_dropdowns_' => {
+      },
+    }
+    data['data'] = []
+
+    devices = {}
+
+    # Convert the array of ints to a hash with unique keys
+    ints = ints.map { |int| ["#{int.device}_#{int.index}", int] }.to_h
+
+    ints.dup.each do |index, int|
+      # Load the device into the devices hash only if it doesn't already exist.
+      # This prevents multiple DB queries for the same device.
+      devices[int.device] ||= Device.fetch_from_db(db: @@db, device: int.device)[0]
+      devices[int.device].populate(nil, ['Interface']) if !int.physical? && devices[int.device].interfaces.empty?
+      device = devices[int.device]
+
+      # This code ensures we get all children of parent interfaces, and that
+      # the child interfaces are positioned directly after their parent (for
+      # tablesorter parent/child relationship to work)
+      children = device.get_children(parent_index: int.index)
+      unless children.empty?
+        ints.delete(index)
+        ints[index] = int
+        children.each do |child_int|
+          child_index = "#{child_int.device}_#{child_int.index}"
+          ints.delete(child_index)
+          ints[child_index] = child_int
+        end
+      end
+    end
+
+    ints.each do |index, int|
+
+      int_data = JSON.parse(int.to_json)['data']
+      # Create the details field as appropriate for the int
+      int_data['td_bps_hidden'] = if_cell_bps_hidden(int)
+      int_data['td_int_link'] = if_cell_int_link(@@config.settings, int)
+      int_data['td_device'] = device_link(int.device)
+      int_data['td_link_status'] = if_cell_link_status(int, devices[int.device])
+      int_data['td_link_type'] = if_cell_link_type(int, devices[int.device])
+      int_data['td_neighbor'] = if_cell_neighbor(int)
+      int_data['td_bps_in'] = if_cell_bps_in(int)
+      int_data['td_bps_out'] = if_cell_bps_out(int)
+      int_data['td_speed'] = if_cell_speed(int)
+      int_data['child'] = int.child?
+      int_data['id'] = index
+      data['data'].push(int_data)
+    end
+    return JSON.generate(data)
+
+  end
+
+
   get '/ajax/devices' do
 
     devices = Device.fetch_from_db(db: @@db)

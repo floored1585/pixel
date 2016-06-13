@@ -138,6 +138,90 @@ module Helper
   end
 
 
+  def if_cell_bps_hidden(int)
+    {
+      'pxl-hidden' => true,
+      'data' => int.bps_in + int.bps_out
+    }
+  end
+
+
+  def if_cell_int_link(settings, int)
+    html = "<a href='#{settings[:grafana_if_dash].value}"
+    html += "?device=#{int.device}&name=#{int.name}"
+    html += "' target='_blank'>#{int.name}</a>"
+
+    {
+      'pxl-td-shrink' => true,
+      'data' => html
+    }
+  end
+
+
+  def if_cell_link_status(int, device)
+    children = device.get_children(parent_name: int.name)
+
+    html = "<table class='pxl-linkUp pxl-linkUp-#{link_status_color(int, children)}'>"
+    html += "<tr><td data-toggle='tooltip' data-container='body' "
+    html += "title='#{link_status_tooltip(int, children)}' data-rel='tooltip-right'></td></tr></table>"
+
+    return html
+  end
+
+
+  def if_cell_link_type(int, device)
+    children = device.get_children(parent_name: int.name)
+
+    html = int.type + " "
+
+    if children.size > 0
+      html += "<button type='button' class='swapPlusMinus btn btn-default btn-xs'> "
+      html += "<span class=\"glyphicon glyphicon-plus\"></span> "
+      html += "</button>"
+    end
+
+    return html
+  end
+
+
+  def if_cell_neighbor(int, opts={})
+    if int.neighbor
+      neighbor = "<a href='/device/#{int.neighbor}'>#{int.neighbor}</a>"
+      port = int.neighbor_port || ''
+      return (port.empty? || opts[:device_only]) ? neighbor : "#{neighbor} (#{port})"
+    else
+      return int.description
+    end
+  end
+
+
+  def if_cell_bps_in(int)
+    {
+      'pxl-meta' => int.bps_util_in,
+      'pxl-histogram' => true,
+      'data' => bps_cell(:in, int)
+    }
+  end
+
+
+  def if_cell_bps_out(int)
+    {
+      'pxl-meta' => int.bps_util_out,
+      'pxl-histogram' => true,
+      'data' => bps_cell(:out, int)
+    }
+  end
+
+
+  def if_cell_speed(int)
+    return '' if int.down?
+    {
+      'pxl-meta' => int.speed,
+      'data' => number_to_human(int.speed, units: :bps, sigfigs: 2)
+    }
+  end
+
+
   def alarm_type_text(device)
     text = ''
     text << "<span class='text-danger'>RED</span> " if device.red_alarm

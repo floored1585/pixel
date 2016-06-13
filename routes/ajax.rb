@@ -106,6 +106,7 @@ class Pixel < Sinatra::Base
     data['data'] = []
 
     devices = {}
+    valid_children = {}
 
     # Convert the array of ints to a hash with unique keys
     ints = ints.map { |int| ["#{int.device}_#{int.index}", int] }.to_h
@@ -126,6 +127,7 @@ class Pixel < Sinatra::Base
         ints[index] = int
         children.each do |child_int|
           child_index = "#{child_int.device}_#{child_int.index}"
+          valid_children[child_index] = true # for lookup below, to determine if we have this child's parent
           ints.delete(child_index)
           ints[child_index] = child_int
         end
@@ -145,7 +147,7 @@ class Pixel < Sinatra::Base
       int_data['td_bps_in'] = if_cell_bps_in(int)
       int_data['td_bps_out'] = if_cell_bps_out(int)
       int_data['td_speed'] = if_cell_speed(int)
-      int_data['child'] = int.child?
+      int_data['child'] = int.child? && valid_children[index]
       int_data['id'] = index
       data['data'].push(int_data)
     end

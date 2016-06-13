@@ -484,17 +484,26 @@ d3_table_update = (jq_table, data, meta) ->
 
   tr = tbody.selectAll("tr.dynamic")
     .data(data, get_keys)
+
   tr.enter().append("tr")
     .attr('class', 'dynamic') # So we can separate this TR from any child TRs
     .classed('tablesorter-childRow pxl-child-tr', (d,i) -> d.child)
     .style('opacity', 0)
     .transition().duration(500)
     .style('opacity', 1)
+
   tr.exit()
+    .each((d,i) -> $(this).nextUntil('tr:not(.tablesorter-childRow)').find('td:not(.pxl-hidden)').show())
     .classed('remove-me', true) # For tablesorter compatibility
     .transition().duration(300)
     .style('opacity', 0)
     .remove()
+
+  tr.classed('tablesorter-childRow pxl-child-tr', (d,i) -> d.child)
+
+  tr.sort((x,y) ->
+    d3.ascending(data.indexOf(x), data.indexOf(y))
+  )
 
   td = tr.selectAll("td.dynamic")
     .data(get_cell_data)

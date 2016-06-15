@@ -31,15 +31,11 @@ class Pixel < Sinatra::Base
     start_time = params[:start_time].to_i_if_numeric
     end_time = params[:end_time].to_i_if_numeric
     limit = params[:limit] || 100 # return a max of 100 results
+    meta_only = params[:meta_only]
     device = params[:device]
     device_partial = params[:device_partial]
     hw_type = params[:hw_type]
     types = params[:type] ? params[:type].split('$') : nil
-
-    events = ComponentEvent.fetch_from_db(
-      start_time: start_time, end_time: end_time, types: types, db: @@db, limit: limit,
-      device: device, hw_type: hw_type, device_partial: device_partial
-    )
 
     data = {}
     data['meta'] = {
@@ -64,6 +60,13 @@ class Pixel < Sinatra::Base
     }
     data['data'] = []
 
+    return JSON.generate(data) if limit.to_i < 1 || meta_only
+
+    events = ComponentEvent.fetch_from_db(
+      start_time: start_time, end_time: end_time, types: types, db: @@db, limit: limit,
+      device: device, hw_type: hw_type, device_partial: device_partial
+    )
+
     events.each do |event|
       temp = JSON.parse(event.to_json)['data']
       component = Component.fetch_from_db(id: event.component_id, db: @@db).first
@@ -83,12 +86,9 @@ class Pixel < Sinatra::Base
 
   get '/ajax/interfaces' do
     limit = params[:limit] || 100 # return a max of 100 results
+    meta_only = params[:meta_only]
     device_name = params[:device]
     device_partial = params[:device_partial]
-
-    ints = Component.fetch_from_db(
-      hw_types: ['Interface'], db: @@db, limit: limit, device: device_name, device_partial: device_partial
-    )
 
     data = {}
     data['meta'] = {
@@ -104,6 +104,12 @@ class Pixel < Sinatra::Base
       },
     }
     data['data'] = []
+
+    return JSON.generate(data) if limit.to_i < 1 || meta_only
+
+    ints = Component.fetch_from_db(
+      hw_types: ['Interface'], db: @@db, limit: limit, device: device_name, device_partial: device_partial
+    )
 
     devices = {}
     valid_children = {}

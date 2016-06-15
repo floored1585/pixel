@@ -309,18 +309,114 @@ d3_init = ->
     $('.ajax_table').each ->
       table = $(this)
       id = table.attr('id')
+
+      d3_get_meta(table)
+
       refresh_time = table.data('api-refresh')
-      if refresh_time?
+      populate = table.data('api-populate')
+      if refresh_time? && populate?
         ajaxRefreshID[id] = window.setInterval((-> d3_table_fetch(table)), refresh_time * 1000)
-      d3_table_fetch(table)
+      if populate?
+        d3_table_fetch(table, populate)
+
   if $('.ajax_list').length != 0
     clearInterval($.cookie('auto-refresh'))
     $('.ajax_list').dynamicTree()
 
 
+d3_get_meta = (table) ->
+    url = table.data('api-url') + '?meta_only=true'
+    $.ajax url,
+      success: (data, status, xhr) ->
+        data = $.parseJSON(data)
+        meta = data.meta
+        meta ?= {}
+        d3_populate_dropdowns(table, meta)
+      error: (xhr, status, err) ->
+      complete: (xhr, status) ->
+
+
+d3_populate_dropdowns = (table, meta) ->
+  table_id = table.attr('id')
+  # Get dropdown data
+  $.each(meta['_dropdowns_'], (field, dd_data) ->
+    url = dd_data['url']
+    placeholder = dd_data['placeholder']
+    dropdown_id = "##{table_id}_#{field}"
+    $.ajax url,
+      success: (data, status, xhr) ->
+        data = $.parseJSON(data)
+        d3.select(dropdown_id).selectAll('option')
+          .data(data)
+          .enter()
+          .append('option')
+          .text((d) -> d3.values(d)[0])
+          .attr('value', (d) -> d3.keys(d)[0])
+        $(dropdown_id).multiselect({
+          buttonWidth: '100%',
+          enableHTML: true,
+          nonSelectedText: "<span class='pxl-placeholder'>#{placeholder}</span>",
+          numberDisplayed: 2,
+          dropRight: true,
+          enableFiltering: true,
+          enableCaseInsensitiveFiltering: true,
+          onDropdownHide: (e) -> set_focus()
+        })
+        # When the clear button is clicked, unselect all the options
+        $("#{dropdown_id}_reset").on click: ->
+          select_id = $(this).attr('id').replace('_reset', '')
+          $("##{select_id} option:selected").each( -> $(this).prop('selected', false))
+          $("##{select_id}").multiselect('refresh')
+          set_focus()
+      error: (xhr, status, err) ->
+      complete: (xhr, status) ->
+  )
+
+  param_data = table.data('api-params')
+  param_data ?= ""
+  params = $.each(param_data.split(','), (i, pair) ->
+    param = pair.split('=')[0]
+    value = pair.split('=')[1]
+    input = $("##{table_id}_#{param}")
+    if(input.length > 0)
+      input.val(value)
+  )
+
+  # Apply button should update api-params data and refresh the data
+  $("##{table_id}_apply").unbind("click.pixel")
+  $("##{table_id}_apply").on 'click.pixel': ->
+    # Reset the refresh timer
+    refresh_time = table.data('api-refresh')
+    window.clearInterval(ajaxRefreshID[table_id])
+    ajaxRefreshID[table_id] = window.setInterval((-> d3_table_fetch(table)), refresh_time * 1000) if refresh_time
+
+    # apply params to the table & get new dataset
+    params = []
+    $.each(meta['_filters_'], (i, filter) ->
+      element = $("##{table_id}_#{filter}")
+      if element.is('select')
+        value = element.find(':selected').map(-> this.value).get().join('$')
+      else if element.is(':checkbox')
+        value = if element.is(':checked') then 'true' else ''
+      else if filter.match(/(start|end)_time/)
+        value = element?.val()
+        if value? && value.trim()
+          value = value.replace(' @ ','T')
+          s = value.split(/\D+/)
+          value = ((new Date(s[0], --s[1], s[2], s[3], s[4], s[5]? || 0)).getTime() / 1000).toString()
+      else
+        value = element?.val()
+      if (value? && value.trim()) then params.push("#{filter}=#{value}")
+    )
+    table.data('api-params', params.join(','))
+    d3_table_fetch(table)
+
+
 d3_table_fetch = (table) ->
     url = table.data('api-url')
-    params = table.data('api-params').split(',').join('&')
+    param_data = table.data('api-params')
+    param_data ?= ""
+    params = param_data.split(',').join('&')
 
     $.ajax "#{url}?#{params}",
       success: (data, status, xhr) ->
@@ -385,86 +481,15 @@ d3_table_update = (jq_table, data, meta) ->
       .attr('colspan', (d,i) -> d3.values(d)[0].colspan)
       .classed('pxl-hidden', (d,i) -> d3.values(d)[0].name == '_hidden_')
       .classed('pxl-sort', (column_data) ->
-        column = d3.keys(column_data)[0]
         (meta['_th_']? && meta['_th_']['pxl-sort']?)
       )
     # Add sort icons
     table.selectAll('.pxl-sort')
       .append('span')
       .attr('class', 'glyphicon glyphicon-sort pxl-sort-icon pxl-hidden')
+
     set_hovers(jq_table)
     set_onclicks(jq_table)
-
-    # Get dropdown data
-    $.each(meta['_dropdowns_'], (field, dd_data) ->
-      url = dd_data['url']
-      placeholder = dd_data['placeholder']
-      dropdown_id = "##{table_id}_#{field}"
-      $.ajax url,
-        success: (data, status, xhr) ->
-          data = $.parseJSON(data)
-          d3.select(dropdown_id).selectAll('option')
-            .data(data)
-            .enter()
-            .append('option')
-            .text((d) -> d3.values(d)[0])
-            .attr('value', (d) -> d3.keys(d)[0])
-          $(dropdown_id).multiselect({
-            buttonWidth: '100%',
-            enableHTML: true,
-            nonSelectedText: "<span class='pxl-placeholder'>#{placeholder}</span>",
-            numberDisplayed: 2,
-            dropRight: true,
-            enableFiltering: true,
-            enableCaseInsensitiveFiltering: true,
-            onDropdownHide: (e) -> set_focus()
-          })
-          # When the clear button is clicked, unselect all the options
-          $("#{dropdown_id}_reset").on click: ->
-            select_id = $(this).attr('id').replace('_reset', '')
-            $("##{select_id} option:selected").each( -> $(this).prop('selected', false))
-            $("##{select_id}").multiselect('refresh')
-            set_focus()
-        error: (xhr, status, err) ->
-        complete: (xhr, status) ->
-    )
-
-    params = $.each(jq_table.data('api-params').split(','), (i, pair) ->
-      param = pair.split('=')[0]
-      value = pair.split('=')[1]
-      input = $("##{table_id}_#{param}")
-      if(input.length > 0)
-        input.val(value)
-    )
-
-    # Apply button should update api-params data and refresh the data
-    $("##{table_id}_apply").unbind("click.pixel")
-    $("##{table_id}_apply").on 'click.pixel': ->
-      # Reset the refresh timer
-      refresh_time = jq_table.data('api-refresh')
-      window.clearInterval(ajaxRefreshID[table_id])
-      ajaxRefreshID[table_id] = window.setInterval((-> d3_table_fetch(jq_table)), refresh_time * 1000) if refresh_time
-
-      # apply params to the table & get new dataset
-      params = []
-      $.each(meta['_filters_'], (i, filter) ->
-        element = $("##{table_id}_#{filter}")
-        if element.is('select')
-          value = element.find(':selected').map(-> this.value).get().join('$')
-        else if element.is(':checkbox')
-          value = if element.is(':checked') then 'true' else ''
-        else if filter.match(/(start|end)_time/)
-          value = element?.val()
-          if value? && value.trim()
-            value = value.replace(' @ ','T')
-            s = value.split(/\D+/)
-            value = ((new Date(s[0], --s[1], s[2], s[3], s[4], s[5]? || 0)).getTime() / 1000).toString()
-        else
-          value = element?.val()
-        if (value? && value.trim()) then params.push("#{filter}=#{value}")
-      )
-      jq_table.data('api-params', params.join(','))
-      d3_table_fetch(jq_table)
 
   tbody = table.select('tbody')
 

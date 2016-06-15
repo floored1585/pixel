@@ -313,7 +313,7 @@ d3_init = ->
       d3_get_meta(table)
 
       refresh_time = table.data('api-refresh')
-      populate = table.data('api-populate')
+      populate = table.data('api-autostart')
       if refresh_time? && populate?
         ajaxRefreshID[id] = window.setInterval((-> d3_table_fetch(table)), refresh_time * 1000)
       if populate?
@@ -379,7 +379,11 @@ d3_populate_dropdowns = (table, meta) ->
     value = pair.split('=')[1]
     input = $("##{table_id}_#{param}")
     if(input.length > 0)
-      input.val(value)
+      if input.is(':checkbox')
+        input.prop('checked', true) if value == 'true'
+        input.prop('checked', false) if value == 'false'
+      else
+        input.val(value)
   )
 
   # Apply button should update api-params data and refresh the data

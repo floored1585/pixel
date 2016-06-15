@@ -39,7 +39,7 @@
     <div class="input-group">
       <span class="input-group-addon" id="es_limit">Result Limit</span>
       <input type="text" id='interfaces_limit' class="api-limit form-control" size='5'
-      placeholder="Only 100 results will be returned if no value is set" aria-describedby="es_limit" />
+      placeholder="Only 100 results will be returned if no limit is set" aria-describedby="es_limit" />
     </div>
     <br />
 
@@ -62,7 +62,7 @@
     class='table ajax_table table-hover table-condensed d3-tablesorter'
     data-api-url="/ajax/interfaces"
     data-api-refresh='10'
-    data-api-autostart='false'
+    data-api-params="device_partial=true"
     data-api-columns="td_bps_hidden:_hidden_:1,td_device:Device :1,td_int_link:Name :2,td_link_status::0,td_link_type:Type :1,td_neighbor:Neighbor :1,td_bps_in:Ingress :1,td_bps_out:Egress :1,td_speed:Speed :1"
     data-api-key="id">
     <thead>

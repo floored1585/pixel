@@ -90,49 +90,29 @@
   </div>
 <% end %>
 
-<div class='row'>
-  <% if device.class == Device && device.interfaces.size > 0 %>
-    <table id='ifTable' class='table table-hover table-condensed tablesorter'>
+<% if device.class == Device && device.interfaces.size > 0 %>
+<div class='pxl-dynamic-content'>
+
+  <table
+    id='interfaces'
+    class='table ajax_table table-hover table-condensed d3-tablesorter'
+    data-api-url="/ajax/interfaces"
+    data-api-refresh='60'
+    data-api-autostart='true'
+    data-api-params="limit=10000,device=<%= device.name %>"
+    data-api-columns="td_bps_hidden:_hidden_:1,td_int_link:Name :2,td_link_status::0,td_link_type:Type :1,td_neighbor:Neighbor :1,td_bps_in:Ingress :1,td_bps_out:Egress :1,td_speed:Speed :1"
+    data-api-key="id">
     <thead>
       <tr>
-        <th class='pxl-hidden'>Total</th>
-        <th colspan='2' class='pxl-sort'>Name <span class='glyphicon glyphicon-sort pxl-sort-icon pxl-hidden'></span></th>
-        <th class='pxl-sort'>Type  <span class='glyphicon glyphicon-sort pxl-sort-icon pxl-hidden'></span></th>
-        <th class='pxl-sort'>Neighbor <span class='glyphicon glyphicon-sort pxl-sort-icon pxl-hidden'></span></th>
-        <th class='pxl-sort'>Ingress <span class='glyphicon glyphicon-sort pxl-sort-icon pxl-hidden'></span></th>
-        <th class='pxl-sort'>Egress <span class='glyphicon glyphicon-sort pxl-sort-icon pxl-hidden'></span></th>
-        <th class='pxl-sort'>Speed <span class='glyphicon glyphicon-sort pxl-sort-icon pxl-hidden'></span></th>
       </tr>
     </thead>
     <tbody>
-    <% device.interfaces.values.each do |int| %>
-      <% parent = device.get_interface(name: int.parent_name) %>
-      <% children = device.get_children(parent_name: int.name) %>
-      <tr <%= tr_attributes(int, parent, hide_if_child: true, hl_relation: true) %>>
-        <td class='pxl-hidden'><%= total_bps_cell(int, parent) %></td>
-        <td class='pxl-td-shrink'><%= interface_link(settings, int) %></td>
-        <td><table class='pxl-linkUp pxl-linkUp-<%= link_status_color(int, children) %>'><tr>
-              <td data-toggle='tooltip' data-container='body' title='<%= link_status_tooltip(int, children) %>' data-rel='tooltip-right'></td>
-          </tr></table></td>
-        <td class='<%= 'pxl-child-td' if parent %>'>
-          <%= int.type %>
-          <% if children.size > 0 %>
-            <button type='button' class='swapPlusMinus btn btn-default btn-xs' data-toggle='collapse' data-target='.<%= int.index %>_child'>
-              <span class="glyphicon glyphicon-plus"></span>
-            </button>
-          <% elsif parent %>
-            <span class='pxl-hidden'><%= "[#{parent.name}]" %></span>
-          <% end %>
-        </td>
-        <td><%= neighbor_link(int) %></td>
-        <td class='pxl-histogram pxl-meta' data-pxl-meta='<%= int.bps_util_in %>'><%= bps_cell(:in, int) %></td>
-        <td class='pxl-histogram pxl-meta' data-pxl-meta='<%= int.bps_util_out %>'><%= bps_cell(:out, int) %></td>
-        <td><%= speed_cell(int) %>&nbsp;&nbsp;&nbsp;&nbsp;</td>
-      </tr>
-    <% end %>
     </tbody>
   </table>
-  <% else # This means we don't have any interfaces, or the device doesn't exist %>
+
+</div>
+<% else # This means we don't have any interfaces, or the device doesn't exist %>
+<div class='row'>
     <% error = device.class == Device ? 'Device found, but no interfaces are being recorded.' : 'Device not found.' %>
     <div class='col-md-2'></div>
     <div class='col-md-8'>
@@ -144,8 +124,8 @@
       </ul>
     </div>
     <div class='col-md-2'></div>
-  <% end %>
 </div>
+<% end %>
 
 <% if device.class == Device %>
 <!--88888888888888888-->

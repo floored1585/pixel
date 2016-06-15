@@ -385,11 +385,6 @@ d3_populate_dropdowns = (table, meta) ->
   # Apply button should update api-params data and refresh the data
   $("##{table_id}_apply").unbind("click.pixel")
   $("##{table_id}_apply").on 'click.pixel': ->
-    # Reset the refresh timer
-    refresh_time = table.data('api-refresh')
-    window.clearInterval(ajaxRefreshID[table_id])
-    ajaxRefreshID[table_id] = window.setInterval((-> d3_table_fetch(table)), refresh_time * 1000) if refresh_time
-
     # apply params to the table & get new dataset
     params = []
     $.each(meta['_filters_'], (i, filter) ->
@@ -413,10 +408,13 @@ d3_populate_dropdowns = (table, meta) ->
 
 
 d3_table_fetch = (table) ->
+    table_id = table.attr('id')
     url = table.data('api-url')
     param_data = table.data('api-params')
     param_data ?= ""
     params = param_data.split(',').join('&')
+
+    window.clearInterval(ajaxRefreshID[table_id]) # Keep ajax queries from stacking up
 
     $.ajax "#{url}?#{params}",
       success: (data, status, xhr) ->
@@ -428,6 +426,12 @@ d3_table_fetch = (table) ->
         d3_table_update(table, data, meta)
       error: (xhr, status, err) ->
       complete: (xhr, status) ->
+        # Clear any interval set during this query and restart the timer
+        window.clearInterval(ajaxRefreshID[table_id])
+        refresh_time = table.data('api-refresh') * 1000
+        if refresh_time
+          ajaxRefreshID[table_id] = window.setInterval((-> d3_table_fetch(table)), refresh_time)
+
         # trigger tablesorter update, and perform initial sort if
         # we previously had no data
         fresh_data = true if table[0].config.totalRows == 0

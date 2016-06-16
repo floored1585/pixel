@@ -419,6 +419,7 @@ d3_table_fetch = (table) ->
     params = param_data.split(',').join('&')
 
     window.clearInterval(ajaxRefreshID[table_id]) # Keep ajax queries from stacking up
+    NProgress.start()
 
     $.ajax "#{url}?#{params}",
       success: (data, status, xhr) ->
@@ -435,6 +436,7 @@ d3_table_fetch = (table) ->
         refresh_time = table.data('api-refresh') * 1000
         if refresh_time
           ajaxRefreshID[table_id] = window.setInterval((-> d3_table_fetch(table)), refresh_time)
+        NProgress.done()
 
         # trigger tablesorter update, and perform initial sort if
         # we previously had no data

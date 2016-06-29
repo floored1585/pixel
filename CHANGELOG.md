@@ -1,8 +1,9 @@
-## 0.0.3 (2016-06-13)
+## 0.0.3 (2016-06-29)
 
 Features:
 
   - New "Interfaces" page; a framework for searching through interface data.
+  - Device page now loads most data via AJAX, for faster initial page load and improved UX.
 
 Bugfixes:
 

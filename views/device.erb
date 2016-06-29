@@ -35,8 +35,8 @@
       <span>Uptime: <b><%= humanize_time(device.uptime)%></b></span>
       <span>Pushing:
         <span data-toggle='tooltip' data-rel='tooltip-bottom' class='tooltip-lighter'
-          title='<%= number_to_human(device.pps_out, units: :pps) %>'>
-          <u><b><%= number_to_human(device.bps_out, units: :bps) %></b></u>
+          title='<%= number_to_human(pps_out, units: :pps) %>'>
+          <u><b><%= number_to_human(bps_out, units: :bps) %></b></u>
         </span>
       </span>
     </div>
@@ -90,7 +90,21 @@
   </div>
 <% end %>
 
-<% if device.class == Device && device.interfaces.size > 0 %>
+<% if device.class != Device || device.sw_descr.empty? %>
+<div class='row'>
+    <% error = device.class == Device ? 'Device found, but no data recorded.' : 'Device not found.' %>
+    <div class='col-md-2'></div>
+    <div class='col-md-8'>
+      <br \>
+      <ul class='list-group'>
+        <li class='center list-group-item list-group-item-danger'>
+        <b><%= error %></b>
+        </li>
+      </ul>
+    </div>
+    <div class='col-md-2'></div>
+</div>
+<% else # This means we don't have any interfaces, or the device doesn't exist %>
 <div class='pxl-dynamic-content'>
 
   <table
@@ -110,20 +124,6 @@
     </tbody>
   </table>
 
-</div>
-<% else # This means we don't have any interfaces, or the device doesn't exist %>
-<div class='row'>
-    <% error = device.class == Device ? 'Device found, but no interfaces are being recorded.' : 'Device not found.' %>
-    <div class='col-md-2'></div>
-    <div class='col-md-8'>
-      <br \>
-      <ul class='list-group'>
-        <li class='center list-group-item list-group-item-danger'>
-        <b><%= error %></b>
-        </li>
-      </ul>
-    </div>
-    <div class='col-md-2'></div>
 </div>
 <% end %>
 

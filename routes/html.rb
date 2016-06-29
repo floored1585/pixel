@@ -98,7 +98,11 @@ class Pixel < Sinatra::Base
     # Start timer
     beginning = Time.now
 
-    device = Device.fetch(device_name, ['all'])
+    device = Device.fetch(device_name, ['CPU', 'Fan', 'Memory', 'PSU', 'Temperature'])
+
+    dev_db = @@db[:interface].natural_join(:component).where(:device => device_name)
+    bps_out = dev_db.sum(:bps_out)
+    pps_out = dev_db.sum(:pps_out)
 
     # How long did it take us to query the database
     db_elapsed = '%.2f' % (Time.now - beginning)
@@ -107,6 +111,8 @@ class Pixel < Sinatra::Base
       :settings => @@config.settings,
       :device_name => device_name,
       :device => device,
+      :bps_out => bps_out,
+      :pps_out => pps_out,
       :db_elapsed => db_elapsed,
     }
   end

@@ -2,8 +2,8 @@
 
 Features:
 
-  - New "Interfaces" page; a framework for searching through interface data.
-  - Device page now loads most data via AJAX, for faster initial page load and improved UX.
+  - New "Interfaces" page; a framework for searching through interface data (@floored1585)
+  - Device page now loads most data via AJAX, for faster initial page load and improved UX (@floored1585)
 
 Bugfixes:
 

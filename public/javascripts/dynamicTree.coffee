@@ -137,7 +137,7 @@ $.fn.extend
         selector = selectors[index]
         # If there are no more selectors to process, just list the devices
         if selector == undefined
-          return $.map(nodes, (node, k) -> { txt: node[display], children: [] } )
+          return [$.map(nodes, (node, k) -> { txt: node[display], children: [] } ), nodes.length]
         selector_field = d3.keys(selector)[0]
         selector_regex = d3.values(selector)[0]
         tree = []
@@ -153,20 +153,23 @@ $.fn.extend
             category = instance
             category ?= '(unmatched)'
             category = '(unmatched)' if category == ''
-          categories[category] ?= []
-          categories[category].push(node)
+          if category != '(unmatched)'
+            categories[category] ?= []
+            categories[category].push(node)
         )
+        count = 0
         $.each(categories, (category, children) ->
-          return true if category == '(unmatched)'
+          data = generate_data(children, index + 1)
+          count = data[1] + count
           tree.push {
             txt: category,
-            children: generate_data(children, index + 1),
-            count: children.length
+            children: data[0]
+            count: data[1]
           }
         )
-        return tree
+        return [tree, count]
     
-      new_data['children'] = generate_data(data, 0)
+      new_data['children'] = generate_data(data, 0)[0] # Only get the tree, not the count. [0] is tree, [1] is count
     
       generate_list = (parent_lists) ->
         item = parent_lists.selectAll('ul')

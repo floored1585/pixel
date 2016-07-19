@@ -34,7 +34,7 @@ $LOG.info "Starting Pixel..."
 # When $DB_VERSION increases a schema update is triggered.  Make sure
 # there is a matching db_update_#.sql file in the config directory
 # before increasing this.
-$DB_VERSION = 1
+$DB_VERSION = 2
 
 class Pixel < Sinatra::Base
 

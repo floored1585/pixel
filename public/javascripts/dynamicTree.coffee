@@ -88,7 +88,6 @@ $.fn.extend
           newLayer.find(".#{list_id}_input").prop('disabled', (i, v) -> !v)
           newLayer.find(".#{list_id}_input").val(null)
           apply_layers(list_id, data)
-          set_focus()
         newLayer.find(".#{list_id}_input").focusout( -> apply_layers(list_id, data) )
         newLayer.find('span button').first().on click: ->
           $(newLayer).hide('slow', ->
@@ -158,6 +157,7 @@ $.fn.extend
           categories[category].push(node)
         )
         $.each(categories, (category, children) ->
+          return true if category == '(unmatched)'
           tree.push {
             txt: category,
             children: generate_data(children, index + 1),

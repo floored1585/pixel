@@ -77,6 +77,8 @@ class ConfigItem
       Integer(@value) # rescue nil ??
     when 'Boolean'
       @value == 'true'
+    when 'Array'
+      JSON.parse(@value)
     end
   end
 

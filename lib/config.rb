@@ -92,7 +92,7 @@ class Config
       @settings[setting.to_sym] = ConfigItem.populate(table_name: 'global_config', data: data)
     end
 
-    # NOTE: 'value' should always be a string here.  It is casted when accessed based on 'type'.
+    # NOTE: 'value' should always be a string here.  It is cast automatically based on 'type'.
 
     @settings[:grafana_if_dash] ||= ConfigItem.new(
       table_name: 'global_config',

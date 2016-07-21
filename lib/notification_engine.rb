@@ -29,10 +29,15 @@ module NotificationEngine
     events = Event.get_unprocessed
 
     notifications_enabled = config.notifications_enabled.value
-    event_notify_types = config.event_notify_types.value
     recipients = config.notification_recipients.value
     from_name = config.notification_from_name.value
     from_email = config.notification_from_email.value
+    notify_types = config.event_notify_types.value
+
+    unless notify_types.is_a? Array
+      $LOG.error "NOTIFICATION ENGINE: event_notify_types is not an Array!"
+      notify_types = []
+    end
 
     # Construct the 'from' field
     from_field = ""
@@ -63,7 +68,7 @@ module NotificationEngine
       # We have to 'next' instead of 'break' because we need to mark
       # events as processed even if these conditions prevent emails
       # from going out.
-      next unless notifications_enabled && mail_data && 
+      next unless notifications_enabled && mail_data && notify_types.include?(event.class.to_s)
       next if from_field.empty? || recipients.empty?
 
       # Send the email!
@@ -83,7 +88,8 @@ module NotificationEngine
 
     end
 
-    $LOG.info "ALERT_ENGINE: Successfully sent #{email_count} emails" if email_count > 0
+    $LOG.info "NOTIFICATION_ENGINE: Successfully processed #{events.size} events" if events.size > 0
+    $LOG.info "NOTIFICATION_ENGINE: Successfully sent #{email_count} emails" if email_count > 0
 
   end
 

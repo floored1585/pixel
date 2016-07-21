@@ -16,22 +16,23 @@
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 #
 
-# alert_engine.rb
+# notification_engine.rb
 #
 require 'logger'
 require_relative 'helper'
 
 $LOG ||= Logger.new(STDOUT)
 
-module AlertEngine
+module NotificationEngine
 
   def self.process_events(db, config)
     events = Event.get_unprocessed
 
-    alerts_enabled = config.alerts_enabled.value
-    recipients = config.alert_recipients.value
-    from_name = config.alert_from_name.value
-    from_email = config.alert_from_email.value
+    notifications_enabled = config.notifications_enabled.value
+    event_notify_types = config.event_notify_types.value
+    recipients = config.notification_recipients.value
+    from_name = config.notification_from_name.value
+    from_email = config.notification_from_email.value
 
     # Construct the 'from' field
     from_field = ""
@@ -42,12 +43,12 @@ module AlertEngine
       from_field << ">" unless from_name.empty?
     end
 
-    if alerts_enabled && recipients.empty?
-      $LOG.warn "ALERT_ENGINE: Alerts enabled, but no recipients defined!"
+    if notifications_enabled && recipients.empty?
+      $LOG.warn "NOTIFICATION_ENGINE: Notifications enabled, but no recipients defined!"
     end
 
-    if alerts_enabled && from_field.empty?
-      $LOG.warn "ALERT_ENGINE: Alerts enabled, but no source email address defined!"
+    if notifications_enabled && from_field.empty?
+      $LOG.warn "NOTIFICATION_ENGINE: Notifications enabled, but no source email address defined!"
     end
 
     email_count = 0
@@ -62,7 +63,7 @@ module AlertEngine
       # We have to 'next' instead of 'break' because we need to mark
       # events as processed even if these conditions prevent emails
       # from going out.
-      next unless alerts_enabled && mail_data
+      next unless notifications_enabled && mail_data && 
       next if from_field.empty? || recipients.empty?
 
       # Send the email!
@@ -77,7 +78,7 @@ module AlertEngine
         email_count += 1
 
       rescue Net::SMTPFatalError => e
-        $LOG.error "ALERT_ENGINE: Error sending alert email: #{e}"
+        $LOG.error "ALERT_ENGINE: Error sending notification email: #{e}"
       end
 
     end

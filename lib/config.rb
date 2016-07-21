@@ -118,35 +118,35 @@ class Config
       type: 'Integer',
       last_updated: now
     )
-    @settings[:alerts_enabled] ||= ConfigItem.new(
+    @settings[:notifications_enabled] ||= ConfigItem.new(
       table_name: 'global_config',
-      setting: 'alerts_enabled',
+      setting: 'notifications_enabled',
       value: "false",
-      description: 'Whether or not to send alert emails',
+      description: 'Whether or not to send alert notification emails',
       type: 'Boolean',
       last_updated: now
     )
-    @settings[:alert_recipients] ||= ConfigItem.new(
+    @settings[:notification_recipients] ||= ConfigItem.new(
       table_name: 'global_config',
-      setting: 'alert_recipients',
+      setting: 'notification_recipients',
       value: "",
-      description: 'Comma separated list of email addresses that will alerts',
+      description: 'Comma separated list of email addresses that will receive notifications',
       type: 'String',
       last_updated: now
     )
-    @settings[:alert_from_email] ||= ConfigItem.new(
+    @settings[:notification_from_email] ||= ConfigItem.new(
       table_name: 'global_config',
-      setting: 'alert_from_email',
+      setting: 'notification_from_email',
       value: "",
-      description: 'Email address from which alert emails will originate',
+      description: 'Email address from which alert notification emails will originate',
       type: 'String',
       last_updated: now
     )
-    @settings[:alert_from_name] ||= ConfigItem.new(
+    @settings[:notification_from_name] ||= ConfigItem.new(
       table_name: 'global_config',
-      setting: 'alert_from_name',
-      value: "Pixel Alert",
-      description: 'Name from which alert emails will originate',
+      setting: 'notification_from_name',
+      value: "Pixel Notification",
+      description: 'Name from which alert notification emails will originate',
       type: 'String',
       last_updated: now
     )
@@ -204,6 +204,14 @@ class Config
       value: "public",
       description: 'SNMPv2 community string',
       type: 'String',
+      last_updated: now
+    )
+    @settings[:event_notify_types] ||= ConfigItem.new(
+      table_name: 'global_config',
+      setting: 'event_notify_types',
+      value: "[]",
+      description: 'List of events that will generate notifications',
+      type: 'Array',
       last_updated: now
     )
 

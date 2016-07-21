@@ -190,6 +190,14 @@ class Config
       type: 'String',
       last_updated: now
     )
+    @settings[:base_url] ||= ConfigItem.new(
+      table_name: 'global_config',
+      setting: 'base_url',
+      value: "http://127.0.0.1",
+      description: 'URL of the Pixel frontend',
+      type: 'String',
+      last_updated: now
+    )
     @settings[:snmpv2_community] ||= ConfigItem.new(
       table_name: 'global_config',
       setting: 'snmpv2_community',

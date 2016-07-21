@@ -231,6 +231,11 @@ module Helper
   end
 
 
+  def self.device_url(config, name)
+    "#{config.base_url.value}/device/#{name}"
+  end
+
+
   def device_link(name)
     "<a href='/device/#{name}'>#{name}</a>"
   end

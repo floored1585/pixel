@@ -19,10 +19,11 @@
 # alert_engine.rb
 #
 require 'logger'
+require_relative 'helper'
+
 $LOG ||= Logger.new(STDOUT)
 
 module AlertEngine
-
 
   def self.process_events(db, config)
     events = Event.get_unprocessed
@@ -70,7 +71,7 @@ module AlertEngine
           from     from_field
           to       recipients
           subject  mail_data[:subject]
-          body     mail_data[:body]
+          body     mail_data[:body] + "\n\n#{Helper.device_url(config, event.device)}"
         end
 
         email_count += 1

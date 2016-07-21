@@ -61,6 +61,18 @@ class Fan < Component
     new_vendor_status = data['vendor_status'].to_i_if_numeric
     new_status_text = data['status_text']
 
+    # Generate events if things have changed
+    @events ||= []
+
+    # Status changes
+    if @status_text && new_status_text != @status_text
+      @events.push(ComponentStatusEvent.new(
+        device: @device, hw_type: @hw_type, index: @index,
+        old: @status_text,
+        new: new_status_text
+      ))
+    end
+
     @status = new_status
     @vendor_status = new_vendor_status
     @status_text = new_status_text

@@ -96,4 +96,13 @@ class ComponentStatusEvent < ComponentEvent
   end
 
 
+  def get_email(db)
+    component = Component.fetch_from_db(id: @component_id, db: db).first
+    {
+      subject: "#{component.description} (#{component.hw_type}) on #{component.device}: #{@new}",
+      body: ""
+    }
+  end
+
+
 end

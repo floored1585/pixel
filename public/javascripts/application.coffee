@@ -197,6 +197,7 @@ sort_table = ->
   # Function for sorting on metadata
   pxl_meta = (node) ->
     if($(node).hasClass('pxl-meta'))
+      $(node).removeData('pxl-meta') # This clears the jQuery cache, allowing it to see the values updated by d3
       $(node).data('pxl-meta')
     else
       node.innerText
@@ -221,6 +222,7 @@ set_hovers = (el) ->
 
 color_cell = (cell,bgcolor) ->
   return if !cell.firstChild # Exits if the cell is empty
+  $(cell).removeData('pxl-meta') # This clears the jQuery cache, allowing it to see the values updated by d3
   percentage = $(cell).data('pxl-meta')
   if percentage < 80
     color = '#BFB'
@@ -236,12 +238,16 @@ color_cell = (cell,bgcolor) ->
 
 
 color_table = ->
-  $('tr').mouseenter ->
+  $('tr').unbind('mouseenter.pixel1')
+  $('tr').bind('mouseenter.pixel1', ->
     for cell in $(this).find('.pxl-histogram')
       color_cell(cell,'#F5F5F5')
-  $('tr').mouseleave ->
+  )
+  $('tr').unbind('mouseleave.pixel1')
+  $('tr').bind('mouseleave.pixel1', ->
     for cell in $(this).find('.pxl-histogram')
       color_cell(cell,'#FFF')
+  )
   bgcolor = '#FFF'
   for cell in document.getElementsByClassName('pxl-histogram')
     color_cell(cell,bgcolor)
@@ -546,11 +552,11 @@ d3_table_update = (jq_table, data, meta) ->
     .append("td")
     .attr('class', 'dynamic') # So we can separate this TR from any child TRs
     # Apply attrs and class if the cell data is a hash and has the attribute/class key
-    .attr('data-pxl-meta', (d,i) -> d && d['pxl-meta'])
     .classed('pxl-meta', (d,i) -> d && d['pxl-meta'])
     .classed('pxl-td-shrink', (d,i) -> d && d['pxl-td-shrink'])
     .classed('pxl-histogram', (d,i) -> d && d['pxl-histogram'])
     .classed('pxl-hidden', (d,i) -> d && d['pxl-hidden'])
+  td.attr('data-pxl-meta', (d,i) -> d && d['pxl-meta'])
 
   td.html(ident)
 

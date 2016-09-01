@@ -20,7 +20,7 @@
     "Chart.js": "~1.0.2",
     "bootstrap": "~3.3.5",
     "bootstrap-multiselect": "~0.9.13",
-    "d3": "~3.5.6",
+    "d3": "^3.5.6",
     "datetimepicker": "~2.5.4",
     "font-awesome": "~4.4.0",
     "jquery-dateFormat": "~1.0.2",

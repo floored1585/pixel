@@ -214,6 +214,22 @@ class Config
       type: 'Array',
       last_updated: now
     )
+    @settings[:config_link] ||= ConfigItem.new(
+      table_name: 'global_config',
+      setting: 'config_link',
+      value: "",
+      description: 'URL which will display device configuration; use %device% as a placeholder',
+      type: 'String',
+      last_updated: now
+    )
+    @settings[:config_link_enabled] ||= ConfigItem.new(
+      table_name: 'global_config',
+      setting: 'config_link_enabled',
+      value: "false",
+      description: 'Whether or not to display device configuration links',
+      type: 'Boolean',
+      last_updated: now
+    )
 
     # Allow acessing config items with @@config.config_item_name
     @settings.each do |config_item_name, config_item|

@@ -131,6 +131,12 @@ module Helper
   end
 
 
+  def self.device_config_link(settings, device, text)
+    link = settings[:config_link].value.gsub(/%device%/, device)
+    "<a href='#{link}' target='_blank'>#{text}</a>"
+  end
+
+
   def interface_link(settings, int)
     "<a href='#{settings[:grafana_if_dash].value}" +
     "?device=#{int.device}&name=#{int.name}" +

@@ -49,6 +49,9 @@
     <%= device_link_graph(settings, device.name, '[ graphs ]') %>&nbsp;
     <a href='#' data-toggle="modal" data-target="#deviceDetails">[ details ]</a>&nbsp;
     <a href='#' data-toggle="modal" data-target="#deviceHardware">[ hardware ]</a>
+    <% if settings[:config_link_enabled].value && !settings[:config_link].value.empty? %>
+      &nbsp;<%= Helper.device_config_link(settings, device.name, '[ config ]') %>
+    <% end %>
   </h5>
   <div class='row'>
     <div class='col-md-6'>

@@ -28,7 +28,7 @@
           title='<%= sw_tooltip(device) %>' class='tooltip-lighter'>
           <u><b><%=
           device.vendor.gsub(/Force10 [\w\-]+/,'Force10') +
-            ' ' << device.hw_model
+            " (#{ device.hw_model })"
             %></b></u>
         </span>
       </span>

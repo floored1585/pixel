@@ -984,6 +984,7 @@ class Device
       :community => @poll_cfg[:snmpv2_community],
       :mib_dir => 'lib/mibs',
       :mib_modules => [
+        'NET-SNMP-TC',
         'CISCO-PRODUCTS-MIB',
         'JNX-CHAS-DEFINES-MIB',
         'F10-PRODUCTS-MIB',

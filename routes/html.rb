@@ -101,8 +101,8 @@ class Pixel < Sinatra::Base
     device = Device.fetch(device_name, ['CPU', 'Fan', 'Memory', 'PSU', 'Temperature'])
 
     dev_db = @@db[:interface].natural_join(:component).where(:device => device_name)
-    bps_out = dev_db.sum(:bps_out)
-    pps_out = dev_db.sum(:pps_out)
+    bps_out = dev_db.sum(:bps_out) || 0
+    pps_out = dev_db.sum(:pps_out) || 0
 
     # How long did it take us to query the database
     db_elapsed = '%.2f' % (Time.now - beginning)

@@ -19,6 +19,7 @@
 # device.rb
 require 'logger'
 require 'snmp'
+require 'pp'
 require_relative 'api'
 require_relative 'influx'
 require_relative 'poller'
@@ -97,6 +98,7 @@ class Device
     # optional
     @poll_ip = poll_ip
     @poll_cfg = poll_cfg
+    @debug = false
 
     @interfaces = {}
     @cpus = {}
@@ -120,6 +122,11 @@ class Device
 
   def poller_uuid
     @poller_uuid || ''
+  end
+
+
+  def debug?
+    true if @debug
   end
 
 
@@ -263,6 +270,9 @@ class Device
     @poll_ip = poll_ip if poll_ip
     @poll_cfg = poll_cfg if poll_cfg
 
+    $LOG.debug("DEVICE_POLL(#{@name}): poll_ip = #{@poll_ip}") if debug?
+    $LOG.debug("DEVICE_POLL(#{@name}): poll_cfg = #{PP.pp @poll_cfg, ''}") if debug?
+
     # Return if we don't have everything needed to poll
     unless @poll_cfg
       $LOG.error("Device<#{@name}>: Can't execute poll with no poll_cfg")
@@ -362,6 +372,7 @@ class Device
       @yellow_alarm = data[:yellow_alarm].to_i_if_numeric
       @red_alarm = data[:red_alarm].to_i_if_numeric
       @poller_uuid = data[:poller_uuid]
+      @debug = data[:debug]
     end
 
     if data == nil && !hw_types.empty?
@@ -522,6 +533,7 @@ class Device
     hash['data']['yellow_alarm'] = @yellow_alarm if @yellow_alarm
     hash['data']['red_alarm'] = @red_alarm if @red_alarm
     hash['data']['poller_uuid'] = @poller_uuid if @poller_uuid
+    hash['data']['debug'] = @debug if @debug
     hash['data']['interfaces'] = @interfaces if @interfaces
     hash['data']['cpus'] = @cpus if @cpus
     hash['data']['fans'] = @fans if @fans
@@ -544,6 +556,7 @@ class Device
 
   # PRIVATE!
   def _poll_device_info(session)
+    $LOG.debug("DEVICE_POLL(#{@name}): _poll_device_info: started") if debug?
     start = Time.now.to_i
 
     # SysDescr, for determining vendor
@@ -564,6 +577,9 @@ class Device
         @new_vendor = 'Unknown'
       end
 
+      $LOG.debug("DEVICE_POLL(#{@name}): _poll_device_info: @new_sys_descr = #{@new_sys_descr}") if debug?
+      $LOG.debug("DEVICE_POLL(#{@name}): _poll_device_info: @new_vendor = #{@new_vendor}") if debug?
+
       # Check for the existence of a regex for extracting sw/version info
       if sys_descr_regex = @poll_cfg[:sys_descr_regex][@new_vendor]
         if match = @new_sys_descr.match(sys_descr_regex)
@@ -577,23 +593,29 @@ class Device
     # Get HW info (model)
     session.get('1.3.6.1.2.1.1.2.0').each_varbind do |vb|
       @new_hw_model = (vb.value.to_s.split('::')[1] || '').gsub('jnxProductName','')
+      $LOG.debug("DEVICE_POLL(#{@name}): _poll_device_info: @new_hw_model = #{@new_hw_model}") if debug?
     end
 
     # Get alarms
     vendor_oids = @poll_cfg[:oids][@new_vendor] || {}
     if vendor_oids['yellow_alarm']
       session.get(vendor_oids['yellow_alarm']).each_varbind { |vb| @new_yellow_alarm = vb.value.to_i }
+      $LOG.debug("DEVICE_POLL(#{@name}): _poll_device_info: @new_yellow_alarm = #{@new_yellow_alarm}") if debug?
     end
     if vendor_oids['red_alarm']
       session.get(vendor_oids['red_alarm']).each_varbind { |vb| @new_red_alarm = vb.value.to_i }
+      $LOG.debug("DEVICE_POLL(#{@name}): _poll_device_info: @new_red_alarm = #{@new_red_alarm}") if debug?
     end
 
     # Get uptime
     session.get('1.3.6.1.2.1.1.3.0').each_varbind { |vb| @new_uptime = vb.value.to_i / 100 }
+    $LOG.debug("DEVICE_POLL(#{@name}): _poll_device_info: @new_uptime = #{@new_uptime}") if debug?
 
     # Update values
     #   This could be its own method if we want to extend functionality later
     #   ie. send alerts on significant changes (alarm status, uptime reset, etc)
+    $LOG.debug("DEVICE_POLL(#{@name}): _poll_device_info: updating instance variables") if debug?
+
     @sys_descr = @new_sys_descr
     @vendor = @new_vendor
     @sw_descr = @new_sw_descr
@@ -602,20 +624,24 @@ class Device
     @uptime = @new_uptime
     @yellow_alarm = @new_yellow_alarm
     @red_alarm = @new_red_alarm
+
     @last_poll = Time.now.to_i
     @next_poll = Time.now.to_i + 100
 
+    $LOG.debug("DEVICE_POLL(#{@name}): _poll_device_info: finished") if debug?
     return Time.now.to_i - start
   end
 
 
   # PRIVATE!
   def _poll_interfaces(session)
+    $LOG.debug("DEVICE_POLL(#{@name}): _poll_interfaces: started") if debug?
     start = Time.now.to_i
 
     if_table = {}
 
     session.walk(@poll_cfg[:oids][:general].keys) do |row|
+      $LOG.debug("DEVICE_POLL(#{@name}): _poll_interfaces: oid_row = #{PP.pp row, ''}") if debug?
       row.each do |vb|
         oid_text = @poll_cfg[:oids][:general][vb.name.to_str.gsub(/\.[0-9]+$/,'')]
         index = vb.name.to_str[/[0-9]+$/]
@@ -623,6 +649,7 @@ class Device
         if_table[index][oid_text] = vb.value.to_s
       end
     end
+    $LOG.debug("DEVICE_POLL(#{@name}): _poll_interfaces: if_table = #{PP.pp if_table, ''}") if debug?
 
     if_table.each do |index, oids|
       # Don't create the interface unless it has an interesting description or name

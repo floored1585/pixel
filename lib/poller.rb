@@ -43,6 +43,7 @@ module Poller
     pid = fork do
       # Get current values
       device = Device.fetch(device_name, ['all'])
+      $LOG.debug("POLLER: Fetched device #{device_name} for polling") if device.debug?
 
       # Poll the device; send data back to core
       if device.poll(worker: instance.hostname, uuid: uuid, poll_cfg: poll_cfg)

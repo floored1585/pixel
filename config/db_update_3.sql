@@ -1,0 +1,3 @@
+UPDATE meta SET db_version=3;
+
+ALTER TABLE device ADD COLUMN debug BOOLEAN DEFAULT FALSE;

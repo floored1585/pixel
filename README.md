@@ -1,6 +1,8 @@
 Pixel
 =============
 
+[![Join the chat at https://gitter.im/pixel-networking/Lobby](https://badges.gitter.im/pixel-networking/Lobby.svg)](https://gitter.im/pixel-networking/Lobby?utm_source=badge&utm_medium=badge&utm_campaign=pr-badge&utm_content=badge)
+
 Pixel is an open source network monitoring project maintained by [@floored1585](https://github.com/floored1585).
 
 Pixel uses SNMP to monitor network equipment.  The API endpoint and user interface is designed to scale

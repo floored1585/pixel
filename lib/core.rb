@@ -199,7 +199,7 @@ module Core
         uuid = SecureRandom.uuid
         devices[row[:device]] = uuid
         $LOG.warn("CORE: Overriding currently_polling for #{row[:device]} (#{poller})") if row[:currently_polling] == 1
-        $LOG.info("CORE: Sending device #{row[:device]} to #{poller} (#{uuid})") if row[:device] == 'iad1-a-1'
+        $LOG.info("CORE: Sending device #{row[:device]} to #{poller} (#{uuid})")
         device_row = db[:device].where(:device => row[:device])
         device_row.update(
           :currently_polling => 1,

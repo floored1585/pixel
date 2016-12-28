@@ -33,7 +33,9 @@ module Core
     ints = []
     int_data = db[:interface].filter(
       Sequel.like(:description, 'sub%') |
-      Sequel.like(:description, 'bb%')
+      Sequel.like(:description, 'bb%') |
+      Sequel.like(:description, 'trn%') |
+      Sequel.like(:description, 'exc%')
     )
     int_data = int_data.exclude(:oper_status => 1).exclude(:type => 'acc').
       natural_join(:component)

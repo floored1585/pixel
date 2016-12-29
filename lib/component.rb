@@ -160,7 +160,7 @@ class Component
   def update(data, worker:)
     new_description = data['description'] || "#{@hw_type} #{@index}"
     new_description.delete!("\0")
-    current_time = Time.now.to_i
+    current_time = data['last_updated'] || Time.now.to_i # If no time was recorded, use 'now'
     new_worker = worker
 
     # Generate events if things have changed

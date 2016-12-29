@@ -1,3 +1,10 @@
+## 0.0.4 (unreleased)
+
+Bugfixes:
+
+  - Interfaces now record last_updated when they are walked, not when they are processed.
+    This should fix a number of inaccuracies in graphs and delta data (bps/pps/etc) (@floored1585)
+
 ## 0.0.3 (2016-06-29)
 
 Features:

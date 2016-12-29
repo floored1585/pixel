@@ -647,6 +647,7 @@ class Device
         index = vb.name.to_str[/[0-9]+$/]
         if_table[index] ||= {}
         if_table[index][oid_text] = vb.value.to_s
+        if_table[index]['last_updated'] ||= Time.now.to_i
       end
     end
     $LOG.debug("DEVICE_POLL(#{@name}): _poll_interfaces: if_table = #{PP.pp if_table, ''}") if debug?

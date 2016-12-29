@@ -261,7 +261,11 @@ class Interface < Component
   def update(data, worker:)
     # Save times (@last_updated gets modified by super)
     old_time = @last_updated
-    current_time = Time.now.to_i
+    current_time = data['last_updated']
+    if !current_time
+      $LOG.error("INTERFACE: No 'last_updated' value provided. Using current time (may cause inaccuracies)!")
+      current_time = Time.now.to_i
+    end
 
     super
 

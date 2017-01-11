@@ -288,8 +288,10 @@ class Interface < Component
     # Generate events if things have changed
     @events ||= []
 
+
     # Status changes
     if @admin_status && new_admin_status != @admin_status
+      @admin_status_time = current_time
       @events.push(AdminStatusEvent.new(
         device: @device, hw_type: @hw_type, index: @index,
         old: Interface.status_converter(@admin_status),
@@ -297,6 +299,7 @@ class Interface < Component
       ))
     end
     if @oper_status && new_oper_status != @oper_status
+      @oper_status_time = current_time
       @events.push(OperStatusEvent.new(
         device: @device, hw_type: @hw_type, index: @index,
         old: Interface.status_converter(@oper_status),
@@ -347,10 +350,6 @@ class Interface < Component
         new_time: current_time, new_value: new_out_errors
       )
     end
-
-    # If the admin or oper statuses are changing, update their timestamps
-    @admin_status_time = current_time if @admin_status != new_admin_status
-    @oper_status_time = current_time if @oper_status != new_oper_status
 
     # Lastly, update all the non-calculated instance variables
     @name = new_name

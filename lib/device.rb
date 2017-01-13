@@ -625,9 +625,6 @@ class Device
     @yellow_alarm = @new_yellow_alarm
     @red_alarm = @new_red_alarm
 
-    @last_poll = Time.now.to_i
-    @next_poll = Time.now.to_i + 100
-
     $LOG.debug("DEVICE_POLL(#{@name}): _poll_device_info: finished") if debug?
     return Time.now.to_i - start
   end

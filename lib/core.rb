@@ -208,6 +208,7 @@ module Core
           :poller_uuid => uuid,
           :worker => poller,
           :last_poll => Time.now.to_i,
+          :next_poll => Time.now.to_i + 100
         )
       end
     end

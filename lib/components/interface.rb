@@ -307,6 +307,11 @@ class Interface < Component
       ))
     end
 
+    # If no status time has been recorded (new interface),
+    # set it to the current time
+    @admin_status_time ||= Time.now.to_i
+    @oper_status_time ||= Time.now.to_i
+
 
     # Determine interface type, by capturing the part of the description before __ or [
     if type_match = @description.match(/^([a-z]+)(?:__|\[)/)

@@ -118,7 +118,7 @@ class Pixel < Sinatra::Base
   end
 
   get '/v2/devices/populate' do
-    populate_device_table(@@db)
+    populate_device_table(@@db, @@config.settings)
   end
 
   get '/v2/devices' do

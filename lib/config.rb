@@ -198,6 +198,14 @@ class Config
       type: 'String',
       last_updated: now
     )
+    @settings[:device_list] ||= ConfigItem.new(
+      table_name: 'global_config',
+      setting: 'device_list',
+      value: "config/devices.yaml",
+      description: 'Location of YAML device list',
+      type: 'String',
+      last_updated: now
+    )
     @settings[:snmpv2_community] ||= ConfigItem.new(
       table_name: 'global_config',
       setting: 'snmpv2_community',

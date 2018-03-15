@@ -74,7 +74,7 @@ namespace :deploy do
       execute "mkdir -p #{shared_path}/log"
       execute :touch, shared_path.join('log/messages.log') unless File.file?(shared_path.join('log/messages.log'))
       execute :touch, shared_path.join('config/hosts.yaml') unless File.file?(shared_path.join('config/hosts.yaml'))
-      execute "ln -s #{shared_path}/config/hosts.yaml #{release_path}/config/hosts.yaml"
+      execute "ln -s #{shared_path}/config/devices.yaml #{release_path}/config/devices.yaml"
       execute "ln -s #{shared_path}/config/config.yaml #{release_path}/config/config.yaml"
       execute "ln -s #{shared_path}/log/messages.log #{release_path}/messages.log"
     end

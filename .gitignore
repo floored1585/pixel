@@ -29,7 +29,7 @@ proc.lock
 config/settings.yaml
 config/config.yaml
 config/settings.production.yaml
-config/hosts.yaml
+config/devices.yaml
 config/deploy/
 
 copyright.txt

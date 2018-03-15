@@ -331,12 +331,12 @@ module Core
   end
 
 
-  def populate_device_table(db)
+  def populate_device_table(db, settings)
     db.disconnect
     devices = {}
 
-    # Load from file TODO: move this to the config somehow
-    device_file = 'config/hosts.yaml'
+    # Load file path from the config table
+    device_file = settings[:device_list].value
 
     if File.exists?(device_file)
       devices = YAML.load_file(File.join(APP_ROOT, device_file)) || {}
